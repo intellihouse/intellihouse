@@ -1,6 +1,7 @@
 package co.codewizards.raspi1;
 
 import java.util.Date;
+import java.util.concurrent.SynchronousQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ public class SwitchInDemo implements Runnable {
 	
 	public static final long PROGRAM_RUN_TIME_MILLIS = 5L * 60L * 1000L;
 //	public static final long SWITCH_PERIOD_MILLIS = 10_000L;
+	private static final long KEY_BUTTON_NOISE_SUPPRESS_MILLIS = 100;
 	
 	private static final int[] LED_DIMMER_PWM = {
 			1,
@@ -46,7 +48,9 @@ public class SwitchInDemo implements Runnable {
 	
 	private volatile boolean switchOffOnKeyUp;
 	private volatile long keyDownStartTimestamp = Long.MIN_VALUE;
-	
+	private volatile long lastKeyStateChangeEventTimestamp;
+	private volatile boolean keyStateCheckDeferred;
+
 	public SwitchInDemo(String[] args) {
 		this.args = args;
 		gpio = GpioFactory.getInstance();
@@ -55,6 +59,9 @@ public class SwitchInDemo implements Runnable {
 		bathRelay = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_09);
 		bathDimmer1 = gpio.provisionSoftPwmOutputPin(RaspiPin.GPIO_04);
 		bathDimmer2 = gpio.provisionSoftPwmOutputPin(RaspiPin.GPIO_05);
+		
+		bathDimmer1.setPwmRange(100);
+		bathDimmer2.setPwmRange(100);
 	}
 
 	public void run() {
@@ -71,24 +78,22 @@ public class SwitchInDemo implements Runnable {
 				PinState keyPinState = event.getState();
 				System.out.println(new Date() + " " + Thread.currentThread().getName() + " keyPinState=" + keyPinState + " bathRelayState=" + bathRelay.getState());
 
+				if (System.currentTimeMillis() - lastKeyStateChangeEventTimestamp < KEY_BUTTON_NOISE_SUPPRESS_MILLIS) {
+					System.out.println(new Date() + " IGNORING this event - deferring state check!");
+					keyStateCheckDeferred = true;
+					return;
+				}
+				keyStateCheckDeferred = false;
+				lastKeyStateChangeEventTimestamp = System.currentTimeMillis();
+
 				if (keyPinState.isHigh()) {
-					keyDownStartTimestamp = System.currentTimeMillis();
-					if (bathRelay.getState() == PinState.HIGH)
-						switchOffOnKeyUp = true;
-					else
-						switchOn();
+					onKeyDown();
 				}
 				else {
-					keyDownStartTimestamp = Long.MIN_VALUE;
-					if (switchOffOnKeyUp) {
-						switchOffOnKeyUp = false;
-						switchOff();
-					} else
-						dimDirectionDown = ! dimDirectionDown;
+					onKeyUp();
 				}
 
 				System.out.println(new Date() + " " + Thread.currentThread().getName() + " keyDown=" + isKeyDown() + " keyDownStartTimestamp=" + keyDownStartTimestamp + " switchOffOnKeyUp=" + switchOffOnKeyUp);
-				System.out.println();
 			}
 		};
 		key.addListener(listener);
@@ -103,17 +108,49 @@ public class SwitchInDemo implements Runnable {
 //		bathRelay.setState(PinState.LOW);
 		while (true) {
 			boolean keyDown = isKeyDown();
-			long sleepTime = keyDown ? 100L : 1000L;
-			System.out.println(new Date() + " " + Thread.currentThread().getName() + " keyDown = " + keyDown + " switchOffOnKeyUp=" + switchOffOnKeyUp + " sleepTime=" + sleepTime + " lastDimmerChangeTimestamp=" + lastDimmerChangeTimestamp);
+			boolean kscd = keyStateCheckDeferred;
+			long sleepTime = keyDown || kscd ? 100L : 1000L;
+			System.out.println(new Date() + " " + Thread.currentThread().getName() + " keyDown = " + keyDown + " keyStateCheckDeferred=" + kscd + " switchOffOnKeyUp=" + switchOffOnKeyUp + " sleepTime=" + sleepTime + " ledDimmerIndex=" + ledDimmerIndex + " lastDimmerChangeTimestamp=" + lastDimmerChangeTimestamp);
+			
+			if (keyStateCheckDeferred
+					&& System.currentTimeMillis() - lastKeyStateChangeEventTimestamp >= KEY_BUTTON_NOISE_SUPPRESS_MILLIS) {
+				keyStateCheckDeferred = false;
+				lastKeyStateChangeEventTimestamp = System.currentTimeMillis();
+				PinState keyPinState = key.getState();
+				if (keyPinState.isHigh()) {
+					onKeyDown();
+				}
+				else {
+					onKeyUp();
+				}
+			}
+			
 			if (keyDown && getKeyDownDuration() > 1000L) {
 				switchOffOnKeyUp = false;
-				if (System.currentTimeMillis() - lastDimmerChangeTimestamp >= 3000L) {
+				if (System.currentTimeMillis() - lastDimmerChangeTimestamp >= 2000L) {
 					lastDimmerChangeTimestamp = System.currentTimeMillis();
 					changeDimmer();
 				}
 			}
 			sleep(sleepTime);
 		}
+	}
+	
+	private void onKeyDown() {
+		keyDownStartTimestamp = System.currentTimeMillis();
+		if (bathRelay.getState() == PinState.HIGH)
+			switchOffOnKeyUp = true;
+		else
+			switchOn();
+	}
+	
+	private void onKeyUp() {
+		keyDownStartTimestamp = Long.MIN_VALUE;
+		if (switchOffOnKeyUp) {
+			switchOffOnKeyUp = false;
+			switchOff();
+		} else
+			dimDirectionDown = ! dimDirectionDown;
 	}
 
 	private void changeDimmer() {
