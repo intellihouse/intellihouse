@@ -39,11 +39,12 @@ public class PowerSupplyDriver extends AbstractBean<PowerSupplyDriver.Property> 
 		return energized;
 	}
 
-	public synchronized void setEnergized(boolean energized) {
-		setPropertyValue(PropertyEnum.energized, energized);
+	public void setEnergized(boolean energized) { // not synchronized to prevent deadlocks in listeners
+		if (setPropertyValue(PropertyEnum.energized, energized))
+			applyEnergized();
 	}
 
-	private void applyEnergized() {
+	protected synchronized void applyEnergized() {
 		openDigitalOutput();
 
 		if (energized)

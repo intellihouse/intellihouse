@@ -51,23 +51,18 @@ public class LightDriver extends AbstractBean<LightDriver.Property> implements A
 	public synchronized int getDimmerValue() {
 		return dimmerValue;
 	}
-	public synchronized void setDimmerValue(int dimmerValue) {
-		if (this.dimmerValue == dimmerValue)
-			return;
-
-		logger.debug("setDimmerValue: old={} new={}", this.dimmerValue, dimmerValue);
-
+	public void setDimmerValue(int dimmerValue) { // not synchronized to prevent deadlocks in listeners
 		if (dimmerValue < MIN_DIMMER_VALUE)
 			throw new IllegalArgumentException("dimmerValue < MIN_DIMMER_VALUE");
 
 		if (dimmerValue > MAX_DIMMER_VALUE)
 			throw new IllegalArgumentException("dimmerValue > MAX_DIMMER_VALUE");
 
-		setPropertyValue(PropertyEnum.dimmerValue, dimmerValue);
-		applyDimmerValue();
+		if (setPropertyValue(PropertyEnum.dimmerValue, dimmerValue))
+			applyDimmerValue();
 	}
 
-	private void applyDimmerValue() {
+	protected synchronized void applyDimmerValue() {
 		if (dimmerValue == MIN_DIMMER_VALUE || dimmerValue == MAX_DIMMER_VALUE) {
 			openDigitalOutput();
 			if (dimmerValue == MAX_DIMMER_VALUE)
@@ -92,6 +87,8 @@ public class LightDriver extends AbstractBean<LightDriver.Property> implements A
 		if (pwmOutput != null)
 			return;
 
+		logger.debug("openPwmOutput");
+
 		closeDigitalOutput();
 
 		GpioController gpioController = GpioFactory.getInstance();
@@ -106,6 +103,8 @@ public class LightDriver extends AbstractBean<LightDriver.Property> implements A
 		if (digitalOutput != null)
 			return;
 
+		logger.debug("openDigitalOutput");
+
 		closePwmOutput();
 
 		GpioController gpioController = GpioFactory.getInstance();
@@ -116,6 +115,7 @@ public class LightDriver extends AbstractBean<LightDriver.Property> implements A
 		if (pwmOutput == null)
 			return;
 
+		logger.debug("closePwmOutput");
 		GpioController gpioController = GpioFactory.getInstance();
 		gpioController.unprovisionPin(pwmOutput);
 		pwmOutput = null;
@@ -125,6 +125,7 @@ public class LightDriver extends AbstractBean<LightDriver.Property> implements A
 		if (digitalOutput == null)
 			return;
 
+		logger.debug("closeDigitalOutput");
 		GpioController gpioController = GpioFactory.getInstance();
 		gpioController.unprovisionPin(digitalOutput);
 		digitalOutput = null;
@@ -132,6 +133,7 @@ public class LightDriver extends AbstractBean<LightDriver.Property> implements A
 
 	@Override
 	public synchronized void close() {
+		logger.debug("close");
 		closeDigitalOutput();
 		closePwmOutput();
 	}

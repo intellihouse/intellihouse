@@ -2,11 +2,15 @@ package house.intelli.core.bean;
 
 import java.beans.PropertyChangeListener;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public abstract class AbstractBean<P extends PropertyBase> implements CloneableBean<P>, Cloneable {
+	private final Logger logger = LoggerFactory.getLogger(AbstractBean.class);
 	private BeanSupport<AbstractBean<P>, P> beanSupport = new BeanSupport<AbstractBean<P>, P>(this);
 
-	protected void setPropertyValue(P property, Object value) {
-		beanSupport.setPropertyValue(property, value);
+	protected boolean setPropertyValue(P property, Object value) {
+		return beanSupport.setPropertyValue(property, value);
 	}
 
 	protected <V> V getPropertyValue(P property) {
