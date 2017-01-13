@@ -1,3 +1,4 @@
 dependencies {
-	compile group: 'org.bouncycastle', name: 'bcpg-jdk15on', version: bouncycastleVersion
+//	compile group: 'org.bouncycastle', name: 'bcpg-jdk15on', version: bouncycastleVersion
+
 }
