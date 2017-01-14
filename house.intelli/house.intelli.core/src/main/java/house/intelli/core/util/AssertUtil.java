@@ -1,5 +1,7 @@
 package house.intelli.core.util;
 
+import java.awt.EventQueue;
+
 public final class AssertUtil {
 	private AssertUtil() {
 	}
@@ -12,5 +14,10 @@ public final class AssertUtil {
 			throw new NullPointerException("name");
 
 		return object;
+	}
+
+	public static void assertEventThread() {
+		if (! EventQueue.isDispatchThread())
+			throw new IllegalStateException("This thread is not the EventQueue.dispatchThread! " + Thread.currentThread().getName());
 	}
 }

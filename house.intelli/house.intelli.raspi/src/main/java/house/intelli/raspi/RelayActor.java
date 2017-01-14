@@ -1,5 +1,6 @@
 package house.intelli.raspi;
 
+import static house.intelli.core.event.EventQueue.*;
 import static house.intelli.core.util.AssertUtil.*;
 
 import com.pi4j.io.gpio.GpioController;
@@ -11,40 +12,47 @@ import com.pi4j.io.gpio.PinState;
 import house.intelli.core.bean.AbstractBean;
 import house.intelli.core.bean.PropertyBase;
 
-public class PowerSupplyDriver extends AbstractBean<PowerSupplyDriver.Property> implements AutoCloseable {
+public class RelayActor extends AbstractBean<RelayActor.Property> implements AutoCloseable {
 
 	public static interface Property extends PropertyBase { }
 
 	public static enum PropertyEnum implements Property {
+		pin,
 		energized
 	}
 
-	private final Pin pin;
+	private Pin pin;
 	private GpioPinDigitalOutput digitalOutput;
 
 	private boolean energized;
 
-	public PowerSupplyDriver(Pin pin) {
-		this.pin = assertNotNull(pin, "pin");
+	public Pin getPin() {
+		return pin;
+	}
+	public void setPin(Pin pin) {
+		if (this.pin != null)
+			throw new IllegalStateException("pin already assigned!");
 
-		if (PowerSupplyDriver.class == this.getClass())
-			init();
+		setPropertyValue(PropertyEnum.pin, pin);
 	}
 
-	protected void init() {
+	public void init() {
+		assertNotNull(pin, "pin");
 		applyEnergized();
 	}
 
-	public synchronized boolean isEnergized() {
+	public boolean isEnergized() {
+		assertEventThread();
 		return energized;
 	}
 
 	public void setEnergized(boolean energized) { // not synchronized to prevent deadlocks in listeners
+		assertEventThread();
 		if (setPropertyValue(PropertyEnum.energized, energized))
 			applyEnergized();
 	}
 
-	protected synchronized void applyEnergized() {
+	protected void applyEnergized() {
 		openDigitalOutput();
 
 		if (energized)
@@ -54,14 +62,18 @@ public class PowerSupplyDriver extends AbstractBean<PowerSupplyDriver.Property> 
 	}
 
 	private void openDigitalOutput() {
+		assertEventThread();
 		if (digitalOutput != null)
 			return;
+
+		assertNotNull(pin, "pin");
 
 		GpioController gpioController = GpioFactory.getInstance();
 		digitalOutput = gpioController.provisionDigitalOutputPin(pin);
 	}
 
 	private void closeDigitalOutput() {
+		assertEventThread();
 		if (digitalOutput == null)
 			return;
 
@@ -71,7 +83,12 @@ public class PowerSupplyDriver extends AbstractBean<PowerSupplyDriver.Property> 
 	}
 
 	@Override
-	public synchronized void close() {
-		closeDigitalOutput();
+	public void close() {
+		invokeAndWait(new Runnable() {
+			@Override
+			public void run() {
+				closeDigitalOutput();
+			}
+		});
 	}
 }

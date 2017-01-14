@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd"
+	default-init-method="init" default-destroy-method="close">
+
+	<context:annotation-config />
+
+	<util:constant id="GPIO_01" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_01" />
+	<util:constant id="GPIO_02" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_02" />
+	<util:constant id="GPIO_03" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_03" />
+	<util:constant id="GPIO_04" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_04" />
+	<util:constant id="GPIO_05" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_05" />
+	<util:constant id="GPIO_06" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_06" />
+	<util:constant id="GPIO_07" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_07" />
+	<util:constant id="GPIO_08" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_08" />
+	<util:constant id="GPIO_09" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_09" />
+	<util:constant id="GPIO_10" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_10" />
+	<util:constant id="GPIO_11" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_11" />
+	<util:constant id="GPIO_12" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_12" />
+	<util:constant id="GPIO_13" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_13" />
+	<util:constant id="GPIO_14" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_14" />
+	<util:constant id="GPIO_15" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_15" />
+	<util:constant id="GPIO_16" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_16" />
+	<util:constant id="GPIO_17" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_17" />
+	<util:constant id="GPIO_18" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_18" />
+	<util:constant id="GPIO_19" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_19" />
+	<util:constant id="GPIO_20" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_20" />
+	<util:constant id="GPIO_21" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_21" />
+	<util:constant id="GPIO_22" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_22" />
+	<util:constant id="GPIO_23" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_23" />
+	<util:constant id="GPIO_24" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_24" />
+	<util:constant id="GPIO_25" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_25" />
+	<util:constant id="GPIO_26" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_26" />
+	<util:constant id="GPIO_27" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_27" />
+	<util:constant id="GPIO_28" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_28" />
+	<util:constant id="GPIO_29" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_29" />
+	<util:constant id="GPIO_30" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_30" />
+	<util:constant id="GPIO_31" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_31" />
+
+	<!-- BEGIN bedroom -->
+	<bean id="bedroomKeyButton" class="house.intelli.raspi.KeyButtonSensor">
+		<property name="pin" ref="GPIO_10" />  <!-- phys. pin 24 -->
+	</bean>
+
+	<bean id="bedroomLight0" class="house.intelli.raspi.DimmerActor">
+		<property name="pin" ref="GPIO_01" />
+	</bean>
+	<bean id="bedroomLight1" class="house.intelli.raspi.DimmerActor">
+		<property name="pin" ref="GPIO_23" />
+	</bean>
+	<bean id="bedroomLight2" class="house.intelli.raspi.DimmerActor">
+		<property name="pin" ref="GPIO_24" />
+	</bean>
+	<bean id="bedroomLight3" class="house.intelli.raspi.DimmerActor">
+		<property name="pin" ref="GPIO_26" />
+	</bean>
+
+	<bean id="bedroomPowerSupply" class="house.intelli.raspi.RelayActor">
+		<property name="pin" ref="GPIO_07" />
+	</bean>
+
+	<bean id="bedroomLightController" class="house.intelli.raspi.LightController">
+	    <property name="keyButtons">
+	        <list>
+	            <ref bean="bedroomKeyButton"/>
+	        </list>
+	    </property>
+	    <property name="lights">
+	        <list>
+	            <ref bean="bedroomLight0"/>
+	            <ref bean="bedroomLight1"/>
+	            <ref bean="bedroomLight2"/>
+	            <ref bean="bedroomLight3"/>
+	        </list>
+	    </property>
+	    <property name="powerSupplies">
+	        <list>
+	            <ref bean="bedroomPowerSupply"/>
+	        </list>
+	    </property>
+	</bean>
+	<!-- END bedroom -->
+
+	<!-- BEGIN dressingroom -->
+	<bean id="dressingroomKeyButton" class="house.intelli.raspi.KeyButtonSensor">
+		<property name="pin" ref="GPIO_11" />  <!-- phys. pin 26 -->
+	</bean>
+
+	<bean id="dressingroomPowerSupply" class="house.intelli.raspi.RelayActor">
+		<property name="pin" ref="GPIO_08" />
+	</bean>
+	<!-- END dressingroom -->
+
+
+	<!-- BEGIN bathroom -->
+	<bean id="bathroomKeyButton" class="house.intelli.raspi.KeyButtonSensor">
+		<property name="pin" ref="GPIO_12" />  <!-- phys. pin 19 -->
+	</bean>
+
+	<bean id="bathroomLight0" class="house.intelli.raspi.DimmerActor">
+		<property name="pin" ref="GPIO_04" />
+	</bean>
+	<bean id="bathroomLight1" class="house.intelli.raspi.DimmerActor">
+		<property name="pin" ref="GPIO_05" />
+	</bean>
+
+	<bean id="bathroomPowerSupply" class="house.intelli.raspi.RelayActor">
+		<property name="pin" ref="GPIO_09" />
+	</bean>
+
+	<bean id="bathroomLightController" class="house.intelli.raspi.LightController">
+	    <property name="keyButtons">
+	        <list>
+	            <ref bean="bathroomKeyButton"/>
+	        </list>
+	    </property>
+	    <property name="lights">
+	        <list>
+	            <ref bean="bathroomLight0"/>
+	            <ref bean="bathroomLight1"/>
+	        </list>
+	    </property>
+	    <property name="powerSupplies">
+	        <list>
+	            <ref bean="bathroomPowerSupply"/>
+	        </list>
+	    </property>
+	</bean>
+	<!-- END bathroom -->
+
+</beans>

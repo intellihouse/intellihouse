@@ -69,6 +69,7 @@ allprojects {
 	project.ext.bouncycastleVersion = '1.52'
 	project.ext.slf4jVersion = '1.7.21'
 	project.ext.logbackVersion = '1.1.7'
+	project.ext.springVersion = '4.3.5.RELEASE'
 
 	sourceSets {
 		main {
