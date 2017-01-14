@@ -108,6 +108,17 @@ public class DimmerActor extends AbstractBean<DimmerActor.Property> implements A
 
 		if (hardPwm) {
 			pwmOutput = gpioController.provisionPwmOutputPin(pin);
+
+			// The PWM properties must be set *after* the output-pin was provisioned. It doesn't
+			// work before.
+			//
+			// The *balanced* mode is required because it causes less fluctuation. The light looks
+			// really nice and uniform. With mark:space, the (cheap, bad) power supply causes swinging
+			// fluctuations despite our 5 * 4700 uF capacitors :-(
+			//
+			// The clock of 1920 and range of 100 was determined experimentically and with the help
+			// of: http://raspberrypi.stackexchange.com/questions/4906/control-hardware-pwm-frequency#9725
+
 			Gpio.pwmSetMode(Gpio.PWM_MODE_BAL);
 			Gpio.pwmSetClock(1920);
 			Gpio.pwmSetRange(100);

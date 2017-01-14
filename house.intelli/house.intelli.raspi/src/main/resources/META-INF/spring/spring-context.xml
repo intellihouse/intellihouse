@@ -11,6 +11,7 @@
 
 	<context:annotation-config />
 
+	<util:constant id="GPIO_00" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_00" />
 	<util:constant id="GPIO_01" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_01" />
 	<util:constant id="GPIO_02" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_02" />
 	<util:constant id="GPIO_03" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_03" />
@@ -92,8 +93,34 @@
 		<property name="pin" ref="GPIO_11" />  <!-- phys. pin 26 -->
 	</bean>
 
+	<bean id="dressingroomLight0" class="house.intelli.raspi.DimmerActor">
+		<property name="pin" ref="GPIO_00" />
+	</bean>
+	<bean id="dressingroomLight1" class="house.intelli.raspi.DimmerActor">
+		<property name="pin" ref="GPIO_02" />
+	</bean>
+
 	<bean id="dressingroomPowerSupply" class="house.intelli.raspi.RelayActor">
 		<property name="pin" ref="GPIO_08" />
+	</bean>
+
+	<bean id="dressingroomLightController" class="house.intelli.raspi.LightController">
+	    <property name="keyButtons">
+	        <list>
+	            <ref bean="dressingroomKeyButton"/>
+	        </list>
+	    </property>
+	    <property name="lights">
+	        <list>
+	            <ref bean="dressingroomLight0"/>
+	            <ref bean="dressingroomLight1"/>
+	        </list>
+	    </property>
+	    <property name="powerSupplies">
+	        <list>
+	            <ref bean="dressingroomPowerSupply"/>
+	        </list>
+	    </property>
 	</bean>
 	<!-- END dressingroom -->
 
