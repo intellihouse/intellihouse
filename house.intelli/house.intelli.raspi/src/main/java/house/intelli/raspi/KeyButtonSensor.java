@@ -80,8 +80,8 @@ public class KeyButtonSensor extends AbstractBean<KeyButtonSensor.Property> impl
 
 		GpioController gpioController = GpioFactory.getInstance();
 		digitalInput = gpioController.provisionDigitalInputPin(pin);
-		digitalInput.setDebounce(50, PinState.HIGH);
-		digitalInput.setDebounce(100, PinState.LOW);
+		digitalInput.setDebounce(100, PinState.HIGH);
+		digitalInput.setDebounce(200, PinState.LOW);
 		digitalInput.addListener(listener);
 		_setDown(digitalInput.getState());
 	}

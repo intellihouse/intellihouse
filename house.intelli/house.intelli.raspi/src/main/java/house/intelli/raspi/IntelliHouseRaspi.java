@@ -10,8 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import com.pi4j.wiringpi.Gpio;
-
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
@@ -26,14 +24,13 @@ public class IntelliHouseRaspi {
 		initLogging();
 
 		final Logger logger = LoggerFactory.getLogger(IntelliHouseRaspi.class);
-		logger.info("Starting up... OINK!");
+		logger.info("Starting up...");
 
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					initPwm();
-
+//					initPwm();
 					logger.info("Creating Spring ApplicationContext...");
 					ApplicationContext applicationContext = new ClassPathXmlApplicationContext("META-INF/spring/spring-context.xml");
 					logger.info("Created Spring ApplicationContext successfully.");
@@ -49,11 +46,13 @@ public class IntelliHouseRaspi {
 		}
 	}
 
-	private static void initPwm() {
-		Gpio.pwmSetMode(Gpio.PWM_MODE_BAL); // balanced works better, because the pulses are shorter and thus the power supply doesn't "swing"
-//		Gpio.pwmSetClock(divisor); // defaults work fine and I don't know what they are => just leave it unchanged.
-		Gpio.pwmSetRange(100);
-	}
+//	private static void initPwm() {
+//		Gpio.pwmSetMode(Gpio.PWM_MODE_MS);
+////		Gpio.pwmSetMode(Gpio.PWM_MODE_BAL); // balanced works better, because the pulses are shorter and thus the power supply doesn't "swing"
+////		Gpio.pwmSetClock(192); // has no effect?!
+//		Gpio.pwmSetClock(1000); // has no effect?!
+//		Gpio.pwmSetRange(100); // has no effect?!
+//	}
 
 	private static void initLogging() throws IOException, JoranException {
 		final File logDir = ConfigDir.getInstance().getLogDir();

@@ -13,6 +13,7 @@ import com.pi4j.io.gpio.GpioPinPwmOutput;
 import com.pi4j.io.gpio.Pin;
 import com.pi4j.io.gpio.PinMode;
 import com.pi4j.io.gpio.PinState;
+import com.pi4j.wiringpi.Gpio;
 
 import house.intelli.core.bean.AbstractBean;
 import house.intelli.core.bean.PropertyBase;
@@ -29,6 +30,7 @@ public class DimmerActor extends AbstractBean<DimmerActor.Property> implements A
 
 	public static final int MIN_DIMMER_VALUE = 0;
 	public static final int MAX_DIMMER_VALUE = 100;
+	private static final boolean USE_DIGITAL_OUTPUT_FOR_EXTREME_VALUES = false;
 
 	private Pin pin;
 	private GpioPinPwmOutput pwmOutput;
@@ -70,7 +72,7 @@ public class DimmerActor extends AbstractBean<DimmerActor.Property> implements A
 	}
 
 	protected void applyDimmerValue() {
-		if (dimmerValue == MIN_DIMMER_VALUE || dimmerValue == MAX_DIMMER_VALUE) {
+		if (USE_DIGITAL_OUTPUT_FOR_EXTREME_VALUES && (dimmerValue == MIN_DIMMER_VALUE || dimmerValue == MAX_DIMMER_VALUE)) {
 			openDigitalOutput();
 			if (dimmerValue == MAX_DIMMER_VALUE)
 				digitalOutput.setState(PinState.HIGH);
@@ -85,7 +87,7 @@ public class DimmerActor extends AbstractBean<DimmerActor.Property> implements A
 
 	private int getPwm() {
 //		if (pwmOutput.isMode(PinMode.PWM_OUTPUT))
-//			return dimmerValue * 1024 / 100; // is this really true? in my tests, it didn't look like the logical pwm value was really this - it looked like being 0 to 100, too, even for hardware-pwm.
+//			return dimmerValue * 512 / 100; // is this really true? in my tests, it didn't look like the logical pwm value was really this - it looked like being 0 to 100, too, even for hardware-pwm.
 
 		return dimmerValue;
 	}
@@ -97,16 +99,22 @@ public class DimmerActor extends AbstractBean<DimmerActor.Property> implements A
 
 		assertNotNull(pin, "pin");
 
-		logger.debug("openPwmOutput");
+		final boolean hardPwm = pin.getSupportedPinModes().contains(PinMode.PWM_OUTPUT);
+		logger.debug("openPwmOutput: hardPwm={}", hardPwm);
 
 		closeDigitalOutput();
 
 		GpioController gpioController = GpioFactory.getInstance();
 
-		if (pin.getSupportedPinModes().contains(PinMode.PWM_OUTPUT))
+		if (hardPwm) {
 			pwmOutput = gpioController.provisionPwmOutputPin(pin);
-		else
+			Gpio.pwmSetMode(Gpio.PWM_MODE_BAL);
+			Gpio.pwmSetClock(1920);
+			Gpio.pwmSetRange(100);
+		}
+		else {
 			pwmOutput = gpioController.provisionSoftPwmOutputPin(pin);
+		}
 	}
 
 	private void openDigitalOutput() {
