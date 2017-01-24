@@ -113,6 +113,11 @@ subprojects {
 	}
 
 	jar {
+		manifest {
+			def manifestFile = "${projectDir}/src/main/resources/META-INF/MANIFEST.MF"
+			if ( new File( manifestFile ).exists() )
+				from (manifestFile)
+		}
 		manifest.attributes Provider: 'CodeWizards GmbH'
 	}
 
