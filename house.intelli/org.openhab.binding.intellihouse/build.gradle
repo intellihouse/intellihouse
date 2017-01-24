@@ -1,0 +1,10 @@
+dependencies {
+	compile project(':house.intelli.core')
+}
+
+// We replace compileJava to run maven with tycho instead (no idea how to integrate tycho into gradle - and don't
+// wanna mess with it now. Marco :-)
+task compileJava(type: Exec, overwrite: true) {
+	commandLine = ['mvn', 'clean', 'install']
+	workingDir = file("$projectDir")
+}
