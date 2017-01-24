@@ -45,7 +45,7 @@ allprojects {
 		}
 	}
 
-	group = 'org.subshare'
+	group = 'house.intelli'
 	version = '0.9.0-SNAPSHOT'
 
 	sourceCompatibility = JavaVersion.VERSION_1_8

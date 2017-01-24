@@ -17,6 +17,14 @@
 
 	<name>IntelliHouse Binding</name>
 	<packaging>eclipse-plugin</packaging>
+
+	<dependencies>
+		<dependency>
+			<groupId>house.intelli</groupId>
+			<artifactId>house.intelli.core</artifactId>
+			<version>0.9.0-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
 	
 	<properties> <!-- ...copied from openHAB's master-POM -->
         <ohdr.version>1.0.10</ohdr.version>
