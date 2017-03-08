@@ -7,7 +7,7 @@
  */
 package org.openhab.binding.intellihouse.handler;
 
-import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.*;
+import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.CHANNEL_1;
 
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
@@ -17,23 +17,26 @@ import org.eclipse.smarthome.core.types.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import house.intelli.core.Uid;
+
 /**
  * The {@link IntelliHouseHandler} is responsible for handling commands, which are
  * sent to one of the channels.
- * 
+ *
  * @author Marco Nguitragool - Initial contribution
  */
 public class IntelliHouseHandler extends BaseThingHandler {
 
     private Logger logger = LoggerFactory.getLogger(IntelliHouseHandler.class);
 
-	public IntelliHouseHandler(Thing thing) {
-		super(thing);
-	}
+    public IntelliHouseHandler(Thing thing) {
+        super(thing);
+        new Uid(); // TODO remove this!
+    }
 
-	@Override
-	public void handleCommand(ChannelUID channelUID, Command command) {
-        if(channelUID.getId().equals(CHANNEL_1)) {
+    @Override
+    public void handleCommand(ChannelUID channelUID, Command command) {
+        if (channelUID.getId().equals(CHANNEL_1)) {
             // TODO: handle command
 
             // Note: if communication with thing fails for some reason,
@@ -41,7 +44,7 @@ public class IntelliHouseHandler extends BaseThingHandler {
             // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
             // "Could not control device at IP address x.x.x.x");
         }
-	}
+    }
 
     @Override
     public void initialize() {
