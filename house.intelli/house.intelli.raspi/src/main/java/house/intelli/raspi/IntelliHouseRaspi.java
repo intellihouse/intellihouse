@@ -22,6 +22,7 @@ public class IntelliHouseRaspi {
 
 	public static void main(String[] args) throws Exception {
 		initLogging();
+		initUserHomeSpringContextFile();
 
 		final Logger logger = LoggerFactory.getLogger(IntelliHouseRaspi.class);
 		logger.info("Starting up...");
@@ -51,7 +52,7 @@ public class IntelliHouseRaspi {
 
 		final String logbackXmlName = "logback.xml";
 		final File logbackXmlFile = new File(ConfigDir.getInstance().getFile(), logbackXmlName);
-		if (!logbackXmlFile.exists()) {
+		if (! logbackXmlFile.exists()) {
 			IOUtil.copyResource(
 					IntelliHouseRaspi.class, logbackXmlName, logbackXmlFile);
 		}
@@ -69,5 +70,14 @@ public class IntelliHouseRaspi {
 			doNothing();
 		}
 		StatusPrinter.printInCaseOfErrorsOrWarnings(context);
+	}
+
+	private static void initUserHomeSpringContextFile() throws IOException {
+		final String springContextLocalName = "spring-context-local.xml";
+		final File springContextLocalFile = new File(ConfigDir.getInstance().getFile(), springContextLocalName);
+		if (! springContextLocalFile.exists()) {
+			IOUtil.copyResource(
+					IntelliHouseRaspi.class, springContextLocalName, springContextLocalFile);
+		}
 	}
 }

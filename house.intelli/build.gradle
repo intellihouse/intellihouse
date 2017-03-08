@@ -6,7 +6,7 @@
  * For more details take a look at the Java Quickstart chapter in the Gradle
  * user guide available at https://docs.gradle.org/3.1/userguide/tutorial_java_projects.html
  */
-
+ 
 // Apply the java plugin to add support for Java
 apply plugin: 'java'
 
@@ -38,7 +38,7 @@ allprojects {
 	apply plugin: 'maven'
 	apply plugin: "jacoco"
 	apply plugin: 'eclipse'
-	
+
 	eclipse {
 		classpath {
 			downloadSources = true
@@ -102,6 +102,7 @@ allprojects {
 
 subprojects {
 	apply plugin: 'eclipse'
+	apply plugin: 'osgi'
 
 	dependencies {
 		compile "org.slf4j:slf4j-api:$slf4jVersion"
