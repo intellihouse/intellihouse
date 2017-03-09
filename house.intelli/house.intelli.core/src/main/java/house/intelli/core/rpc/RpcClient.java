@@ -2,6 +2,7 @@ package house.intelli.core.rpc;
 
 import static house.intelli.core.util.AssertUtil.*;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 
 import javax.xml.bind.JAXBContext;
@@ -12,19 +13,23 @@ import house.intelli.core.jaxb.IntelliHouseJaxbContext;
 
 public class RpcClient {
 
-	private ConnectionProvider connectionProvider;
+	private RpcTransportProvider rpcTransportProvider;
 
 	public <REQ extends Request, RES extends Response> RES invoke(REQ request) throws RpcException {
+		assertNotNull(request, "request");
 		try {
 			JAXBContext jaxbContext = IntelliHouseJaxbContext.getJaxbContext();
-			try (Connection connection = connectionProvider.openConnection()) {
+			try (RpcClientTransport rpcClientTransport = rpcTransportProvider.createRpcClientTransport()) {
 				Marshaller marshaller = jaxbContext.createMarshaller();
-				OutputStream outputStream = connection.getOutputStream();
-				marshaller.marshal(request, outputStream);
-				outputStream.flush();
+				try (OutputStream outputStream = rpcClientTransport.createRequestOutputStream()) {
+					marshaller.marshal(request, outputStream);
+				}
 
+				Object unmarshalled;
 				Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-				Object unmarshalled = unmarshaller.unmarshal(connection.getInputStream());
+				try (InputStream inputStream = rpcClientTransport.createResponseInputStream()) {
+					unmarshalled = unmarshaller.unmarshal(inputStream);
+				}
 				if (unmarshalled instanceof ErrorResponse) {
 					ErrorResponse errorResponse = (ErrorResponse) unmarshalled;
 					Error error = assertNotNull(errorResponse.getError(), "errorResponse.error");

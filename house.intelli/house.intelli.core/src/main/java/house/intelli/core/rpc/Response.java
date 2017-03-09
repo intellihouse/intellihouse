@@ -1,19 +1,5 @@
 package house.intelli.core.rpc;
 
-import javax.xml.bind.annotation.XmlRootElement;
-
-import house.intelli.core.Uid;
-
-@XmlRootElement
-public abstract class Response {
-
-	private Uid requestId;
-
-	public Uid getRequestId() {
-		return requestId;
-	}
-	public void setRequestId(Uid requestId) {
-		this.requestId = requestId;
-	}
+public abstract class Response extends RpcMessage {
 
 }

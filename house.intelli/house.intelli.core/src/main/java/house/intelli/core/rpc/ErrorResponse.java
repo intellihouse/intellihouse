@@ -7,6 +7,10 @@ public class ErrorResponse extends Response {
 	public ErrorResponse() {
 	}
 
+	public ErrorResponse(Error error) {
+		this.error = error;
+	}
+
 	public Error getError() {
 		return error;
 	}
