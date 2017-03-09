@@ -9,17 +9,34 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
+import house.intelli.core.Uid;
 import house.intelli.core.jaxb.IntelliHouseJaxbContext;
 
 public class RpcClient {
 
-	private RpcTransportProvider rpcTransportProvider;
+	private final RpcContext rpcContext;
+	private final RpcClientTransportProvider rpcClientTransportProvider;
+
+	protected RpcClient(final RpcContext rpcContext) {
+		this.rpcContext = assertNotNull(rpcContext, "rpcContext");
+		this.rpcClientTransportProvider = assertNotNull(this.rpcContext.getRpcClientTransportProvider(), "rpcContext.rpcClientTransportProvider");
+	}
 
 	public <REQ extends Request, RES extends Response> RES invoke(REQ request) throws RpcException {
 		assertNotNull(request, "request");
+		assertNotNull(request.getClientHostId(), "request.clientChannelId");
+		assertNotNull(request.getServerHostId(), "request.serverChannelId");
+
+		if (request.getRequestId() == null)
+			request.setRequestId(new Uid());
+
+		if (request.getTimeout() == Request.TIMEOUT_UNDEFINED)
+			request.setTimeout(RpcConst.DEFAULT_REQUEST_TIMEOUT);
+
 		try {
 			JAXBContext jaxbContext = IntelliHouseJaxbContext.getJaxbContext();
-			try (RpcClientTransport rpcClientTransport = rpcTransportProvider.createRpcClientTransport()) {
+			try (RpcClientTransport rpcClientTransport = rpcClientTransportProvider.createRpcClientTransport()) {
+//				rpcClientTransport.setRequestTimeout(request.getTimeout());
 				Marshaller marshaller = jaxbContext.createMarshaller();
 				try (OutputStream outputStream = rpcClientTransport.createRequestOutputStream()) {
 					marshaller.marshal(request, outputStream);

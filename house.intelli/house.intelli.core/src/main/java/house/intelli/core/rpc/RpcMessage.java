@@ -7,18 +7,11 @@ import house.intelli.core.Uid;
 @XmlRootElement
 public abstract class RpcMessage {
 
-	/**
-	 * Constant identifying the OpenHAB server being the center of the network.
-	 * <p>
-	 * Used as {@link #getClient() client} or {@link #getServer() server}.
-	 */
-	public static final String CENTER = "center";
-
 	private Uid requestId;
 
-	private String client;
+	private HostId clientHostId;
 
-	private String server;
+	private HostId serverHostId;
 
 	/**
 	 * Gets a unique identifier for the request and its corresponding response.
@@ -33,30 +26,43 @@ public abstract class RpcMessage {
 	}
 
 	/**
-	 * Gets the client who sent this request.
-	 * @return the client who sent this request. Must not be <code>null</code> for a request to be processed.
+	 * Gets the host-id of the client who sent this request.
+	 * <p>
+	 * Important: This is totally independent from the physical transport layer. Thus an HTTP-client may
+	 * very well act as server. The high-level-protocol is entirely bidirectional and every host may
+	 * act as client invoking a {@link RpcService} anywhere on every host in the network.
+	 * <p>
+	 * It is also possible that client and server are the same.
+	 * @return the host-id of the client who sent this request.
+	 * Must not be <code>null</code> for a request to be processed.
 	 */
-	public String getClient() {
-		return client;
+	public HostId getClientHostId() {
+		return clientHostId;
 	}
-	public void setClient(String client) {
-		this.client = client;
+	public void setClientHostId(HostId channelId) {
+		this.clientHostId = channelId;
 	}
 
 	/**
-	 * Gets the server who is supposed to process this request and then send a response.
-	 * @return the server who is supposed to process this request and then send a response. Must not be <code>null</code>
-	 * for a request to be processed.
+	 * Gets the host-id of the server who is supposed to process this request and then send a response.
+	 * <p>
+	 * Important: This is totally independent from the physical transport layer. Thus an HTTP-client may
+	 * very well act as server. The high-level-protocol is entirely bidirectional and every host may
+	 * act as client invoking a {@link RpcService} anywhere on every host in the network.
+	 * <p>
+	 * It is also possible that client and server are the same.
+	 * @return the host-id of the server who is supposed to process this request and then send a response.
+	 * Must not be <code>null</code> for a request to be processed.
 	 */
-	public String getServer() {
-		return server;
+	public HostId getServerHostId() {
+		return serverHostId;
 	}
-	public void setServer(String server) {
-		this.server = server;
+	public void setServerHostId(HostId channelId) {
+		this.serverHostId = channelId;
 	}
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "[requestId=" + requestId + ", client=" + client + ", server=" + server + ']';
+		return getClass().getSimpleName() + "[requestId=" + requestId + ", clientHostId=" + clientHostId + ", serverHostId=" + serverHostId + ']';
 	}
 }

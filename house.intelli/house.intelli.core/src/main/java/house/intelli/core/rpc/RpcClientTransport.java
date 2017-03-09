@@ -1,35 +1,32 @@
 package house.intelli.core.rpc;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 public interface RpcClientTransport extends AutoCloseable {
-
-//	private final InputStream inputStream;
-//	private final OutputStream outputStream;
+//	static class Context {
+//		private final long requestTimeout;
 //
-//	public RpcClientTransport(InputStream inputStream, OutputStream outputStream) {
-//		this.inputStream = assertNotNull(inputStream, "inputStream");
-//		this.outputStream = assertNotNull(outputStream, "outputStream");
-//	}
+//		public Context(long requestTimeout) {
+//			if (requestTimeout < 0)
+//				throw new IllegalArgumentException("requestTimeout < 0");
 //
-//	public InputStream getInputStream() {
-//		return inputStream;
-//	}
-//	public OutputStream getOutputStream() {
-//		return outputStream;
-//	}
+//			this.requestTimeout = requestTimeout;
+//		}
 //
-//	@Override
-//	public void close() throws IOException {
-//		// TODO implement!
-//	}
-//
-//	public void flushRequest() throws IOException {
-//		outputStream.flush();
+//		public long getRequestTimeout() {
+//			return requestTimeout;
+//		}
 //	}
 
-	OutputStream createRequestOutputStream();
+	RpcContext getRpcContext();
+	void setRpcContext(RpcContext rpcContext);
 
-	InputStream createResponseInputStream();
+//	long getRequestTimeout();
+//	void setRequestTimeout(long timeout);
+
+	OutputStream createRequestOutputStream() throws IOException;
+
+	InputStream createResponseInputStream() throws IOException;
 }

@@ -1,5 +1,6 @@
 package house.intelli.core.rpc;
 
+import static house.intelli.core.rpc.RpcConst.*;
 import static house.intelli.core.util.AssertUtil.*;
 
 import java.io.InputStream;
@@ -9,17 +10,22 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
+import house.intelli.core.Uid;
 import house.intelli.core.jaxb.IntelliHouseJaxbContext;
 
 public class RpcServer {
 
-//	private RpcServerTransport rpcServerTransport;
-//
-//	public RpcServer(RpcServerTransport rpcServerTransport) {
-//		this.rpcServerTransport = assertNotNull(rpcServerTransport, "rpcServerTransport");
-//	}
+	private final RpcContext rpcContext;
 
-	public void receiveAndProcessRequest(RpcServerTransport rpcServerTransport) throws RpcException {
+	protected RpcServer(final RpcContext rpcContext) {
+		this.rpcContext = assertNotNull(rpcContext, "rpcContext");
+	}
+
+	public void receiveAndProcessRequest(final RpcServerTransport rpcServerTransport) throws RpcException {
+		assertNotNull(rpcServerTransport, "rpcServerTransport");
+		if (rpcServerTransport.getRpcContext() != this.rpcContext)
+			throw new IllegalArgumentException("rpcServerTransport.rpcContext != this.rpcContext");
+
 		try {
 			JAXBContext jaxbContext = IntelliHouseJaxbContext.getJaxbContext();
 			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -42,11 +48,11 @@ public class RpcServer {
 			} catch (Exception x) {
 				Error error = RemoteExceptionUtil.createError(x);
 				response = new ErrorResponse(error);
+
+				if (request != null)
+					response.copyRequestCoordinates(request);
 			}
 			assertNotNull(response, "response");
-
-			if (request != null)
-				copyRequestCoordinates(response, request);
 
 			Marshaller marshaller = jaxbContext.createMarshaller();
 			try (OutputStream outputStream = rpcServerTransport.createResponseOutputStream()) {
@@ -61,22 +67,25 @@ public class RpcServer {
 		}
 	}
 
-	protected void copyRequestCoordinates(Response response, Request request) {
-		assertNotNull(response, "response");
+	protected Response process(final Request request) {
 		assertNotNull(request, "request");
-		response.setClient(request.getClient());
-		response.setRequestId(request.getRequestId());
-		response.setServer(request.getServer());
-	}
+		final Uid requestId = assertNotNull(request.getRequestId(), "request.requestId");
+		final HostId serverHostId = request.getServerHostId();
+		if (HostId.CENTRAL.equals(serverHostId)
+				|| rpcContext.getLocalHostId().equals(serverHostId)) {
+			final RpcServiceExecutor rpcServiceExecutor = rpcContext.getRpcServiceExecutor();
+			if (! (request instanceof DeferredResponseRequest)) // not putting this! we're fetching a response for an old request.
+				rpcServiceExecutor.putRequest(request);
 
-	protected Response process(Request request) {
-		assertNotNull(request, "request");
-//		if (RpcMessage.CENTER.equals(request.getServer())) {
-//
-//		}
+			Response response = rpcServiceExecutor.pollResponse(requestId, LOW_LEVEL_TIMEOUT);
+			if (response == null) {
+				response = new DeferringResponse();
+				response.copyRequestCoordinates(request); // warning! this might be a DeferredResponseRequest -- not the original request! but currently, this does not matter as the data copied is the same.
+			}
+
+			return response;
+		}
 		throw new UnsupportedOperationException("NYI");
 	}
-
-
 
 }

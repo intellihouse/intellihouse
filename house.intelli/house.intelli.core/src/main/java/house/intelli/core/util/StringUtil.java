@@ -53,4 +53,25 @@ public final class StringUtil {
 
         return len < length ? string.substring(0, len) : string;
     }
+
+	public static final List<String> split(final String string, final char separatorChar) {
+		if (isEmpty(string))
+			return Collections.emptyList();
+
+		final ArrayList<String> result = new ArrayList<>();
+
+		int fromIndex = 0;
+		while (fromIndex < string.length()) {
+			int index = string.indexOf(separatorChar, fromIndex);
+			if (index < 0)
+				index = string.length();
+
+			final String segment = string.substring(fromIndex, index);
+			result.add(segment);
+			fromIndex = index + 1;
+		}
+
+		result.trimToSize();
+		return Collections.unmodifiableList(result);
+	}
 }
