@@ -8,6 +8,8 @@ import house.intelli.core.rpc.Request;
 public class EchoRequest extends Request {
 
 	private String payload;
+	private String throwExceptionClassName;
+	private long sleep;
 
 	public String getPayload() {
 		return payload;
@@ -16,4 +18,17 @@ public class EchoRequest extends Request {
 		this.payload = payload;
 	}
 
+	public String getThrowExceptionClassName() {
+		return throwExceptionClassName;
+	}
+	public void setThrowExceptionClassName(String throwExceptionClassName) {
+		this.throwExceptionClassName = throwExceptionClassName;
+	}
+
+	public long getSleep() {
+		return sleep;
+	}
+	public void setSleep(long sleep) {
+		this.sleep = sleep;
+	}
 }

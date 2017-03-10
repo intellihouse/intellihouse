@@ -3,15 +3,7 @@ package house.intelli.core.rpc;
 import static house.intelli.core.rpc.RpcConst.*;
 import static house.intelli.core.util.AssertUtil.*;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
-
 import house.intelli.core.Uid;
-import house.intelli.core.jaxb.IntelliHouseJaxbContext;
 
 public class RpcServer {
 
@@ -27,24 +19,11 @@ public class RpcServer {
 			throw new IllegalArgumentException("rpcServerTransport.rpcContext != this.rpcContext");
 
 		try {
-			JAXBContext jaxbContext = IntelliHouseJaxbContext.getJaxbContext();
-			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-
 			Request request = null;
 			Response response = null;
 			try {
-				Object unmarshalled;
-				try (InputStream inputStream = rpcServerTransport.createRequestInputStream()) {
-					unmarshalled = unmarshaller.unmarshal(inputStream);
-				}
-
-				if (unmarshalled instanceof Request) {
-					request = (Request) unmarshalled;
-					response = process(request);
-				}
-				else
-					throw new RpcException("Client sent an instance of ");
-
+				request = rpcServerTransport.receiveRequest();
+				response = process(request);
 			} catch (Exception x) {
 				Error error = RemoteExceptionUtil.createError(x);
 				response = new ErrorResponse(error);
@@ -54,10 +33,7 @@ public class RpcServer {
 			}
 			assertNotNull(response, "response");
 
-			Marshaller marshaller = jaxbContext.createMarshaller();
-			try (OutputStream outputStream = rpcServerTransport.createResponseOutputStream()) {
-				marshaller.marshal(response, outputStream);
-			}
+			rpcServerTransport.sendResponse(response);
 		} catch (RpcException x) {
 			throw x;
 		} catch (RuntimeException x) {

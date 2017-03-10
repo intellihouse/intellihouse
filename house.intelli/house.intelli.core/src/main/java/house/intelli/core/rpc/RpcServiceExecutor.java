@@ -86,13 +86,16 @@ public class RpcServiceExecutor {
 			@Override
 			public void run() {
 				try {
-					RpcService<Request, Response> rpcService = rpcContext.getRpcServiceRegistry().createRpcService(request.getClass());
+					RpcServiceRegistry rpcServiceRegistry = RpcServiceRegistry.getInstance();
+					RpcService<Request, Response> rpcService = rpcServiceRegistry.createRpcService(request.getClass());
 					if (rpcService == null)
 						throw new IllegalArgumentException("There is no RpcService registered for this requestType: " + request.getClass().getName());
 
+					rpcService.setRpcContext(rpcContext);
+
 					Response response = rpcService.process(request);
 					if (response == null)
-						response = new VoidResponse();
+						response = new NullResponse();
 
 					response.copyRequestCoordinates(request);
 					putResponse(response);

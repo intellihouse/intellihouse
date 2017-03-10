@@ -33,4 +33,8 @@ public abstract class Request extends RpcMessage {
 		this.timeout = timeout;
 	}
 
+	@Override
+	protected String toString_getProperties() {
+		return super.toString_getProperties() + ", created=" + created + ", timeout=" + timeout;
+	}
 }

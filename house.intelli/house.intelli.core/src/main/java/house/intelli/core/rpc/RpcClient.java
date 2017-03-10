@@ -2,17 +2,15 @@ package house.intelli.core.rpc;
 
 import static house.intelli.core.util.AssertUtil.*;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.Date;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import house.intelli.core.Uid;
-import house.intelli.core.jaxb.IntelliHouseJaxbContext;
 
 public class RpcClient {
+	private static final Logger logger = LoggerFactory.getLogger(RpcClient.class);
 
 	private final RpcContext rpcContext;
 	private final RpcClientTransportProvider rpcClientTransportProvider;
@@ -24,38 +22,59 @@ public class RpcClient {
 
 	public <REQ extends Request, RES extends Response> RES invoke(REQ request) throws RpcException {
 		assertNotNull(request, "request");
-		assertNotNull(request.getClientHostId(), "request.clientChannelId");
-		assertNotNull(request.getServerHostId(), "request.serverChannelId");
+		assertNotNull(request.getServerHostId(), "request.serverHostId");
+
+		if (request.getClientHostId() == null)
+			request.setClientHostId(rpcContext.getLocalHostId());
 
 		if (request.getRequestId() == null)
 			request.setRequestId(new Uid());
 
+		if (request.getCreated() == null)
+			request.setCreated(new Date());
+
 		if (request.getTimeout() == Request.TIMEOUT_UNDEFINED)
 			request.setTimeout(RpcConst.DEFAULT_REQUEST_TIMEOUT);
 
+		final long timeoutTimestamp = System.currentTimeMillis() + request.getTimeout();
+		DeferredResponseRequest deferredResponseRequest = null;
 		try {
-			JAXBContext jaxbContext = IntelliHouseJaxbContext.getJaxbContext();
 			try (RpcClientTransport rpcClientTransport = rpcClientTransportProvider.createRpcClientTransport()) {
-//				rpcClientTransport.setRequestTimeout(request.getTimeout());
-				Marshaller marshaller = jaxbContext.createMarshaller();
-				try (OutputStream outputStream = rpcClientTransport.createRequestOutputStream()) {
-					marshaller.marshal(request, outputStream);
-				}
+				while (true) {
+					Request req = deferredResponseRequest != null ? deferredResponseRequest : request;
+					logger.debug("invoke: Sending request: {}", req);
 
-				Object unmarshalled;
-				Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-				try (InputStream inputStream = rpcClientTransport.createResponseInputStream()) {
-					unmarshalled = unmarshaller.unmarshal(inputStream);
+					rpcClientTransport.sendRequest(req);
+					Response response = rpcClientTransport.receiveResponse();
+
+					logger.debug("invoke: Received response: {}", response);
+
+					if (response instanceof DeferringResponse) {
+						if (System.currentTimeMillis() > timeoutTimestamp)
+							throw new RpcTimeoutException(String.format("Request timed out: %s", request));
+
+						deferredResponseRequest = new DeferredResponseRequest();
+						deferredResponseRequest.copyRequestCoordinates(request);
+						deferredResponseRequest.setCreated(new Date());
+						deferredResponseRequest.setTimeout(timeoutTimestamp - System.currentTimeMillis()); // has no effect AFAIK, but is good in the log.
+						continue;
+					}
+
+					if (response instanceof ErrorResponse) {
+						ErrorResponse errorResponse = (ErrorResponse) response;
+						Error error = assertNotNull(errorResponse.getError(), "errorResponse.error");
+						RemoteExceptionUtil.throwOriginalExceptionIfPossible(error);
+						throw new RemoteException(error);
+					}
+
+					if (response instanceof NullResponse) {
+						return null;
+					}
+
+					@SuppressWarnings("unchecked")
+					RES res = (RES) response;
+					return res;
 				}
-				if (unmarshalled instanceof ErrorResponse) {
-					ErrorResponse errorResponse = (ErrorResponse) unmarshalled;
-					Error error = assertNotNull(errorResponse.getError(), "errorResponse.error");
-					RemoteExceptionUtil.throwOriginalExceptionIfPossible(error);
-					throw new RemoteException(error);
-				}
-				@SuppressWarnings("unchecked")
-				RES response = (RES) unmarshalled;
-				return response;
 			}
 		} catch (RpcException x) {
 			throw x;

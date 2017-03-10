@@ -10,7 +10,7 @@ public class RpcContext {
 
 	private RpcServiceExecutor rpcServiceExecutor;
 
-	private RpcServiceRegistry rpcServiceRegistry;
+//	private RpcServiceRegistry rpcServiceRegistry;
 
 	public RpcContext(HostId localHostId) {
 		this.localHostId = assertNotNull(localHostId, "localHostId");
@@ -52,10 +52,10 @@ public class RpcContext {
 		return rpcServiceExecutor;
 	}
 
-	public synchronized RpcServiceRegistry getRpcServiceRegistry() {
-		if (rpcServiceRegistry == null)
-			rpcServiceRegistry = new RpcServiceRegistry(this);
-
-		return rpcServiceRegistry;
-	}
+//	public synchronized RpcServiceRegistry getRpcServiceRegistry() {
+//		if (rpcServiceRegistry == null)
+//			rpcServiceRegistry = new RpcServiceRegistry(this);
+//
+//		return rpcServiceRegistry;
+//	}
 }

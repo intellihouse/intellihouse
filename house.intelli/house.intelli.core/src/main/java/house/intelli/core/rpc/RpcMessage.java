@@ -1,5 +1,7 @@
 package house.intelli.core.rpc;
 
+import static house.intelli.core.util.AssertUtil.*;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 import house.intelli.core.Uid;
@@ -61,8 +63,19 @@ public abstract class RpcMessage {
 		this.serverHostId = channelId;
 	}
 
+	public void copyRequestCoordinates(Request request) {
+		assertNotNull(request, "request");
+		this.setRequestId(request.getRequestId());
+		this.setClientHostId(request.getClientHostId());
+		this.setServerHostId(request.getServerHostId());
+	}
+
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "[requestId=" + requestId + ", clientHostId=" + clientHostId + ", serverHostId=" + serverHostId + ']';
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "requestId=" + requestId + ", clientHostId=" + clientHostId + ", serverHostId=" + serverHostId;
 	}
 }

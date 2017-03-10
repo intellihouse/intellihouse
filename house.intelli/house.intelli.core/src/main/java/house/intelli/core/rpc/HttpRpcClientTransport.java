@@ -11,7 +11,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class HttpRpcClientTransport extends AbstractRpcClientTransport {
+public class HttpRpcClientTransport extends JaxbRpcClientTransport {
 	private URL serverUrl;
 
 	private HttpURLConnection connection;
@@ -26,7 +26,7 @@ public class HttpRpcClientTransport extends AbstractRpcClientTransport {
 	}
 
 	@Override
-	public OutputStream createRequestOutputStream() throws IOException {
+	protected OutputStream createRequestOutputStream() throws IOException {
 		closeConnection();
 		final OutputStream out = getConnection().getOutputStream();
 		return new FilterOutputStream(out) {
@@ -42,7 +42,7 @@ public class HttpRpcClientTransport extends AbstractRpcClientTransport {
 	}
 
 	@Override
-	public InputStream createResponseInputStream() throws IOException {
+	protected InputStream createResponseInputStream() throws IOException {
 		if (! requestSent)
 			throw new IllegalStateException("request not yet sent!");
 

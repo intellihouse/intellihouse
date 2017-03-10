@@ -13,17 +13,39 @@ import java.util.ServiceLoader;
 
 public class RpcServiceRegistry {
 
-	private final RpcContext rpcContext;
+//	private final RpcContext rpcContext;
 
 	private final Object mutex = new Object();
-	private final Map<Class<?>, List<Class<RpcService<?, ?>>>> requestType2RpcServiceClasses = new HashMap<>();
+	private final Map<Class<?>, List<Class<RpcService<Request, Response>>>> requestType2RpcServiceClasses = new HashMap<>();
 
-	protected RpcServiceRegistry(RpcContext rpcContext) {
-		this.rpcContext = assertNotNull(rpcContext, "rpcContext");
+	private static final RpcServiceRegistry instance = new RpcServiceRegistry();
+
+	public static RpcServiceRegistry getInstance() {
+		return instance;
 	}
 
-	public RpcContext getRpcContext() {
-		return rpcContext;
+	protected RpcServiceRegistry() {
+	}
+
+//	protected RpcServiceRegistry(RpcContext rpcContext) {
+//		this.rpcContext = assertNotNull(rpcContext, "rpcContext");
+//	}
+//
+//	public RpcContext getRpcContext() {
+//		return rpcContext;
+//	}
+
+	public List<RpcService<?, ?>> createRpcServices() {
+		List<RpcService<?, ?>> result = new ArrayList<>();
+		synchronized (mutex) {
+			for (List<Class<RpcService<Request, Response>>> serviceClasses : requestType2RpcServiceClasses.values()) {
+				for (Class<RpcService<Request, Response>> serviceClass : serviceClasses) {
+					RpcService<Request, Response> service = createRpcServiceFromRpcServiceClass(serviceClass);
+					result.add(service);
+				}
+			}
+		}
+		return result;
 	}
 
 	public <REQ extends Request, RES extends Response> RpcService<REQ, RES> createRpcService(final Class<? extends REQ> requestType) {
@@ -33,25 +55,29 @@ public class RpcServiceRegistry {
 				load();
 
 			while (rt != Object.class) {
-				List<Class<RpcService<?, ?>>> list = requestType2RpcServiceClasses.get(rt);
+				List<Class<RpcService<Request, Response>>> list = requestType2RpcServiceClasses.get(rt);
 				if (list != null && ! list.isEmpty()) {
-					Class<RpcService<?, ?>> rpcServiceClass = list.get(0);
-					try {
-						@SuppressWarnings("unchecked")
-						RpcService<REQ, RES> rpcService = (RpcService<REQ, RES>) rpcServiceClass.newInstance();
-						rpcService.setRpcContext(rpcContext);
-						return rpcService;
-					} catch (RuntimeException e) {
-						throw e;
-					} catch (Exception e) {
-						throw new RuntimeException(e);
-					}
+					Class<RpcService<Request, Response>> rpcServiceClass = list.get(0);
+					@SuppressWarnings("unchecked")
+					RpcService<REQ, RES> result = (RpcService<REQ, RES>) createRpcServiceFromRpcServiceClass(rpcServiceClass);
+					return result;
 				}
 
 				rt = rt.getSuperclass();
 			}
 		}
 		return null;
+	}
+
+	protected <REQ extends Request, RES extends Response> RpcService<REQ, RES> createRpcServiceFromRpcServiceClass(Class<RpcService<REQ, RES>> rpcServiceClass) {
+		try {
+			RpcService<REQ, RES> rpcService = rpcServiceClass.newInstance();
+			return rpcService;
+		} catch (RuntimeException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	protected void load() {
@@ -70,14 +96,14 @@ public class RpcServiceRegistry {
 			rpcServices.add(rpcService);
 		}
 
-		Map<Class<?>, List<Class<RpcService<?, ?>>>> requestType2RpcServiceClasses = new HashMap<>();
+		Map<Class<?>, List<Class<RpcService<Request, Response>>>> requestType2RpcServiceClasses = new HashMap<>();
 		for (Map.Entry<Class<?>, List<RpcService<?, ?>>> me : requestType2RpcServices.entrySet()) {
 			List<RpcService<?, ?>> rpcServices = me.getValue();
 			Collections.sort(rpcServices, rpcServiceComparator);
-			List<Class<RpcService<?, ?>>> rpcServiceClasses = new ArrayList<>(rpcServices.size());
+			List<Class<RpcService<Request, Response>>> rpcServiceClasses = new ArrayList<>(rpcServices.size());
 			for (RpcService<?,?> rpcService : rpcServices) {
 				@SuppressWarnings("unchecked")
-				Class<RpcService<?, ?>> rpcServiceClass = (Class<RpcService<?, ?>>) rpcService.getClass();
+				Class<RpcService<Request, Response>> rpcServiceClass = (Class<RpcService<Request, Response>>) rpcService.getClass();
 				rpcServiceClasses.add(rpcServiceClass);
 			}
 			requestType2RpcServiceClasses.put(me.getKey(), rpcServiceClasses);
