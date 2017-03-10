@@ -3,8 +3,16 @@ package house.intelli.core.rpc;
 import static house.intelli.core.rpc.RpcConst.*;
 import static house.intelli.core.util.AssertUtil.*;
 
+import java.util.List;
+
 import house.intelli.core.Uid;
 
+/**
+ * Server object to process invocation requests on the server-side.
+ * <p>
+ * Instances of this class are <b>not thread-safe!</b>
+ * @author mn
+ */
 public class RpcServer implements AutoCloseable {
 
 	private final RpcContext rpcContext;
@@ -49,12 +57,33 @@ public class RpcServer implements AutoCloseable {
 			request.setTimeout(RpcConst.DEFAULT_REQUEST_TIMEOUT);
 
 		final Uid requestId = assertNotNull(request.getRequestId(), "request.requestId");
-
+		final long timeout = Math.min(LOW_LEVEL_TIMEOUT, request.getTimeout());
 		final RpcServiceExecutor rpcServiceExecutor = rpcContext.getRpcServiceExecutor();
-		if (! (request instanceof DeferredResponseRequest)) // not putting this! we're fetching a response for an old request.
+
+		if (request instanceof PollInverseRequestsRequest) {
+			assertServerLocal(request);
+			final List<Request> requests = rpcContext.getInverseRequestRegistry().pollRequests(request.getClientHostId(), timeout);
+			PollInverseRequestsResponse response = new PollInverseRequestsResponse();
+			response.setInverseRequests(requests);
+			response.copyRequestCoordinates(request);
+			return response;
+		}
+
+		if (request instanceof PutInverseResponseRequest) {
+			assertServerLocal(request);
+			PutInverseResponseRequest pirRequest = (PutInverseResponseRequest) request;
+			Response inverseResponse = assertNotNull(pirRequest.getInverseResponse(), "putInverseResponseRequest.inverseResponse");
+			rpcServiceExecutor.putResponse(inverseResponse);
+			Response response = new NullResponse();
+			response.copyRequestCoordinates(request);
+			return response;
+		}
+
+		if (request instanceof DeferredResponseRequest)
+			assertServerLocal(request); // not putting this request! we're fetching a response for an old request.
+		else
 			rpcServiceExecutor.putRequest(request);
 
-		long timeout = Math.min(LOW_LEVEL_TIMEOUT, request.getTimeout());
 		Response response = rpcServiceExecutor.pollResponse(requestId, timeout);
 		if (response == null) {
 			response = new DeferringResponse();
@@ -66,5 +95,11 @@ public class RpcServer implements AutoCloseable {
 
 	@Override
 	public void close() {
+	}
+
+	protected void assertServerLocal(final Request request) {
+		assertNotNull(request, "request");
+		if (! rpcContext.isServerLocal(request))
+			throw new UnsupportedOperationException("This request's type is only supported for local processing, but its serverHostId references another host!" + request);
 	}
 }

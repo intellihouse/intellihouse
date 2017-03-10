@@ -84,7 +84,7 @@ public class HttpRpcClientTransport extends JaxbRpcClientTransport {
 	}
 
 	@Override
-	public void close() throws Exception {
+	public void close() {
 		closeConnection();
 		super.close();
 	}

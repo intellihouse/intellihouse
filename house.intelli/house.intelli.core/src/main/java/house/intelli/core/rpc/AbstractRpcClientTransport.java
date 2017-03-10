@@ -18,6 +18,6 @@ public abstract class AbstractRpcClientTransport implements RpcClientTransport {
 	}
 
 	@Override
-	public void close() throws Exception {
+	public void close() {
 	}
 }

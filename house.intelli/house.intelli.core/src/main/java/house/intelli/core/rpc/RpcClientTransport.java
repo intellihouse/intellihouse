@@ -9,4 +9,7 @@ public interface RpcClientTransport extends AutoCloseable {
 	void sendRequest(Request request) throws IOException;
 
 	Response receiveResponse() throws IOException;
+
+	@Override
+	void close();
 }

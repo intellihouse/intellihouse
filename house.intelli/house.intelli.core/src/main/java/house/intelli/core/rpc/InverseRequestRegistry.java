@@ -110,7 +110,7 @@ public class InverseRequestRegistry {
 					try {
 						mutex.wait(remainingTime);
 					} catch (InterruptedException e) {
-						logger.warn("pollRequests: " + e, e);
+						logger.info("pollRequests: " + e, e);
 						return Collections.emptyList();
 					}
 				}

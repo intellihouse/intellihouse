@@ -90,7 +90,7 @@ public class RpcServiceExecutor {
 			public void run() {
 				try {
 					Response response;
-					if (isServerLocal(request))
+					if (rpcContext.isServerLocal(request))
 						response = processLocally(request);
 					else
 						response = processRemotely(request);
@@ -106,20 +106,8 @@ public class RpcServiceExecutor {
 		});
 	}
 
-	protected boolean isServerLocal(final Request request) {
-		assertNotNull(request, "request");
-		final HostId serverHostId = assertNotNull(request.getServerHostId(), "request.serverHostId");
-		if (rpcContext.getLocalHostId().equals(serverHostId))
-			return true;
-
-		if (RpcContextMode.SERVER == rpcContext.getMode() && HostId.SERVER.equals(serverHostId))
-			return true;
-
-		return false;
-	}
-
 	protected boolean putRequestIntoInverseRequestRegistryIfApplicable(final Request request) {
-		if (isServerLocal(request))
+		if (rpcContext.isServerLocal(request))
 			return false;
 
 		switch (rpcContext.getMode()) {
@@ -146,7 +134,7 @@ public class RpcServiceExecutor {
 		}
 	}
 
-	protected Response processLocally(final Request request) throws Exception {
+	public Response processLocally(final Request request) throws Exception {
 		RpcServiceRegistry rpcServiceRegistry = RpcServiceRegistry.getInstance();
 		RpcService<Request, Response> rpcService = rpcServiceRegistry.createRpcService(request.getClass());
 		if (rpcService == null)
@@ -193,7 +181,7 @@ public class RpcServiceExecutor {
 		}
 	}
 
-	protected void putResponse(final Response response) {
+	public void putResponse(final Response response) {
 		assertNotNull(response, "response");
 		final Uid requestId = assertNotNull(response.getRequestId(), "response.requestId");
 		assertNotNull(response.getClientHostId(), "response.clientHostId");

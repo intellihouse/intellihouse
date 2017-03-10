@@ -2,6 +2,7 @@ package house.intelli.core.rpc;
 
 import static org.assertj.core.api.Assertions.*;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -10,7 +11,7 @@ import house.intelli.core.rpc.echo.EchoRequest;
 import house.intelli.core.rpc.echo.EchoResponse;
 import house.intelli.core.rpc.mocktransport.MockRpcClientTransportProvider;
 
-public class SimpleClientServerTest extends AbstractRpcTest {
+public class InverseClientServerTest extends AbstractRpcTest {
 
 	private HostId clientHostId;
 
@@ -33,13 +34,22 @@ public class SimpleClientServerTest extends AbstractRpcTest {
 		clientRpcContext.setRpcClientTransportProvider(rpcClientTransportProvider);
 	}
 
+	@After
+	public void after() throws Exception {
+		if (clientRpcContext != null)
+			clientRpcContext.close();
+
+		if (serverRpcContext != null)
+			serverRpcContext.close();
+	}
+
 	@Test
-	public void clientInvokesNormalServiceOnServer() throws Exception {
+	public void serverInvokesNormalServiceOnClient() throws Exception {
 		EchoRequest echoRequest = new EchoRequest();
-		echoRequest.setServerHostId(HostId.SERVER);
+		echoRequest.setServerHostId(clientHostId);
 		echoRequest.setPayload("bla bla trallala");
 
-		RpcClient rpcClient = clientRpcContext.createRpcClient();
+		RpcClient rpcClient = serverRpcContext.createRpcClient();
 		Response response = rpcClient.invoke(echoRequest);
 
 		assertThat(response).isNotNull().isInstanceOf(EchoResponse.class);
@@ -49,17 +59,17 @@ public class SimpleClientServerTest extends AbstractRpcTest {
 	}
 
 	@Test
-	public void clientInvokesLongRunningServiceOnServer() throws Exception {
+	public void serverInvokesLongRunningServiceOnClient() throws Exception {
 		long startTimestamp = System.currentTimeMillis();
 		EchoRequest echoRequest = new EchoRequest();
-		echoRequest.setServerHostId(HostId.SERVER);
+		echoRequest.setServerHostId(clientHostId);
 		Uid payloadUid = new Uid();
 		echoRequest.setPayload(payloadUid.toString());
 
 		long sleep = 5L * 60 * 1000; // 5 minutes
 		echoRequest.setSleep(sleep);
 
-		RpcClient rpcClient = clientRpcContext.createRpcClient();
+		RpcClient rpcClient = serverRpcContext.createRpcClient();
 		Response response = rpcClient.invoke(echoRequest);
 
 		assertThat(response).isNotNull().isInstanceOf(EchoResponse.class);
@@ -71,10 +81,10 @@ public class SimpleClientServerTest extends AbstractRpcTest {
 	}
 
 	@Test
-	public void clientInvokesLongRunningServiceOnServerAndEncountersTimeout() throws Exception {
+	public void serverInvokesLongRunningServiceOnClientAndEncountersTimeout() throws Exception {
 		long startTimestamp = System.currentTimeMillis();
 		EchoRequest echoRequest = new EchoRequest();
-		echoRequest.setServerHostId(HostId.SERVER);
+		echoRequest.setServerHostId(clientHostId);
 		Uid payloadUid = new Uid();
 		echoRequest.setPayload(payloadUid.toString());
 
@@ -85,7 +95,7 @@ public class SimpleClientServerTest extends AbstractRpcTest {
 		timeout = timeout + random.nextInt(60 * 1000); // + a random time between 0 and 60 seconds
 		echoRequest.setTimeout(timeout);
 
-		RpcClient rpcClient = clientRpcContext.createRpcClient();
+		RpcClient rpcClient = serverRpcContext.createRpcClient();
 
 		try {
 			Response response = rpcClient.invoke(echoRequest);
@@ -100,14 +110,14 @@ public class SimpleClientServerTest extends AbstractRpcTest {
 	}
 
 	@Test
-	public void clientInvokesServiceOnServerAndExpectsRemoteException() throws Exception {
+	public void serverInvokesServiceOnClientAndExpectsRemoteException() throws Exception {
 		EchoRequest echoRequest = new EchoRequest();
-		echoRequest.setServerHostId(HostId.SERVER);
+		echoRequest.setServerHostId(clientHostId);
 		Uid payloadUid = new Uid();
 		echoRequest.setPayload(payloadUid.toString());
 		echoRequest.setThrowExceptionClassName(NumberFormatException.class.getName());
 
-		RpcClient rpcClient = clientRpcContext.createRpcClient();
+		RpcClient rpcClient = serverRpcContext.createRpcClient();
 		try {
 			Response response = rpcClient.invoke(echoRequest);
 			fail("Received response instead of exception: " + response);
