@@ -20,7 +20,7 @@ public class HttpRpcClientTransportTest {
 
 	@Before
 	public void before() throws Exception {
-		rpcContext = new RpcContext(new HostId("dummy"));
+		rpcContext = new RpcContext(RpcContextMode.CLIENT, new HostId("dummy"));
 	}
 
 	@Test

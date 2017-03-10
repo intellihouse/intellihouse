@@ -34,7 +34,14 @@ public class HostId {
 
 	public static final Pattern HOSTID_PATTERN = Pattern.compile("[A-Za-z0-9_\\-\\.]*");
 
-	public static final HostId CENTRAL = new HostId("central");
+	/**
+	 * Synonym for the server host.
+	 * <p>
+	 * <b>Important:</b> Every computer can act as server or as client! Thus,
+	 * {@link Request#getClientHostId() Request.clientHostId} might very well be "server"
+	 * and {@link Request#getServerHostId() Request.serverHostId} might be one of the clients.
+	 */
+	public static final HostId SERVER = new HostId("server");
 
 	/**
 	 * Gets the {@code HostId} of this computer.

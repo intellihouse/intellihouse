@@ -5,7 +5,7 @@ import static house.intelli.core.util.AssertUtil.*;
 
 import house.intelli.core.Uid;
 
-public class RpcServer {
+public class RpcServer implements AutoCloseable {
 
 	private final RpcContext rpcContext;
 
@@ -45,23 +45,26 @@ public class RpcServer {
 
 	protected Response process(final Request request) {
 		assertNotNull(request, "request");
+		if (request.getTimeout() == Request.TIMEOUT_UNDEFINED || request.getTimeout() < 0)
+			request.setTimeout(RpcConst.DEFAULT_REQUEST_TIMEOUT);
+
 		final Uid requestId = assertNotNull(request.getRequestId(), "request.requestId");
-		final HostId serverHostId = request.getServerHostId();
-		if (HostId.CENTRAL.equals(serverHostId)
-				|| rpcContext.getLocalHostId().equals(serverHostId)) {
-			final RpcServiceExecutor rpcServiceExecutor = rpcContext.getRpcServiceExecutor();
-			if (! (request instanceof DeferredResponseRequest)) // not putting this! we're fetching a response for an old request.
-				rpcServiceExecutor.putRequest(request);
 
-			Response response = rpcServiceExecutor.pollResponse(requestId, LOW_LEVEL_TIMEOUT);
-			if (response == null) {
-				response = new DeferringResponse();
-				response.copyRequestCoordinates(request); // warning! this might be a DeferredResponseRequest -- not the original request! but currently, this does not matter as the data copied is the same.
-			}
+		final RpcServiceExecutor rpcServiceExecutor = rpcContext.getRpcServiceExecutor();
+		if (! (request instanceof DeferredResponseRequest)) // not putting this! we're fetching a response for an old request.
+			rpcServiceExecutor.putRequest(request);
 
-			return response;
+		long timeout = Math.min(LOW_LEVEL_TIMEOUT, request.getTimeout());
+		Response response = rpcServiceExecutor.pollResponse(requestId, timeout);
+		if (response == null) {
+			response = new DeferringResponse();
+			response.copyRequestCoordinates(request); // warning! this might be a DeferredResponseRequest -- not the original request! but currently, this does not matter as the data copied is the same.
 		}
-		throw new UnsupportedOperationException("NYI");
+
+		return response;
 	}
 
+	@Override
+	public void close() {
+	}
 }

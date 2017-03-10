@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import house.intelli.core.Uid;
 
-public class RpcClient {
+public class RpcClient implements AutoCloseable {
 	private static final Logger logger = LoggerFactory.getLogger(RpcClient.class);
 
 	private final RpcContext rpcContext;
@@ -33,7 +33,7 @@ public class RpcClient {
 		if (request.getCreated() == null)
 			request.setCreated(new Date());
 
-		if (request.getTimeout() == Request.TIMEOUT_UNDEFINED)
+		if (request.getTimeout() == Request.TIMEOUT_UNDEFINED || request.getTimeout() < 0)
 			request.setTimeout(RpcConst.DEFAULT_REQUEST_TIMEOUT);
 
 		final long timeoutTimestamp = System.currentTimeMillis() + request.getTimeout();
@@ -56,7 +56,7 @@ public class RpcClient {
 						deferredResponseRequest = new DeferredResponseRequest();
 						deferredResponseRequest.copyRequestCoordinates(request);
 						deferredResponseRequest.setCreated(new Date());
-						deferredResponseRequest.setTimeout(timeoutTimestamp - System.currentTimeMillis()); // has no effect AFAIK, but is good in the log.
+						deferredResponseRequest.setTimeout(Math.max(1, timeoutTimestamp - System.currentTimeMillis()));
 						continue;
 					}
 
@@ -83,5 +83,9 @@ public class RpcClient {
 		} catch (Exception x) {
 			throw new RpcException(x);
 		}
+	}
+
+	@Override
+	public void close() {
 	}
 }

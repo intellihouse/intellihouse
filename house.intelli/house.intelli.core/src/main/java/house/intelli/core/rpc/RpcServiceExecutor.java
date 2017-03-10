@@ -82,22 +82,19 @@ public class RpcServiceExecutor {
 			mutex.notifyAll();
 		}
 
+		if (putRequestIntoInverseRequestRegistryIfApplicable(request))
+			return;
+
 		executorService.submit(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					RpcServiceRegistry rpcServiceRegistry = RpcServiceRegistry.getInstance();
-					RpcService<Request, Response> rpcService = rpcServiceRegistry.createRpcService(request.getClass());
-					if (rpcService == null)
-						throw new IllegalArgumentException("There is no RpcService registered for this requestType: " + request.getClass().getName());
+					Response response;
+					if (isServerLocal(request))
+						response = processLocally(request);
+					else
+						response = processRemotely(request);
 
-					rpcService.setRpcContext(rpcContext);
-
-					Response response = rpcService.process(request);
-					if (response == null)
-						response = new NullResponse();
-
-					response.copyRequestCoordinates(request);
 					putResponse(response);
 				} catch (Throwable x) {
 					Error error = RemoteExceptionUtil.createError(x);
@@ -109,8 +106,67 @@ public class RpcServiceExecutor {
 		});
 	}
 
+	protected boolean isServerLocal(final Request request) {
+		assertNotNull(request, "request");
+		final HostId serverHostId = assertNotNull(request.getServerHostId(), "request.serverHostId");
+		if (rpcContext.getLocalHostId().equals(serverHostId))
+			return true;
+
+		if (RpcContextMode.SERVER == rpcContext.getMode() && HostId.SERVER.equals(serverHostId))
+			return true;
+
+		return false;
+	}
+
+	protected boolean putRequestIntoInverseRequestRegistryIfApplicable(final Request request) {
+		if (isServerLocal(request))
+			return false;
+
+		switch (rpcContext.getMode()) {
+			case CLIENT:
+				return false;
+			case SERVER:
+				rpcContext.getInverseRequestRegistry().putRequest(request);
+				return true;
+			default:
+				throw new IllegalStateException("Unknown mode: " + rpcContext.getMode());
+		}
+	}
+
+	protected Response processRemotely(final Request request) throws Exception {
+		switch (rpcContext.getMode()) {
+			case CLIENT:
+				try (RpcClient rpcClient = rpcContext.createRpcClient()) {
+					return rpcClient.invoke(request);
+				}
+			case SERVER:
+				throw new IllegalStateException("This should have been processed by putRequestIntoInverseRequestRegistryIfApplicable(...)!");
+			default:
+				throw new IllegalStateException("Unknown mode: " + rpcContext.getMode());
+		}
+	}
+
+	protected Response processLocally(final Request request) throws Exception {
+		RpcServiceRegistry rpcServiceRegistry = RpcServiceRegistry.getInstance();
+		RpcService<Request, Response> rpcService = rpcServiceRegistry.createRpcService(request.getClass());
+		if (rpcService == null)
+			throw new IllegalArgumentException("There is no RpcService registered for this requestType: " + request.getClass().getName());
+
+		rpcService.setRpcContext(rpcContext);
+
+		Response response = rpcService.process(request);
+		if (response == null)
+			response = new NullResponse();
+
+		response.copyRequestCoordinates(request);
+		return response;
+	}
+
 	public Response pollResponse(final Uid requestId, final long timeout) {
 		assertNotNull(requestId, "requestId");
+		if (timeout < 0)
+			throw new IllegalArgumentException("timeout < 0");
+
 		final long startTimestamp = System.currentTimeMillis();
 		synchronized (mutex) {
 			while (true) {
@@ -129,7 +185,7 @@ public class RpcServiceExecutor {
 					try {
 						mutex.wait(remainingTime);
 					} catch (InterruptedException e) {
-						logger.warn(e.toString(), e);
+						logger.warn("pollResponse: " + e, e);
 						return null;
 					}
 				}
@@ -140,6 +196,8 @@ public class RpcServiceExecutor {
 	protected void putResponse(final Response response) {
 		assertNotNull(response, "response");
 		final Uid requestId = assertNotNull(response.getRequestId(), "response.requestId");
+		assertNotNull(response.getClientHostId(), "response.clientHostId");
+		assertNotNull(response.getServerHostId(), "response.serverHostId");
 
 		synchronized (mutex) {
 			final Request request = requestId2Request.remove(requestId);
