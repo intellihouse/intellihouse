@@ -35,24 +35,24 @@ public final class StringUtil {
 	}
 
 	public static final String trimLeft(final String string) {
-        final int len = string.length();
-        int st = 0;
+		final int len = string.length();
+		int st = 0;
 
-        while ((st < len) && (string.charAt(st) <= ' '))
-            st++;
+		while ((st < len) && (string.charAt(st) <= ' '))
+			st++;
 
-        return st > 0 ? string.substring(st) : string;
-    }
+		return st > 0 ? string.substring(st) : string;
+	}
 
 	public static final String trimRight(final String string) {
 		final int length = string.length();
 		int len = length;
 
-        while ((0 < len) && (string.charAt(len - 1) <= ' '))
-            len--;
+		while ((0 < len) && (string.charAt(len - 1) <= ' '))
+			len--;
 
-        return len < length ? string.substring(0, len) : string;
-    }
+		return len < length ? string.substring(0, len) : string;
+	}
 
 	public static final List<String> split(final String string, final char separatorChar) {
 		if (isEmpty(string))

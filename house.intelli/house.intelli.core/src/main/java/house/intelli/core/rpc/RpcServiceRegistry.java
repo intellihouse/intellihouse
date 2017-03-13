@@ -6,17 +6,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
+
+import house.intelli.core.service.ServiceRegistry;
 
 public class RpcServiceRegistry {
 
-//	private final RpcContext rpcContext;
-
 	private final Object mutex = new Object();
-	private final Map<Class<?>, List<Class<RpcService<Request, Response>>>> requestType2RpcServiceClasses = new HashMap<>();
+	private final Map<Class<?>, List<RpcService<Request, Response>>> requestType2RpcServices = new HashMap<>();
 
 	private static final RpcServiceRegistry instance = new RpcServiceRegistry();
 
@@ -27,20 +25,14 @@ public class RpcServiceRegistry {
 	protected RpcServiceRegistry() {
 	}
 
-//	protected RpcServiceRegistry(RpcContext rpcContext) {
-//		this.rpcContext = assertNotNull(rpcContext, "rpcContext");
-//	}
-//
-//	public RpcContext getRpcContext() {
-//		return rpcContext;
-//	}
-
-	public List<RpcService<?, ?>> createRpcServices() {
+	public List<RpcService<?, ?>> getRpcServices() {
 		List<RpcService<?, ?>> result = new ArrayList<>();
 		synchronized (mutex) {
-			for (List<Class<RpcService<Request, Response>>> serviceClasses : requestType2RpcServiceClasses.values()) {
-				for (Class<RpcService<Request, Response>> serviceClass : serviceClasses) {
-					RpcService<Request, Response> service = createRpcServiceFromRpcServiceClass(serviceClass);
+			if (requestType2RpcServices.isEmpty())
+				load();
+
+			for (List<RpcService<Request, Response>> services : requestType2RpcServices.values()) {
+				for (RpcService<Request, Response> service : services) {
 					result.add(service);
 				}
 			}
@@ -48,18 +40,18 @@ public class RpcServiceRegistry {
 		return result;
 	}
 
-	public <REQ extends Request, RES extends Response> RpcService<REQ, RES> createRpcService(final Class<? extends REQ> requestType) {
+	public <REQ extends Request, RES extends Response> RpcService<REQ, RES> getRpcService(final Class<? extends REQ> requestType) {
 		Class<?> rt = assertNotNull(requestType, "requestType");
 		synchronized (mutex) {
-			if (requestType2RpcServiceClasses.isEmpty())
+			if (requestType2RpcServices.isEmpty())
 				load();
 
 			while (rt != Object.class) {
-				List<Class<RpcService<Request, Response>>> list = requestType2RpcServiceClasses.get(rt);
+				List<RpcService<Request, Response>> list = requestType2RpcServices.get(rt);
 				if (list != null && ! list.isEmpty()) {
-					Class<RpcService<Request, Response>> rpcServiceClass = list.get(0);
+					RpcService<Request, Response> rpcService = list.get(0);
 					@SuppressWarnings("unchecked")
-					RpcService<REQ, RES> result = (RpcService<REQ, RES>) createRpcServiceFromRpcServiceClass(rpcServiceClass);
+					RpcService<REQ, RES> result = (RpcService<REQ, RES>) rpcService;
 					return result;
 				}
 
@@ -69,26 +61,17 @@ public class RpcServiceRegistry {
 		return null;
 	}
 
-	protected <REQ extends Request, RES extends Response> RpcService<REQ, RES> createRpcServiceFromRpcServiceClass(Class<RpcService<REQ, RES>> rpcServiceClass) {
-		try {
-			RpcService<REQ, RES> rpcService = rpcServiceClass.newInstance();
-			return rpcService;
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected void load() {
-		Map<Class<?>, List<RpcService<?, ?>>> requestType2RpcServices = new HashMap<>();
+		Map<Class<?>, List<RpcService<Request, Response>>> requestType2RpcServices = new HashMap<>();
 
-		@SuppressWarnings("rawtypes")
-		Iterator<RpcService> it = ServiceLoader.load(RpcService.class).iterator();
-		while (it.hasNext()) {
-			RpcService<?, ?> rpcService = it.next();
+		final ServiceRegistry<RpcService> serviceRegistry = ServiceRegistry.getInstance(RpcService.class);
+
+		serviceRegistry.addListener(event -> reset());
+
+		for (RpcService<Request, Response> rpcService : serviceRegistry.getServices()) {
 			Class<?> requestType = rpcService.getRequestType();
-			List<RpcService<?, ?>> rpcServices = requestType2RpcServices.get(requestType);
+			List<RpcService<Request, Response>> rpcServices = requestType2RpcServices.get(requestType);
 			if (rpcServices == null) {
 				rpcServices = new ArrayList<>();
 				requestType2RpcServices.put(requestType, rpcServices);
@@ -96,22 +79,12 @@ public class RpcServiceRegistry {
 			rpcServices.add(rpcService);
 		}
 
-		Map<Class<?>, List<Class<RpcService<Request, Response>>>> requestType2RpcServiceClasses = new HashMap<>();
-		for (Map.Entry<Class<?>, List<RpcService<?, ?>>> me : requestType2RpcServices.entrySet()) {
-			List<RpcService<?, ?>> rpcServices = me.getValue();
-			Collections.sort(rpcServices, rpcServiceComparator);
-			List<Class<RpcService<Request, Response>>> rpcServiceClasses = new ArrayList<>(rpcServices.size());
-			for (RpcService<?,?> rpcService : rpcServices) {
-				@SuppressWarnings("unchecked")
-				Class<RpcService<Request, Response>> rpcServiceClass = (Class<RpcService<Request, Response>>) rpcService.getClass();
-				rpcServiceClasses.add(rpcServiceClass);
-			}
-			requestType2RpcServiceClasses.put(me.getKey(), rpcServiceClasses);
-		}
+		for (List<RpcService<Request, Response>> list : requestType2RpcServices.values())
+			Collections.sort(list, rpcServiceComparator);
 
 		synchronized (mutex) {
-			this.requestType2RpcServiceClasses.clear();
-			this.requestType2RpcServiceClasses.putAll(requestType2RpcServiceClasses);
+			this.requestType2RpcServices.clear();
+			this.requestType2RpcServices.putAll(requestType2RpcServices);
 		}
 	}
 
@@ -125,4 +98,10 @@ public class RpcServiceRegistry {
 			return o1.getClass().getName().compareTo(o2.getClass().getName());
 		}
 	};
+
+	public void reset() {
+		synchronized (mutex) {
+			this.requestType2RpcServices.clear();
+		}
+	}
 }

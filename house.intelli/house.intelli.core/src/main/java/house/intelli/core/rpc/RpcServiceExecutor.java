@@ -136,7 +136,7 @@ public class RpcServiceExecutor {
 
 	public Response processLocally(final Request request) throws Exception {
 		RpcServiceRegistry rpcServiceRegistry = RpcServiceRegistry.getInstance();
-		RpcService<Request, Response> rpcService = rpcServiceRegistry.createRpcService(request.getClass());
+		RpcService<Request, Response> rpcService = rpcServiceRegistry.getRpcService(request.getClass());
 		if (rpcService == null)
 			throw new IllegalArgumentException("There is no RpcService registered for this requestType: " + request.getClass().getName());
 

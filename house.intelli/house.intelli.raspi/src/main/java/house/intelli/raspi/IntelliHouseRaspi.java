@@ -47,7 +47,7 @@ public class IntelliHouseRaspi {
 	}
 
 	private static void initLogging() throws IOException, JoranException {
-		final File logDir = ConfigDir.getInstance().getLogDir();
+		ConfigDir.getInstance().getLogDir(); // creates the directory, if it does not exist yet. hence NECESSARY!
 //		DerbyUtil.setLogFile(createFile(logDir, "derby.log")); // we don't use Derby (yet)
 
 		final String logbackXmlName = "logback.xml";

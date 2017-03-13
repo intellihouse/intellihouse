@@ -20,7 +20,7 @@ public class IntelliHouseJaxbContextProviderImpl extends AbstractIntelliHouseJax
 		Set<Class<?>> classes = new HashSet<>();
 
 		// automatically enlist all Request and Response sub-classes used by the RpcServices.
-		for (RpcService<?, ?> rpcService : RpcServiceRegistry.getInstance().createRpcServices()) {
+		for (RpcService<?, ?> rpcService : RpcServiceRegistry.getInstance().getRpcServices()) {
 			classes.add(rpcService.getRequestType());
 			classes.add(rpcService.getResponseType());
 		}

@@ -15,6 +15,6 @@ public abstract class AbstractRpcServerTransport implements RpcServerTransport {
 	}
 
 	@Override
-	public void close() throws Exception {
+	public void close() {
 	}
 }

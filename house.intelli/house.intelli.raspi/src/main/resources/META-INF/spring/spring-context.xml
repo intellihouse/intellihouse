@@ -10,7 +10,7 @@
 	default-init-method="init" default-destroy-method="close">
 
 	<context:annotation-config />
-
+	
 	<util:constant id="GPIO_00" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_00" />
 	<util:constant id="GPIO_01" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_01" />
 	<util:constant id="GPIO_02" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_02" />
@@ -44,11 +44,19 @@
 	<util:constant id="GPIO_30" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_30" />
 	<util:constant id="GPIO_31" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_31" />
 
+
 	<!--
 	Include the local configuration, which is initially copied to the user's home
 	directory (if not existing, yet) and then customized to reflect the actual physical
 	device setup.
 	-->
 	<import resource="file:${user.home}/.intellihouse/spring-context-local.xml" />
+
+
+	<util:constant id="CLIENT" static-field="house.intelli.core.rpc.RpcContextMode.CLIENT" />
+	<bean id="rpcContext" class="house.intelli.core.rpc.RpcContext">
+		<constructor-arg ref="CLIENT" />
+		<property name="rpcClientTransportProvider" ref="rpcClientTransportProvider"/>
+	</bean>
 
 </beans>

@@ -19,6 +19,16 @@
     ${user.home}/.intellihouse/spring-context-local.xml (the local file system).
     -->
 
+    <!-- BEGIN RPC configuration for connection to OpenHAB central server -->
+    <bean id="rpcClientTransportProvider" class="house.intelli.core.rpc.HttpRpcClientTransportProvider">
+        <property name="serverUrl">
+		    <bean class="java.net.URL">
+		        <constructor-arg value="https://MY-OPENHAB-SERVER/intellihouse/RPC">
+		    </bean>
+        </property>
+    </bean>
+    <!-- END RPC configuration for connection to OpenHAB central server -->
+
 	<!-- BEGIN bedroom -->
 	<bean id="bedroomKeyButton" class="house.intelli.raspi.KeyButtonSensor">
 		<property name="pin" ref="GPIO_10" />  <!-- phys. pin 24 -->

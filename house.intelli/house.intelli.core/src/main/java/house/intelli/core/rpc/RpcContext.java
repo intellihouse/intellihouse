@@ -104,7 +104,7 @@ public class RpcContext implements AutoCloseable {
 	}
 
 	@Override
-	public void close() throws Exception {
+	public void close() {
 		if (pollInverseRequestsThread != null)
 			pollInverseRequestsThread.interrupt();
 

@@ -9,6 +9,7 @@ import java.io.Writer;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,6 +22,12 @@ public class HttpRpcClientTransportTest {
 	@Before
 	public void before() throws Exception {
 		rpcContext = new RpcContext(RpcContextMode.CLIENT, new HostId("dummy"));
+	}
+
+	@After
+	public void after() throws Exception {
+		if (rpcContext != null)
+			rpcContext.close();
 	}
 
 	@Test

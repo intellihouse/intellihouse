@@ -1,22 +1,26 @@
 package house.intelli.core.jaxb;
 
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.ServiceLoader;
 import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
-public class IntelliHouseJaxbContext {
+import house.intelli.core.service.ServiceRegistry;
 
-	private static class JaxbContextHolder {
-		private static final JAXBContext jaxbContext;
-		static {
+public class IntelliHouseJaxbContext {
+	private static volatile JAXBContext jaxbContext;
+
+	public static JAXBContext getJaxbContext() {
+		JAXBContext result = jaxbContext;
+		if (result == null) {
 			final Set<Class<?>> collectedClassesToBeBound = new HashSet<Class<?>>();
-			final ServiceLoader<IntelliHouseJaxbContextProvider> serviceLoader = ServiceLoader.load(IntelliHouseJaxbContextProvider.class);
-			for (final Iterator<IntelliHouseJaxbContextProvider> it = serviceLoader.iterator(); it.hasNext(); ) {
-				final IntelliHouseJaxbContextProvider provider = it.next();
+
+			final ServiceRegistry<IntelliHouseJaxbContextProvider> serviceRegistry = ServiceRegistry.getInstance(IntelliHouseJaxbContextProvider.class);
+
+			serviceRegistry.addListener(event -> reset());
+
+			for (final IntelliHouseJaxbContextProvider provider : serviceRegistry.getServices()) {
 				final Class<?>[] classesToBeBound = provider.getClassesToBeBound();
 				if (classesToBeBound != null) {
 					for (final Class<?> clazz : classesToBeBound)
@@ -25,14 +29,15 @@ public class IntelliHouseJaxbContext {
 			}
 			try {
 				final Class<?>[] ca = collectedClassesToBeBound.toArray(new Class[collectedClassesToBeBound.size()]);
-				jaxbContext = JAXBContext.newInstance(ca);
+				jaxbContext = result = JAXBContext.newInstance(ca);
 			} catch (JAXBException x) {
 				throw new RuntimeException(x);
 			}
 		}
+		return result;
 	}
 
-	public static JAXBContext getJaxbContext() {
-		return JaxbContextHolder.jaxbContext;
+	public static void reset() {
+		jaxbContext = null;
 	}
 }
