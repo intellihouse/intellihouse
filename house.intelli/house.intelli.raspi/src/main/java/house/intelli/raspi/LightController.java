@@ -34,15 +34,15 @@ public class LightController extends AbstractBean<LightController.Property> impl
 		UP
 	}
 
-	public static final int[] LIGHT_DIMMER_VALUES = {
-			1,
-			2,
-			4,
-			8,
-			16,
-			32,
-			64,
-			100
+	public static final int[] LIGHT_DIMMER_VALUES = { // percentages
+			12, //   1
+			25, //   2
+			37, //   4
+			50, //   8
+			62, //  16
+			75, //  32
+			87, //  64
+			100 // 100
 	};
 
 	private int lightDimmerValuesIndex = -1;
@@ -240,7 +240,7 @@ public class LightController extends AbstractBean<LightController.Property> impl
 	private void applyLightsDimmerValue() {
 		assertEventThread();
 		for (DimmerActor light : lights) {
-			light.setDimmerValue(lightOn ? LIGHT_DIMMER_VALUES[lightDimmerValuesIndex] : DimmerActor.MIN_DIMMER_VALUE);
+			light.setDimmerValue(isLightOn() ? LIGHT_DIMMER_VALUES[lightDimmerValuesIndex] : DimmerActor.MIN_DIMMER_VALUE);
 		}
 	}
 

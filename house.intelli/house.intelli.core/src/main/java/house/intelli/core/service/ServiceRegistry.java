@@ -9,7 +9,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ServiceRegistry<S> {
+
+	private static final Logger logger = LoggerFactory.getLogger(ServiceRegistry.class);
 
 	private final Class<S> serviceClass;
 
@@ -72,8 +77,17 @@ public class ServiceRegistry<S> {
 
 	public List<S> getServices() {
 		final ArrayList<S> result = new ArrayList<>();
-		for (final ServiceRegistryDelegate<S> delegate : delegates)
-			result.addAll(delegate.getServices());
+		for (final ServiceRegistryDelegate<S> delegate : delegates) {
+			List<S> services = delegate.getServices();
+			if (logger.isInfoEnabled()) {
+				List<String> serviceClassNames = new ArrayList<>();
+				for (S service : services)
+					serviceClassNames.add(service.getClass().getName());
+
+				logger.info("getServices: delegateClass={}, serviceClasses={}", delegate.getClass().getName(), serviceClassNames);
+			}
+			result.addAll(services);
+		}
 
 		result.trimToSize();
 		return Collections.unmodifiableList(result);

@@ -10,7 +10,9 @@
 	default-init-method="init" default-destroy-method="close">
 
 	<context:annotation-config />
-	
+
+	<context:component-scan base-package="house.intelli.raspi" />
+
 	<util:constant id="GPIO_00" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_00" />
 	<util:constant id="GPIO_01" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_01" />
 	<util:constant id="GPIO_02" static-field="com.pi4j.io.gpio.RaspiPin.GPIO_02" />

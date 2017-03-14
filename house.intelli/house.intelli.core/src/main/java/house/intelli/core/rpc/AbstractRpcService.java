@@ -5,13 +5,13 @@ import static house.intelli.core.util.ReflectionUtil.*;
 
 import java.lang.reflect.Type;
 
-public abstract class AbstractRpcService<REQ extends Request, RES extends Response> implements RpcService<REQ, RES> {
+public abstract class AbstractRpcService<REQ extends Request, RES extends Response> implements RpcService<REQ, RES>, Cloneable {
 
 	private Class<REQ> requestType;
 
 	private Class<RES> responseType;
 
-	private RpcContext RpcContext;
+	private RpcContext rpcContext;
 
 	@Override
 	public Class<REQ> getRequestType() {
@@ -51,10 +51,23 @@ public abstract class AbstractRpcService<REQ extends Request, RES extends Respon
 
 	@Override
 	public RpcContext getRpcContext() {
-		return RpcContext;
+		return rpcContext;
 	}
 	@Override
-	public void setRpcContext(RpcContext rpcContext) {
-		RpcContext = rpcContext;
+	public void setRpcContext(final RpcContext rpcContext) {
+		if (this.rpcContext != null)
+			throw new IllegalStateException("this.rpcContext already assigned!");
+
+		this.rpcContext = rpcContext;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public RpcService<REQ, RES> clone() {
+		try {
+			return (RpcService<REQ, RES>) super.clone();
+		} catch (CloneNotSupportedException e) { // Should really never happen, because we implement Cloneable!
+			throw new RuntimeException(e);
+		}
 	}
 }

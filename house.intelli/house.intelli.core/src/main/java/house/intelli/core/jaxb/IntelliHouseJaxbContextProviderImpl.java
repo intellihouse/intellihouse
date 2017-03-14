@@ -12,6 +12,8 @@ import house.intelli.core.rpc.PollInverseRequestsResponse;
 import house.intelli.core.rpc.PutInverseResponseRequest;
 import house.intelli.core.rpc.RpcService;
 import house.intelli.core.rpc.RpcServiceRegistry;
+import house.intelli.core.rpc.dimmer.DimmerSetRequest;
+import house.intelli.core.rpc.dimmer.DimmerSetResponse;
 
 public class IntelliHouseJaxbContextProviderImpl extends AbstractIntelliHouseJaxbContextProvider {
 
@@ -26,6 +28,7 @@ public class IntelliHouseJaxbContextProviderImpl extends AbstractIntelliHouseJax
 		}
 
 		// manually add other classes below...
+		// BEGIN framework stuff
 		classes.add(DeferredResponseRequest.class);
 		classes.add(DeferringResponse.class);
 		classes.add(ErrorResponse.class);
@@ -33,6 +36,12 @@ public class IntelliHouseJaxbContextProviderImpl extends AbstractIntelliHouseJax
 		classes.add(PollInverseRequestsRequest.class);
 		classes.add(PollInverseRequestsResponse.class);
 		classes.add(PutInverseResponseRequest.class);
+		// END framework stuff
+
+		// BEGIN RpcService-related DTOs for which there might be no RpcService registered
+		classes.add(DimmerSetRequest.class);
+		classes.add(DimmerSetResponse.class);
+		// END RpcService-related DTOs for which there might be no RpcService registered
 
 		return classes.toArray(new Class<?>[classes.size()]);
 	}
