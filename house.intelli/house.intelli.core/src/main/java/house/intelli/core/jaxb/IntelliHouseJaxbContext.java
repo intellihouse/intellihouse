@@ -6,9 +6,15 @@ import java.util.Set;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import house.intelli.core.service.ServiceRegistry;
 
 public class IntelliHouseJaxbContext {
+
+	private static final Logger logger = LoggerFactory.getLogger(IntelliHouseJaxbContext.class);
+
 	private static volatile JAXBContext jaxbContext;
 
 	public static JAXBContext getJaxbContext() {
@@ -22,6 +28,7 @@ public class IntelliHouseJaxbContext {
 
 			for (final IntelliHouseJaxbContextProvider provider : serviceRegistry.getServices()) {
 				final Class<?>[] classesToBeBound = provider.getClassesToBeBound();
+				logger.info("getJaxbContext: provider.class={}, classesToBeBound={}", provider.getClass().getName(), classesToBeBound);
 				if (classesToBeBound != null) {
 					for (final Class<?> clazz : classesToBeBound)
 						collectedClassesToBeBound.add(clazz);

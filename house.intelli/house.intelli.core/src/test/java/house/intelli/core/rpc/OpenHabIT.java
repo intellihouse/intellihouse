@@ -11,6 +11,7 @@ import org.junit.Test;
 import house.intelli.core.rpc.echo.EchoRequest;
 import house.intelli.core.rpc.echo.EchoResponse;
 
+//@Ignore // Currently only used in development, with running OpenHAB server in IDE.
 public class OpenHabIT {
 
 	private RpcContext rpcContext;

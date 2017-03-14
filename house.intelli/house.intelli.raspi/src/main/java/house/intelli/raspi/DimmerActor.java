@@ -37,6 +37,18 @@ public class DimmerActor extends AbstractBean<DimmerActor.Property> implements A
 	private GpioPinDigitalOutput digitalOutput;
 	private int dimmerValue = MIN_DIMMER_VALUE;
 
+	public static final int[] PWM_VALUES = {
+			0,
+			1,
+			2,
+			4,
+			8,
+			16,
+			32,
+			64,
+			100
+	};
+
 	public void init() {
 		assertEventThread();
 		assertNotNull(pin, "pin");
@@ -67,6 +79,9 @@ public class DimmerActor extends AbstractBean<DimmerActor.Property> implements A
 
 		assertEventThread();
 
+		int pwmValueIndex = getPwmValueIndex(dimmerValue);
+		dimmerValue = pwmValueIndex * 100 / (PWM_VALUES.length - 1);
+
 		if (setPropertyValue(PropertyEnum.dimmerValue, dimmerValue))
 			applyDimmerValue();
 	}
@@ -85,11 +100,16 @@ public class DimmerActor extends AbstractBean<DimmerActor.Property> implements A
 		}
 	}
 
-	private int getPwm() {
-//		if (pwmOutput.isMode(PinMode.PWM_OUTPUT))
-//			return dimmerValue * 512 / 100; // is this really true? in my tests, it didn't look like the logical pwm value was really this - it looked like being 0 to 100, too, even for hardware-pwm.
+	protected int getPwm() {
+////		if (pwmOutput.isMode(PinMode.PWM_OUTPUT))
+////			return dimmerValue * 512 / 100; // is this really true? in my tests, it didn't look like the logical pwm value was really this - it looked like being 0 to 100, too, even for hardware-pwm.
+//		return dimmerValue;
+		return PWM_VALUES[getPwmValueIndex(dimmerValue)];
+	}
 
-		return dimmerValue;
+	private int getPwmValueIndex(int dimmerValue) {
+		int pwmIndex = Math.round((float) dimmerValue * (PWM_VALUES.length - 1) / 100);
+		return pwmIndex;
 	}
 
 	private void openPwmOutput() {

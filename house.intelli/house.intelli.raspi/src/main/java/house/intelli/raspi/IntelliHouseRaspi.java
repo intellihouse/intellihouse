@@ -16,7 +16,11 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import house.intelli.core.config.ConfigDir;
 import house.intelli.core.event.EventQueue;
+import house.intelli.core.jaxb.IntelliHouseJaxbContextProvider;
+import house.intelli.core.rpc.RpcService;
+import house.intelli.core.service.ServiceRegistry;
 import house.intelli.core.util.IOUtil;
+import house.intelli.raspi.service.SpringServiceRegistryDelegate;
 
 public class IntelliHouseRaspi {
 
@@ -33,6 +37,13 @@ public class IntelliHouseRaspi {
 				try {
 					logger.info("Creating Spring ApplicationContext...");
 					ApplicationContext applicationContext = new ClassPathXmlApplicationContext("META-INF/spring/spring-context.xml");
+
+					ServiceRegistry.getInstance(RpcService.class).addDelegate(
+							new SpringServiceRegistryDelegate<>(RpcService.class, applicationContext));
+
+					ServiceRegistry.getInstance(IntelliHouseJaxbContextProvider.class).addDelegate(
+							new SpringServiceRegistryDelegate<>(IntelliHouseJaxbContextProvider.class, applicationContext));
+
 					logger.info("Created Spring ApplicationContext successfully.");
 				} catch (Throwable x) {
 					logger.error("Creating Spring ApplicationContext failed: " + x, x);

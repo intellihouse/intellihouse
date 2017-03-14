@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import house.intelli.core.jaxb.IntelliHouseJaxbContext;
 import house.intelli.core.service.ServiceRegistry;
 
 public class RpcServiceRegistry {
@@ -33,7 +34,7 @@ public class RpcServiceRegistry {
 
 			for (List<RpcService<Request, Response>> services : requestType2RpcServices.values()) {
 				for (RpcService<Request, Response> service : services) {
-					result.add(service);
+					result.add(service.clone());
 				}
 			}
 		}
@@ -51,7 +52,7 @@ public class RpcServiceRegistry {
 				if (list != null && ! list.isEmpty()) {
 					RpcService<Request, Response> rpcService = list.get(0);
 					@SuppressWarnings("unchecked")
-					RpcService<REQ, RES> result = (RpcService<REQ, RES>) rpcService;
+					RpcService<REQ, RES> result = (RpcService<REQ, RES>) rpcService.clone();
 					return result;
 				}
 
@@ -103,5 +104,6 @@ public class RpcServiceRegistry {
 		synchronized (mutex) {
 			this.requestType2RpcServices.clear();
 		}
+		IntelliHouseJaxbContext.reset();
 	}
 }

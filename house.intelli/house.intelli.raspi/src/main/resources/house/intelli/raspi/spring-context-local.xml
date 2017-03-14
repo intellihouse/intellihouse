@@ -1,33 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:context="http://www.springframework.org/schema/context"
-	xmlns:util="http://www.springframework.org/schema/util"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
 		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd"
 	default-init-method="init" default-destroy-method="close">
 
-    <!--
-    *** Local include file ***
+	<!--
+	*** Local include file ***
 
-    This file specifies the actual Raspi wiring, i.e. which devices exist and are connected
-    to which GPIO pins.
+	This file specifies the actual Raspi wiring, i.e. which devices exist and are connected
+	to which GPIO pins. It is therefore local configuration (not global program code) and thus
+	loaded from ${user.home}/.intellihouse/spring-context-local.xml (the local file system).
+	-->
 
-    It is therefore local configuration (not global program code) and thus loaded from
-    ${user.home}/.intellihouse/spring-context-local.xml (the local file system).
-    -->
-
-    <!-- BEGIN RPC configuration for connection to OpenHAB central server -->
-    <bean id="rpcClientTransportProvider" class="house.intelli.core.rpc.HttpRpcClientTransportProvider">
-        <property name="serverUrl">
-		    <bean class="java.net.URL">
-		        <constructor-arg value="https://MY-OPENHAB-SERVER/intellihouse/RPC">
-		    </bean>
-        </property>
-    </bean>
-    <!-- END RPC configuration for connection to OpenHAB central server -->
+	<!-- BEGIN RPC configuration for connection to OpenHAB central server -->
+	<bean id="rpcClientTransportProvider" class="house.intelli.core.rpc.HttpRpcClientTransportProvider">
+		<property name="serverUrl">
+			<bean class="java.net.URL">
+				<constructor-arg value="https://MY-OPENHAB-SERVER/intellihouse/RPC" />
+			</bean>
+		</property>
+	</bean>
+	<!-- END RPC configuration for connection to OpenHAB central server -->
 
 	<!-- BEGIN bedroom -->
 	<bean id="bedroomKeyButton" class="house.intelli.raspi.KeyButtonSensor">
@@ -52,24 +49,24 @@
 	</bean>
 
 	<bean id="bedroomLightController" class="house.intelli.raspi.LightController">
-	    <property name="keyButtons">
-	        <list>
-	            <ref bean="bedroomKeyButton"/>
-	        </list>
-	    </property>
-	    <property name="lights">
-	        <list>
-	            <ref bean="bedroomLight0"/>
-	            <ref bean="bedroomLight1"/>
-	            <ref bean="bedroomLight2"/>
-	            <ref bean="bedroomLight3"/>
-	        </list>
-	    </property>
-	    <property name="powerSupplies">
-	        <list>
-	            <ref bean="bedroomPowerSupply"/>
-	        </list>
-	    </property>
+		<property name="keyButtons">
+			<list>
+				<ref bean="bedroomKeyButton" />
+			</list>
+		</property>
+		<property name="lights">
+			<list>
+				<ref bean="bedroomLight0" />
+				<ref bean="bedroomLight1" />
+				<ref bean="bedroomLight2" />
+				<ref bean="bedroomLight3" />
+			</list>
+		</property>
+		<property name="powerSupplies">
+			<list>
+				<ref bean="bedroomPowerSupply" />
+			</list>
+		</property>
 	</bean>
 	<!-- END bedroom -->
 
@@ -90,25 +87,24 @@
 	</bean>
 
 	<bean id="dressingroomLightController" class="house.intelli.raspi.LightController">
-	    <property name="keyButtons">
-	        <list>
-	            <ref bean="dressingroomKeyButton"/>
-	        </list>
-	    </property>
-	    <property name="lights">
-	        <list>
-	            <ref bean="dressingroomLight0"/>
-	            <ref bean="dressingroomLight1"/>
-	        </list>
-	    </property>
-	    <property name="powerSupplies">
-	        <list>
-	            <ref bean="dressingroomPowerSupply"/>
-	        </list>
-	    </property>
+		<property name="keyButtons">
+			<list>
+				<ref bean="dressingroomKeyButton" />
+			</list>
+		</property>
+		<property name="lights">
+			<list>
+				<ref bean="dressingroomLight0" />
+				<ref bean="dressingroomLight1" />
+			</list>
+		</property>
+		<property name="powerSupplies">
+			<list>
+				<ref bean="dressingroomPowerSupply" />
+			</list>
+		</property>
 	</bean>
 	<!-- END dressingroom -->
-
 
 	<!-- BEGIN bathroom -->
 	<bean id="bathroomKeyButton" class="house.intelli.raspi.KeyButtonSensor">
@@ -127,22 +123,22 @@
 	</bean>
 
 	<bean id="bathroomLightController" class="house.intelli.raspi.LightController">
-	    <property name="keyButtons">
-	        <list>
-	            <ref bean="bathroomKeyButton"/>
-	        </list>
-	    </property>
-	    <property name="lights">
-	        <list>
-	            <ref bean="bathroomLight0"/>
-	            <ref bean="bathroomLight1"/>
-	        </list>
-	    </property>
-	    <property name="powerSupplies">
-	        <list>
-	            <ref bean="bathroomPowerSupply"/>
-	        </list>
-	    </property>
+		<property name="keyButtons">
+			<list>
+				<ref bean="bathroomKeyButton" />
+			</list>
+		</property>
+		<property name="lights">
+			<list>
+				<ref bean="bathroomLight0" />
+				<ref bean="bathroomLight1" />
+			</list>
+		</property>
+		<property name="powerSupplies">
+			<list>
+				<ref bean="bathroomPowerSupply" />
+			</list>
+		</property>
 	</bean>
 	<!-- END bathroom -->
 

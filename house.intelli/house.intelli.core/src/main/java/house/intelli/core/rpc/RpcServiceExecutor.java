@@ -122,32 +122,42 @@ public class RpcServiceExecutor {
 	}
 
 	protected Response processRemotely(final Request request) throws Exception {
-		switch (rpcContext.getMode()) {
-			case CLIENT:
-				try (RpcClient rpcClient = rpcContext.createRpcClient()) {
-					return rpcClient.invoke(request);
-				}
-			case SERVER:
-				throw new IllegalStateException("This should have been processed by putRequestIntoInverseRequestRegistryIfApplicable(...)!");
-			default:
-				throw new IllegalStateException("Unknown mode: " + rpcContext.getMode());
+		try {
+			switch (rpcContext.getMode()) {
+				case CLIENT:
+					try (RpcClient rpcClient = rpcContext.createRpcClient()) {
+						return rpcClient.invoke(request);
+					}
+				case SERVER:
+					throw new IllegalStateException("This should have been processed by putRequestIntoInverseRequestRegistryIfApplicable(...)!");
+				default:
+					throw new IllegalStateException("Unknown mode: " + rpcContext.getMode());
+			}
+		} catch (Exception x) {
+			logger.error("processLocally: " + x, x);
+			throw x;
 		}
 	}
 
 	public Response processLocally(final Request request) throws Exception {
-		RpcServiceRegistry rpcServiceRegistry = RpcServiceRegistry.getInstance();
-		RpcService<Request, Response> rpcService = rpcServiceRegistry.getRpcService(request.getClass());
-		if (rpcService == null)
-			throw new IllegalArgumentException("There is no RpcService registered for this requestType: " + request.getClass().getName());
+		try {
+			RpcServiceRegistry rpcServiceRegistry = RpcServiceRegistry.getInstance();
+			RpcService<Request, Response> rpcService = rpcServiceRegistry.getRpcService(request.getClass());
+			if (rpcService == null)
+				throw new IllegalArgumentException("There is no RpcService registered for this requestType: " + request.getClass().getName());
 
-		rpcService.setRpcContext(rpcContext);
+			rpcService.setRpcContext(rpcContext);
 
-		Response response = rpcService.process(request);
-		if (response == null)
-			response = new NullResponse();
+			Response response = rpcService.process(request);
+			if (response == null)
+				response = new NullResponse();
 
-		response.copyRequestCoordinates(request);
-		return response;
+			response.copyRequestCoordinates(request);
+			return response;
+		} catch (Exception x) {
+			logger.error("processLocally: " + x, x);
+			throw x;
+		}
 	}
 
 	public Response pollResponse(final Uid requestId, final long timeout) {
