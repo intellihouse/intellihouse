@@ -12,6 +12,8 @@ Import-Package:
  house.intelli.core,
  house.intelli.core.jaxb,
  house.intelli.core.rpc,
+ house.intelli.core.rpc.channel,
+ house.intelli.core.rpc.dimmer,
  house.intelli.core.rpc.echo,
  house.intelli.core.service,
  house.intelli.core.util,

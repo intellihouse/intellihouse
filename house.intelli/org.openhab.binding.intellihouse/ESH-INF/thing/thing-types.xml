@@ -4,21 +4,34 @@
         xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
         xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
 
-    <!-- Sample Thing Type -->
-    <thing-type id="sample">
-        <label>IntelliHouse Binding Thing</label>
-        <description>Sample thing for IntelliHouse Binding</description>
+    <thing-type id="dimmer">
+        <label>IntelliHouse Binding Dimmer</label>
+        <description>Dimmer IntelliHouse Binding</description>
 
+<!-- Channels are dynamic! The last segment of a channel's UID, i.e. the channel-id, is the same as the Spring-bean-id. 
         <channels>
-            <channel id="channel1" typeId="sample-channel"/>
+            <channel id="channel0" typeId="light-channel"/>
+            <channel id="channel1" typeId="light-channel"/>
+            <channel id="channel2" typeId="light-channel"/>
+            <channel id="channel3" typeId="light-channel"/>
+            <channel id="channel4" typeId="light-channel"/>
+            <channel id="channel5" typeId="light-channel"/>
+            <channel id="channel6" typeId="light-channel"/>
+            <channel id="channel7" typeId="light-channel"/>
         </channels>
+-->
     </thing-type>
 
-    <!-- Sample Channel Type -->
-    <channel-type id="sample-channel">
-        <item-type>intellihouseItem</item-type>
-        <label>IntelliHouse Binding Channel</label>
-        <description>Sample channel for IntelliHouse Binding</description>
+    <channel-type id="dimmer-channel">
+        <item-type>intellihouseDimmer</item-type>
+        <label>IntelliHouse Binding Channel for Dimmer</label>
+        <description>Dimmer channel for IntelliHouse Binding</description>
+    </channel-type>
+
+    <channel-type id="switch-channel">
+        <item-type>intellihouseSwitch</item-type>
+        <label>IntelliHouse Binding Channel for Switch</label>
+        <description>Switch channel for IntelliHouse Binding</description>
     </channel-type>
 
 </thing:thing-descriptions>

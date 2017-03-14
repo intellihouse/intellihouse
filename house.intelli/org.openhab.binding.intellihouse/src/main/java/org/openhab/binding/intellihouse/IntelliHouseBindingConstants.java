@@ -10,19 +10,20 @@ package org.openhab.binding.intellihouse;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 
 /**
- * The {@link IntelliHouseBinding} class defines common constants, which are 
+ * The {@link IntelliHouseBinding} class defines common constants, which are
  * used across the whole binding.
- * 
+ *
  * @author Marco Nguitragool - Initial contribution
  */
 public class IntelliHouseBindingConstants {
 
     public static final String BINDING_ID = "intellihouse";
-    
-    // List of all Thing Type UIDs
-    public final static ThingTypeUID THING_TYPE_SAMPLE = new ThingTypeUID(BINDING_ID, "sample");
 
-    // List of all Channel ids
-    public final static String CHANNEL_1 = "channel1";
+    // List of all Thing Type UIDs
+    public final static ThingTypeUID THING_TYPE_DIMMER = new ThingTypeUID(BINDING_ID, "dimmer");
+    public final static ThingTypeUID THING_TYPE_SWITCH = new ThingTypeUID(BINDING_ID, "switch");
+
+    // // List of all Channel ids
+    // public final static String CHANNEL_1 = "channel1";
 
 }

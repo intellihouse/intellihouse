@@ -33,6 +33,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.http.NamespaceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +63,7 @@ public class RpcServlet extends BaseServlet {
     private ServiceRegistry<RpcService> rcpServiceServiceRegistry;
     private ServiceListener rpcServiceServiceListener;
     private ServiceRegistryDelegate<RpcService> rpcServiceServiceRegistryDelegate;
+    private ServiceRegistration<RpcContext> rpcContextServiceRegistration;
 
     public void setEventPublisher(EventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
@@ -109,6 +111,7 @@ public class RpcServlet extends BaseServlet {
                 rpcContext.close();
             }
             rpcContext = new RpcContext(RpcContextMode.SERVER);
+            rpcContextServiceRegistration = bundleContext.registerService(RpcContext.class, rpcContext, null);
 
             Hashtable<String, String> props = new Hashtable<String, String>();
             httpService.registerServlet(WEBAPP_ALIAS + "/" + SERVLET_NAME, this, props, createHttpContext());
@@ -121,8 +124,16 @@ public class RpcServlet extends BaseServlet {
     }
 
     protected void deactivate() {
-        rcpServiceServiceRegistry.removeDelegate(rpcServiceServiceRegistryDelegate);
-        bundleContext.removeServiceListener(rpcServiceServiceListener);
+        if (rpcContextServiceRegistration != null) {
+            rpcContextServiceRegistration.unregister();
+            rpcContextServiceRegistration = null;
+        }
+        if (rcpServiceServiceRegistry != null && rpcServiceServiceRegistryDelegate != null) {
+            rcpServiceServiceRegistry.removeDelegate(rpcServiceServiceRegistryDelegate);
+        }
+        if (rpcServiceServiceListener != null) {
+            bundleContext.removeServiceListener(rpcServiceServiceListener);
+        }
         httpService.unregister(WEBAPP_ALIAS + "/" + SERVLET_NAME);
         if (rpcContext != null) {
             rpcContext.close();
