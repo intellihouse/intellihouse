@@ -17,7 +17,7 @@ public class RpcServer implements AutoCloseable {
 
 	private final RpcContext rpcContext;
 
-	private Request request;
+	private Request<?> request;
 	private Response response;
 
 	protected RpcServer(final RpcContext rpcContext) {
@@ -54,7 +54,7 @@ public class RpcServer implements AutoCloseable {
 		}
 	}
 
-	protected Response process(final Request request) {
+	protected Response process(final Request<?> request) {
 		assertNotNull(request, "request");
 		if (request.getTimeout() == Request.TIMEOUT_UNDEFINED || request.getTimeout() < 0)
 			request.setTimeout(RpcConst.DEFAULT_REQUEST_TIMEOUT);
@@ -65,7 +65,7 @@ public class RpcServer implements AutoCloseable {
 
 		if (request instanceof PollInverseRequestsRequest) {
 			assertServerLocal(request);
-			final List<Request> requests = rpcContext.getInverseRequestRegistry().pollRequests(request.getClientHostId(), timeout);
+			final List<Request<?>> requests = rpcContext.getInverseRequestRegistry().pollRequests(request.getClientHostId(), timeout);
 			PollInverseRequestsResponse response = new PollInverseRequestsResponse();
 			response.setInverseRequests(requests);
 			response.copyRequestCoordinates(request);

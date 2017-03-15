@@ -10,18 +10,18 @@ import org.springframework.stereotype.Component;
 
 import house.intelli.core.event.EventQueue;
 import house.intelli.core.rpc.AbstractRpcService;
-import house.intelli.core.rpc.dimmer.DimmerSetRequest;
-import house.intelli.core.rpc.dimmer.DimmerSetResponse;
+import house.intelli.core.rpc.dimmer.DimmerActorReadRequest;
+import house.intelli.core.rpc.dimmer.DimmerActorReadResponse;
 import house.intelli.raspi.DimmerActor;
 
 @Component
-public class DimmerSetRpcService extends AbstractRpcService<DimmerSetRequest, DimmerSetResponse> {
+public class DimmerActorReadRpcService extends AbstractRpcService<DimmerActorReadRequest, DimmerActorReadResponse> {
 
-	private static final Logger logger = LoggerFactory.getLogger(DimmerSetRpcService.class);
+	private static final Logger logger = LoggerFactory.getLogger(DimmerActorReadRpcService.class);
 
 	private ApplicationContext applicationContext;
 
-	public DimmerSetRpcService() {
+	public DimmerActorReadRpcService() {
 		logger.info("<init>");
 	}
 
@@ -35,26 +35,21 @@ public class DimmerSetRpcService extends AbstractRpcService<DimmerSetRequest, Di
 	}
 
 	@Override
-	public DimmerSetResponse process(DimmerSetRequest request) throws Exception {
+	public DimmerActorReadResponse process(DimmerActorReadRequest request) throws Exception {
 		final String channelId = assertNotNull(request.getChannelId(), "request.channelId");
-		Object bean = applicationContext.getBean(channelId);
+		final Object bean = applicationContext.getBean(channelId);
 		if (bean == null)
 			throw new IllegalArgumentException("No bean found with beanId=channelId=" + channelId);
 
 		if (! (bean instanceof DimmerActor))
-			throw new IllegalArgumentException("Bean with beanId=channelId=" + channelId + " is not an instance of DimmerActor, but: " + bean.getClass().getName());
+			throw new IllegalArgumentException("Bean with beanId=channelId=" + channelId + " is not an instance of DimmerActorImpl, but: " + bean.getClass().getName());
 
-		DimmerSetResponse[] response = new DimmerSetResponse[1];
-		EventQueue.invokeAndWait(new Runnable() {
-			@Override
-			public void run() {
-				@SuppressWarnings("resource") // not newly opened! it exists in the applicationContext.
-				DimmerActor dimmerActor = (DimmerActor) bean;
-				dimmerActor.setDimmerValue(request.getDimmerValue());
+		final DimmerActor dimmerActor = (DimmerActor) bean;
 
-				response[0] = new DimmerSetResponse();
-				response[0].setDimmerValue(dimmerActor.getDimmerValue());
-			}
+		final DimmerActorReadResponse[] response = new DimmerActorReadResponse[1];
+		EventQueue.invokeAndWait(() -> {
+			response[0] = new DimmerActorReadResponse();
+			response[0].setDimmerValue(dimmerActor.getDimmerValue());
 		});
 		return response[0];
 	}

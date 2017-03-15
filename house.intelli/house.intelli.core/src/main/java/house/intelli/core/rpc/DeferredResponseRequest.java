@@ -7,7 +7,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author mn
  */
 @XmlRootElement
-public class DeferredResponseRequest extends Request {
+public class DeferredResponseRequest extends Request<Response> {
 
 	public DeferredResponseRequest() {
 	}

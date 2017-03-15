@@ -27,28 +27,28 @@
 	<!-- END RPC configuration for connection to OpenHAB central server -->
 
 	<!-- BEGIN bedroom -->
-	<bean id="bedroomKeyButton" class="house.intelli.raspi.KeyButtonSensor">
+	<bean id="bedroomKeyButton" class="house.intelli.raspi.KeyButtonSensorImpl">
 		<property name="pin" ref="GPIO_10" />  <!-- phys. pin 24 -->
 	</bean>
 
-	<bean id="bedroomLight0" class="house.intelli.raspi.DimmerActor">
+	<bean id="bedroomLight0" class="house.intelli.raspi.DimmerActorImpl">
 		<property name="pin" ref="GPIO_01" />
 	</bean>
-	<bean id="bedroomLight1" class="house.intelli.raspi.DimmerActor">
+	<bean id="bedroomLight1" class="house.intelli.raspi.DimmerActorImpl">
 		<property name="pin" ref="GPIO_23" />
 	</bean>
-	<bean id="bedroomLight2" class="house.intelli.raspi.DimmerActor">
+	<bean id="bedroomLight2" class="house.intelli.raspi.DimmerActorImpl">
 		<property name="pin" ref="GPIO_24" />
 	</bean>
-	<bean id="bedroomLight3" class="house.intelli.raspi.DimmerActor">
+	<bean id="bedroomLight3" class="house.intelli.raspi.DimmerActorImpl">
 		<property name="pin" ref="GPIO_26" />
 	</bean>
 
-	<bean id="bedroomPowerSupply" class="house.intelli.raspi.RelayActor">
+	<bean id="bedroomPowerSupply" class="house.intelli.raspi.RelayActorImpl">
 		<property name="pin" ref="GPIO_07" />
 	</bean>
 
-	<bean id="bedroomLightController" class="house.intelli.raspi.LightController">
+	<bean id="bedroomLightController" class="house.intelli.raspi.LightControllerImpl">
 		<property name="keyButtons">
 			<list>
 				<ref bean="bedroomKeyButton" />
@@ -71,22 +71,22 @@
 	<!-- END bedroom -->
 
 	<!-- BEGIN dressingroom -->
-	<bean id="dressingroomKeyButton" class="house.intelli.raspi.KeyButtonSensor">
+	<bean id="dressingroomKeyButton" class="house.intelli.raspi.KeyButtonSensorImpl">
 		<property name="pin" ref="GPIO_11" />  <!-- phys. pin 26 -->
 	</bean>
 
-	<bean id="dressingroomLight0" class="house.intelli.raspi.DimmerActor">
+	<bean id="dressingroomLight0" class="house.intelli.raspi.DimmerActorImpl">
 		<property name="pin" ref="GPIO_00" />
 	</bean>
-	<bean id="dressingroomLight1" class="house.intelli.raspi.DimmerActor">
+	<bean id="dressingroomLight1" class="house.intelli.raspi.DimmerActorImpl">
 		<property name="pin" ref="GPIO_02" />
 	</bean>
 
-	<bean id="dressingroomPowerSupply" class="house.intelli.raspi.RelayActor">
+	<bean id="dressingroomPowerSupply" class="house.intelli.raspi.RelayActorImpl">
 		<property name="pin" ref="GPIO_08" />
 	</bean>
 
-	<bean id="dressingroomLightController" class="house.intelli.raspi.LightController">
+	<bean id="dressingroomLightController" class="house.intelli.raspi.LightControllerImpl">
 		<property name="keyButtons">
 			<list>
 				<ref bean="dressingroomKeyButton" />
@@ -107,22 +107,22 @@
 	<!-- END dressingroom -->
 
 	<!-- BEGIN bathroom -->
-	<bean id="bathroomKeyButton" class="house.intelli.raspi.KeyButtonSensor">
+	<bean id="bathroomKeyButton" class="house.intelli.raspi.KeyButtonSensorImpl">
 		<property name="pin" ref="GPIO_12" />  <!-- phys. pin 19 -->
 	</bean>
 
-	<bean id="bathroomLight0" class="house.intelli.raspi.DimmerActor">
+	<bean id="bathroomLight0" class="house.intelli.raspi.DimmerActorImpl">
 		<property name="pin" ref="GPIO_04" />
 	</bean>
-	<bean id="bathroomLight1" class="house.intelli.raspi.DimmerActor">
+	<bean id="bathroomLight1" class="house.intelli.raspi.DimmerActorImpl">
 		<property name="pin" ref="GPIO_05" />
 	</bean>
 
-	<bean id="bathroomPowerSupply" class="house.intelli.raspi.RelayActor">
+	<bean id="bathroomPowerSupply" class="house.intelli.raspi.RelayActorImpl">
 		<property name="pin" ref="GPIO_09" />
 	</bean>
 
-	<bean id="bathroomLightController" class="house.intelli.raspi.LightController">
+	<bean id="bathroomLightController" class="house.intelli.raspi.LightControllerImpl">
 		<property name="keyButtons">
 			<list>
 				<ref bean="bathroomKeyButton" />

@@ -15,14 +15,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import house.intelli.core.bean.AbstractBean;
-import house.intelli.core.bean.PropertyBase;
 
-public class LightController extends AbstractBean<LightController.Property> implements AutoCloseable {
-	private final Logger logger = LoggerFactory.getLogger(LightController.class);
+public class LightControllerImpl extends AbstractBean<DimmerActor.Property> implements DimmerActor, AutoCloseable {
+	private final Logger logger = LoggerFactory.getLogger(LightControllerImpl.class);
 
-	public static interface Property extends PropertyBase { }
-
-	public static enum PropertyEnum implements Property {
+	public static enum PropertyEnum implements DimmerActor.Property {
 		lightDimmerValuesIndex,
 		lightOn,
 		switchOffOnKeyButtonUp,
@@ -48,33 +45,34 @@ public class LightController extends AbstractBean<LightController.Property> impl
 	private int lightDimmerValuesIndex = -1;
 	private Boolean lightOn;
 
-	private List<KeyButtonSensor> keyButtons = new ArrayList<>();
-	private List<DimmerActor> lights = new ArrayList<>();
-	private List<RelayActor> powerSupplies = new ArrayList<>();
+	private List<KeyButtonSensorImpl> keyButtons = new ArrayList<>();
+	private List<DimmerActorImpl> lights = new ArrayList<>();
+	private List<RelayActorImpl> powerSupplies = new ArrayList<>();
 	private boolean switchOffOnKeyButtonUp;
 	private DimDirection dimDirection = DimDirection.DOWN;
+	private int dimmerValue;
 
-	private static final Timer timer = new Timer("LightController.timer", true);
+	private static final Timer timer = new Timer("LightControllerImpl.timer", true);
 	private TimerTask timerTask;
 
-	public List<KeyButtonSensor> getKeyButtons() {
+	public List<KeyButtonSensorImpl> getKeyButtons() {
 		return keyButtons;
 	}
-	public void setKeyButtons(List<KeyButtonSensor> keyButtonSensors) {
-		this.keyButtons = keyButtonSensors == null ? new ArrayList<>() : keyButtonSensors;
+	public void setKeyButtons(List<KeyButtonSensorImpl> keyButtonSensorImpls) {
+		this.keyButtons = keyButtonSensorImpls == null ? new ArrayList<>() : keyButtonSensorImpls;
 	}
 
-	public List<DimmerActor> getLights() {
+	public List<DimmerActorImpl> getLights() {
 		return lights;
 	}
-	public void setLights(List<DimmerActor> lights) {
+	public void setLights(List<DimmerActorImpl> lights) {
 		this.lights = lights == null ? new ArrayList<>() : lights;
 	}
 
-	public List<RelayActor> getPowerSupplies() {
+	public List<RelayActorImpl> getPowerSupplies() {
 		return powerSupplies;
 	}
-	public void setPowerSupplies(List<RelayActor> powerSupplies) {
+	public void setPowerSupplies(List<RelayActorImpl> powerSupplies) {
 		this.powerSupplies = powerSupplies == null ? new ArrayList<>() : powerSupplies;
 	}
 
@@ -187,12 +185,12 @@ public class LightController extends AbstractBean<LightController.Property> impl
 	private void onDimmerValueChange() {
 		assertEventThread();
 		boolean energized = false;
-		for (DimmerActor light : lights) {
+		for (DimmerActorImpl light : lights) {
 			int dimmerValue = light.getDimmerValue();
-			if (DimmerActor.MIN_DIMMER_VALUE != dimmerValue)
+			if (DimmerActorImpl.MIN_DIMMER_VALUE != dimmerValue)
 				energized = true;
 		}
-		for (RelayActor powerSupply : powerSupplies) {
+		for (RelayActorImpl powerSupply : powerSupplies) {
 			powerSupply.setEnergized(energized);
 		}
 	}
@@ -203,10 +201,10 @@ public class LightController extends AbstractBean<LightController.Property> impl
 		lights = Collections.unmodifiableList(lights);
 		powerSupplies = Collections.unmodifiableList(powerSupplies);
 
-		for (KeyButtonSensor keyButton : keyButtons) {
+		for (KeyButtonSensorImpl keyButton : keyButtons) {
 			keyButton.addPropertyChangeListener(KeyButtonSensor.PropertyEnum.down, keyButtonDownListener);
 		}
-		for (DimmerActor light : lights) {
+		for (DimmerActorImpl light : lights) {
 			light.addPropertyChangeListener(DimmerActor.PropertyEnum.dimmerValue, dimmerValueListener);
 		}
 		setLightOn(false);
@@ -223,6 +221,7 @@ public class LightController extends AbstractBean<LightController.Property> impl
 			throw new IllegalArgumentException("lightDimmerValuesIndex out of range!");
 
 		setPropertyValue(PropertyEnum.lightDimmerValuesIndex, lightDimmerValuesIndex);
+		setPropertyValue(DimmerActor.PropertyEnum.dimmerValue, LIGHT_DIMMER_VALUES[lightDimmerValuesIndex]);
 		applyLightsDimmerValue();
 	}
 
@@ -239,8 +238,8 @@ public class LightController extends AbstractBean<LightController.Property> impl
 
 	private void applyLightsDimmerValue() {
 		assertEventThread();
-		for (DimmerActor light : lights) {
-			light.setDimmerValue(isLightOn() ? LIGHT_DIMMER_VALUES[lightDimmerValuesIndex] : DimmerActor.MIN_DIMMER_VALUE);
+		for (DimmerActorImpl light : lights) {
+			light.setDimmerValue(isLightOn() ? LIGHT_DIMMER_VALUES[lightDimmerValuesIndex] : DimmerActorImpl.MIN_DIMMER_VALUE);
 		}
 	}
 
@@ -257,14 +256,38 @@ public class LightController extends AbstractBean<LightController.Property> impl
 	protected void _close() {
 		assertEventThread();
 
-		for (KeyButtonSensor keyButton : keyButtons) {
+		for (KeyButtonSensorImpl keyButton : keyButtons) {
 			keyButton.removePropertyChangeListener(KeyButtonSensor.PropertyEnum.down, keyButtonDownListener);
 		}
-		for (DimmerActor light : lights) {
+		for (DimmerActorImpl light : lights) {
 			light.removePropertyChangeListener(DimmerActor.PropertyEnum.dimmerValue, dimmerValueListener);
 		}
 		keyButtons = new ArrayList<>(keyButtons);
 		lights = new ArrayList<>(lights);
 		powerSupplies = new ArrayList<>(powerSupplies);
+	}
+
+	@Override
+	public int getDimmerValue() {
+		return LIGHT_DIMMER_VALUES[lightDimmerValuesIndex];
+	}
+	@Override
+	public void setDimmerValue(final int dimmerValue) {
+		if (dimmerValue < MIN_DIMMER_VALUE)
+			throw new IllegalArgumentException("dimmerValue < MIN_DIMMER_VALUE");
+
+		if (dimmerValue > MAX_DIMMER_VALUE)
+			throw new IllegalArgumentException("dimmerValue > MAX_DIMMER_VALUE");
+
+		int bestDistance = Integer.MAX_VALUE;
+		int bestIndex = -1;
+		for (int i = 0; i < LIGHT_DIMMER_VALUES.length; i++) {
+			int d = Math.abs(LIGHT_DIMMER_VALUES[i] - dimmerValue);
+			if (d < bestDistance) {
+				bestDistance = d;
+				bestIndex = i;
+			}
+		}
+		setLightDimmerValuesIndex(bestIndex);
 	}
 }

@@ -30,7 +30,7 @@ public class RpcClient implements AutoCloseable {
 			this.rpcClientTransportProvider = null;
 	}
 
-	public <REQ extends Request, RES extends Response> RES invoke(final REQ request) throws RpcException {
+	public <REQ extends Request<RES>, RES extends Response> RES invoke(final REQ request) throws RpcException {
 		assertNotNull(request, "request");
 		prepareRequest(request);
 
@@ -38,7 +38,7 @@ public class RpcClient implements AutoCloseable {
 		DeferredResponseRequest deferredResponseRequest = null;
 		try {
 			while (true) {
-				Request req = deferredResponseRequest != null ? deferredResponseRequest : request;
+				Request<?> req = deferredResponseRequest != null ? deferredResponseRequest : request;
 				logger.debug("invoke: Sending request: {}", req);
 
 				Response response;

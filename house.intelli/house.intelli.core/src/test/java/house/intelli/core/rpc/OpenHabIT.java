@@ -6,12 +6,13 @@ import java.net.URL;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import house.intelli.core.rpc.echo.EchoRequest;
 import house.intelli.core.rpc.echo.EchoResponse;
 
-//@Ignore // Currently only used in development, with running OpenHAB server in IDE.
+@Ignore("Currently only used in development, with running OpenHAB server in IDE.")
 public class OpenHabIT {
 
 	private RpcContext rpcContext;

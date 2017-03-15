@@ -3,7 +3,7 @@ package house.intelli.core.rpc;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class PutInverseResponseRequest extends Request {
+public class PutInverseResponseRequest extends Request<VoidResponse> {
 
 	private Response inverseResponse;
 

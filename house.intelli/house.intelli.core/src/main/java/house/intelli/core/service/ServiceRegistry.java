@@ -45,6 +45,7 @@ public class ServiceRegistry<S> {
 
 	public void addDelegate(final ServiceRegistryDelegate<S> delegate) {
 		assertNotNull(delegate, "delegate");
+		logger.info("addDelegate: serviceClass={}, delegate={}", serviceClass.getName(), delegate);
 		delegate.setServiceRegistry(this);
 		delegates.add(delegate);
 		fireServiceRegistryChanged();
@@ -52,6 +53,7 @@ public class ServiceRegistry<S> {
 
 	public void removeDelegate(final ServiceRegistryDelegate<S> delegate) {
 		assertNotNull(delegate, "delegate");
+		logger.info("removeDelegate: serviceClass={}, delegate={}", serviceClass.getName(), delegate);
 		delegates.remove(delegate);
 		fireServiceRegistryChanged();
 		delegate.setServiceRegistry(null);

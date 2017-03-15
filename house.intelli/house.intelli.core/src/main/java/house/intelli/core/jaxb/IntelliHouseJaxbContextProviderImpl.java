@@ -12,8 +12,16 @@ import house.intelli.core.rpc.PollInverseRequestsResponse;
 import house.intelli.core.rpc.PutInverseResponseRequest;
 import house.intelli.core.rpc.RpcService;
 import house.intelli.core.rpc.RpcServiceRegistry;
-import house.intelli.core.rpc.dimmer.DimmerSetRequest;
-import house.intelli.core.rpc.dimmer.DimmerSetResponse;
+import house.intelli.core.rpc.dimmer.DimmerActorEventRequest;
+import house.intelli.core.rpc.dimmer.DimmerActorReadRequest;
+import house.intelli.core.rpc.dimmer.DimmerActorReadResponse;
+import house.intelli.core.rpc.dimmer.DimmerActorWriteRequest;
+import house.intelli.core.rpc.dimmer.DimmerActorWriteResponse;
+import house.intelli.core.rpc.relay.RelayActorEventRequest;
+import house.intelli.core.rpc.relay.RelayActorReadRequest;
+import house.intelli.core.rpc.relay.RelayActorReadResponse;
+import house.intelli.core.rpc.relay.RelayActorWriteRequest;
+import house.intelli.core.rpc.relay.RelayActorWriteResponse;
 
 public class IntelliHouseJaxbContextProviderImpl extends AbstractIntelliHouseJaxbContextProvider {
 
@@ -39,8 +47,17 @@ public class IntelliHouseJaxbContextProviderImpl extends AbstractIntelliHouseJax
 		// END framework stuff
 
 		// BEGIN RpcService-related DTOs for which there might be no RpcService registered
-		classes.add(DimmerSetRequest.class);
-		classes.add(DimmerSetResponse.class);
+		classes.add(DimmerActorEventRequest.class);
+		classes.add(DimmerActorReadRequest.class);
+		classes.add(DimmerActorReadResponse.class);
+		classes.add(DimmerActorWriteRequest.class);
+		classes.add(DimmerActorWriteResponse.class);
+
+		classes.add(RelayActorEventRequest.class);
+		classes.add(RelayActorReadRequest.class);
+		classes.add(RelayActorReadResponse.class);
+		classes.add(RelayActorWriteRequest.class);
+		classes.add(RelayActorWriteResponse.class);
 		// END RpcService-related DTOs for which there might be no RpcService registered
 
 		return classes.toArray(new Class<?>[classes.size()]);

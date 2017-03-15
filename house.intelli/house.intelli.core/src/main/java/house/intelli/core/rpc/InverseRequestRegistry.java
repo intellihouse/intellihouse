@@ -24,7 +24,7 @@ public class InverseRequestRegistry {
 
 	private final RpcContext rpcContext;
 	private final Object mutex = new Object();
-	private final Map<HostId, Map<Uid, Request>> serverHostId2RequestId2Request = new HashMap<>();
+	private final Map<HostId, Map<Uid, Request<?>>> serverHostId2RequestId2Request = new HashMap<>();
 	private final Map<Uid, EvictDescriptor> requestId2EvictDescriptor = new HashMap<>();
 
 	private final Timer evictTimer;
@@ -37,7 +37,7 @@ public class InverseRequestRegistry {
 		public final long timeout;
 		public final long timeoutElapsed;
 
-		public EvictDescriptor(Request request) {
+		public EvictDescriptor(Request<?> request) {
 			assertNotNull(request, "request");
 			serverHostId = assertNotNull(request.getServerHostId(), "request.serverHostId");
 			requestId = assertNotNull(request.getRequestId(), "request.requestId");
@@ -48,6 +48,10 @@ public class InverseRequestRegistry {
 
 			timeoutElapsed = created + timeout;
 		}
+	}
+
+	public RpcContext getRpcContext() {
+		return rpcContext;
 	}
 
 	protected InverseRequestRegistry(RpcContext rpcContext) {
@@ -66,17 +70,17 @@ public class InverseRequestRegistry {
 		evictTimer.schedule(evictTimerTask, EVICT_PERIOD, EVICT_PERIOD);
 	}
 
-	public void putRequest(final Request request) {
+	public void putRequest(final Request<?> request) {
 		assertNotNull(request, "request");
 		final HostId serverHostId = assertNotNull(request.getServerHostId(), "request.serverHostId");
 		final Uid requestId = assertNotNull(request.getRequestId(), "request.requestId");
 		synchronized (mutex) {
-			Map<Uid, Request> requestId2Request = serverHostId2RequestId2Request.get(serverHostId);
+			Map<Uid, Request<?>> requestId2Request = serverHostId2RequestId2Request.get(serverHostId);
 			if (requestId2Request == null) {
 				requestId2Request = new HashMap<>();
 				serverHostId2RequestId2Request.put(serverHostId, requestId2Request);
 			}
-			Request old = requestId2Request.put(requestId, request);
+			Request<?> old = requestId2Request.put(requestId, request);
 			if (old != null && old != request)
 				throw new IllegalArgumentException("There was already another request with the same requestId! WTF?! requestId=" + requestId);
 
@@ -86,7 +90,7 @@ public class InverseRequestRegistry {
 		}
 	}
 
-	public List<Request> pollRequests(final HostId serverHostId, final long timeout) {
+	public List<Request<?>> pollRequests(final HostId serverHostId, final long timeout) {
 		assertNotNull(serverHostId, "serverHostId");
 		if (timeout < 0)
 			throw new IllegalArgumentException("timeout < 0");
@@ -94,9 +98,9 @@ public class InverseRequestRegistry {
 		final long startTimestamp = System.currentTimeMillis();
 		synchronized (mutex) {
 			while (true) {
-				Map<Uid, Request> requestId2Request = serverHostId2RequestId2Request.remove(serverHostId);
+				Map<Uid, Request<?>> requestId2Request = serverHostId2RequestId2Request.remove(serverHostId);
 				if (requestId2Request != null && ! requestId2Request.isEmpty()) {
-					List<Request> result = new ArrayList<>(requestId2Request.values());
+					List<Request<?>> result = new ArrayList<>(requestId2Request.values());
 					requestId2Request.keySet().forEach(requestId -> requestId2EvictDescriptor.remove(requestId));
 					return Collections.unmodifiableList(result);
 				}
@@ -124,7 +128,7 @@ public class InverseRequestRegistry {
 			for (Iterator<EvictDescriptor> it = requestId2EvictDescriptor.values().iterator(); it.hasNext(); ) {
 				EvictDescriptor evictDescriptor = it.next();
 				if (evictDescriptor.timeoutElapsed < now) {
-					Map<Uid, Request> requestId2Request = serverHostId2RequestId2Request.get(evictDescriptor.serverHostId);
+					Map<Uid, Request<?>> requestId2Request = serverHostId2RequestId2Request.get(evictDescriptor.serverHostId);
 					if (requestId2Request != null) {
 						requestId2Request.remove(evictDescriptor.requestId);
 

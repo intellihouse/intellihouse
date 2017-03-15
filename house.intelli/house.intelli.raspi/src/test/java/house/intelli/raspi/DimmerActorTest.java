@@ -16,7 +16,7 @@ import mockit.integration.junit4.JMockit;
 @RunWith(JMockit.class)
 public class DimmerActorTest {
 
-	private DimmerActor dimmerActor;
+	private DimmerActorImpl dimmerActorImpl;
 
 	@BeforeClass
 	public static void beforeDimmerActorTest() {
@@ -30,7 +30,7 @@ public class DimmerActorTest {
 
 	@Before
 	public void before() {
-		dimmerActor = new DimmerActor() {
+		dimmerActorImpl = new DimmerActorImpl() {
 			@Override
 			protected void applyDimmerValue() {
 				// We have no hardware!
@@ -42,44 +42,44 @@ public class DimmerActorTest {
 
 	@After
 	public void after() {
-		if (dimmerActor != null)
-			dimmerActor.close();
+		if (dimmerActorImpl != null)
+			dimmerActorImpl.close();
 	}
 
 	@Test
 	public void dimmerValue0() {
-		dimmerActor.setDimmerValue(0);
-		assertThat(dimmerActor.getDimmerValue()).isEqualTo(0);
+		dimmerActorImpl.setDimmerValue(0);
+		assertThat(dimmerActorImpl.getDimmerValue()).isEqualTo(0);
 	}
 
 	@Test
 	public void dimmerValue100() {
-		dimmerActor.setDimmerValue(100);
-		assertThat(dimmerActor.getDimmerValue()).isEqualTo(100);
+		dimmerActorImpl.setDimmerValue(100);
+		assertThat(dimmerActorImpl.getDimmerValue()).isEqualTo(100);
 	}
 
 	@Test(expected=IllegalArgumentException.class)
 	public void dimmerValue101() {
-		dimmerActor.setDimmerValue(101);
+		dimmerActorImpl.setDimmerValue(101);
 	}
 
 	@Test(expected=IllegalArgumentException.class)
 	public void dimmerValue_1() {
-		dimmerActor.setDimmerValue(-1);
+		dimmerActorImpl.setDimmerValue(-1);
 	}
 
 	@Test
 	public void dimmerValue() {
 		int dimmerValue = 87;
-		dimmerActor.setDimmerValue(dimmerValue);
-		assertThat(dimmerActor.getDimmerValue()).isEqualTo(dimmerValue);
+		dimmerActorImpl.setDimmerValue(dimmerValue);
+		assertThat(dimmerActorImpl.getDimmerValue()).isEqualTo(dimmerValue);
 	}
 
 	@Test
 	public void dimmerValues() {
-		for (int dimmerValue : LightController.LIGHT_DIMMER_VALUES) {
-			dimmerActor.setDimmerValue(dimmerValue);
-			assertThat(dimmerActor.getDimmerValue()).isEqualTo(dimmerValue);
+		for (int dimmerValue : LightControllerImpl.LIGHT_DIMMER_VALUES) {
+			dimmerActorImpl.setDimmerValue(dimmerValue);
+			assertThat(dimmerActorImpl.getDimmerValue()).isEqualTo(dimmerValue);
 		}
 	}
 

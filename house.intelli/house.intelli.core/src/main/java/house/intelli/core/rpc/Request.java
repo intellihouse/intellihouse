@@ -2,7 +2,7 @@ package house.intelli.core.rpc;
 
 import java.util.Date;
 
-public abstract class Request extends RpcMessage {
+public abstract class Request<RES extends Response> extends RpcMessage {
 
 	public static final long TIMEOUT_UNDEFINED = 0;
 

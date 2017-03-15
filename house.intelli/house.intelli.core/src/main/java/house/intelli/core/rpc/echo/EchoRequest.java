@@ -5,7 +5,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import house.intelli.core.rpc.Request;
 
 @XmlRootElement
-public class EchoRequest extends Request {
+public class EchoRequest extends Request<EchoResponse> {
 
 	private String payload;
 	private String throwExceptionClassName;
