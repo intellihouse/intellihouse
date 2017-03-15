@@ -5,7 +5,7 @@ import static house.intelli.core.util.ReflectionUtil.*;
 
 import java.lang.reflect.Type;
 
-public abstract class AbstractRpcService<REQ extends Request, RES extends Response> implements RpcService<REQ, RES>, Cloneable {
+public abstract class AbstractRpcService<REQ extends Request<RES>, RES extends Response> implements RpcService<REQ, RES>, Cloneable {
 
 	private Class<REQ> requestType;
 

@@ -5,6 +5,7 @@ import static house.intelli.core.util.AssertUtil.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 import house.intelli.core.rpc.HostId;
 import house.intelli.core.rpc.RpcClient;
 import house.intelli.core.rpc.RpcContext;
+import house.intelli.core.rpc.RpcException;
 import house.intelli.core.rpc.dimmer.DimmerActorEventRequest;
 import house.intelli.raspi.DimmerActor;
 
@@ -30,7 +32,7 @@ public class DimmerActorEventNotifier {
 
 	private ApplicationContext applicationContext;
 
-	private List<DimmerActor> dimmerActors;
+	private List<DimmerActor> dimmerActors = Collections.emptyList();
 
 	private RpcContext rpcContext;
 
@@ -54,18 +56,13 @@ public class DimmerActorEventNotifier {
 				logger.error("dimmerValuePropertyChangeListener.propertyChange: beanId not found for " + dimmerActor);
 				return;
 			}
+			logger.debug("dimmerValuePropertyChangeListener.propertyChange: beanId={}, dimmerValue={}", beanId, dimmerValue);
 
 			executorService.submit(new Runnable() {
 				@Override
 				public void run() {
 					try {
-						DimmerActorEventRequest request = new DimmerActorEventRequest();
-						request.setServerHostId(HostId.SERVER);
-						request.setChannelId(beanId);
-						request.setDimmerValue(dimmerValue);
-						try (RpcClient rpcClient = rpcContext.createRpcClient()) {
-							rpcClient.invoke(request);
-						}
+						invokeDimmerActorEventRequest(beanId, dimmerValue);
 					} catch (Exception x) {
 						logger.error("dimmerValuePropertyChangeListener.propertyChange.run: " + x, x);
 					}
@@ -74,9 +71,25 @@ public class DimmerActorEventNotifier {
 		}
 	};
 
+	protected void invokeDimmerActorEventRequest(final String beanId, final int dimmerValue) throws RpcException {
+		logger.debug("invokeDimmerActorEventRequest: beanId={}, dimmerValue={}", beanId, dimmerValue);
+		DimmerActorEventRequest request = new DimmerActorEventRequest();
+		request.setServerHostId(HostId.SERVER);
+		request.setChannelId(beanId);
+		request.setDimmerValue(dimmerValue);
+		try (RpcClient rpcClient = rpcContext.createRpcClient()) {
+			rpcClient.invoke(request);
+		}
+	}
+
+	public DimmerActorEventNotifier() {
+		logger.info("<init>");
+	}
+
 	public ApplicationContext getApplicationContext() {
 		return applicationContext;
 	}
+
 	@Autowired
 	public void setApplicationContext(ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
@@ -85,35 +98,32 @@ public class DimmerActorEventNotifier {
 	public RpcContext getRpcContext() {
 		return rpcContext;
 	}
+
 	@Autowired
 	public void setRpcContext(RpcContext rpcContext) {
 		this.rpcContext = rpcContext;
 	}
 
 	public List<DimmerActor> getDimmerActors() {
-		if (dimmerActors == null)
-			dimmerActors = new ArrayList<>();
-
 		return dimmerActors;
 	}
+
 	@Autowired
 	public void setDimmerActors(List<DimmerActor> dimmerActors) {
 		assertEventThread();
-		this.dimmerActors = dimmerActors;
-	}
+		logger.debug("setDimmerActors: dimmerActors={}", dimmerActors);
 
-	public DimmerActorEventNotifier() {
-	}
+		List<DimmerActor> oldDimmerActors = this.dimmerActors;
+		for (DimmerActor dimmerActor : oldDimmerActors)
+			dimmerActor.removePropertyChangeListener(DimmerActor.PropertyEnum.dimmerValue, dimmerValuePropertyChangeListener);
 
-	public void addDimmerActor(DimmerActor dimmerActor) {
-		assertNotNull(dimmerActor, "dimmerActor");
-		assertEventThread();
-		dimmerActor.addPropertyChangeListener(DimmerActor.PropertyEnum.dimmerValue, dimmerValuePropertyChangeListener);
-	}
+		if (dimmerActors == null)
+			this.dimmerActors = Collections.emptyList();
+		else {
+			for (DimmerActor dimmerActor : dimmerActors)
+				dimmerActor.addPropertyChangeListener(DimmerActor.PropertyEnum.dimmerValue, dimmerValuePropertyChangeListener);
 
-	public void removeDimmerActor(DimmerActor dimmerActor) {
-		assertNotNull(dimmerActor, "dimmerActor");
-		assertEventThread();
-		dimmerActor.removePropertyChangeListener(DimmerActor.PropertyEnum.dimmerValue, dimmerValuePropertyChangeListener);
+			this.dimmerActors = Collections.unmodifiableList(new ArrayList<>(dimmerActors));
+		}
 	}
 }

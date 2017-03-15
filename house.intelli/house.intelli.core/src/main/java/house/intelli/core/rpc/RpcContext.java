@@ -85,7 +85,7 @@ public class RpcContext implements AutoCloseable {
 		return inverseRequestRegistry;
 	}
 
-	public boolean isServerLocal(final Request request) {
+	public boolean isServerLocal(final Request<?> request) {
 		assertNotNull(request, "request");
 		assertNotClosed();
 		final HostId serverHostId = assertNotNull(request.getServerHostId(), "request.serverHostId");
