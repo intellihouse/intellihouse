@@ -7,8 +7,8 @@
  */
 package org.openhab.binding.intellihouse.handler;
 
-import static house.intelli.core.util.AssertUtil.*;
-import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.*;
+import static house.intelli.core.util.AssertUtil.assertNotNull;
+import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.THING_CONFIG_KEY_HOST_ID;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.smarthome.core.common.registry.RegistryChangeListener;
-import org.eclipse.smarthome.core.items.ItemRegistry;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
@@ -182,16 +181,17 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
         }
     }
 
-    protected ItemRegistry getItemRegistryOrFail() {
-        ServiceReference<ItemRegistry> serviceReference = bundleContext.getServiceReference(ItemRegistry.class);
+    protected <S> S getServiceOrFail(final Class<S> serviceClass) {
+        assertNotNull(serviceClass, "serviceClass");
+        ServiceReference<S> serviceReference = bundleContext.getServiceReference(serviceClass);
         if (serviceReference == null) {
-            throw new IllegalStateException("No ServiceReference found for: " + ItemRegistry.class.getName());
+            throw new IllegalStateException("No ServiceReference found for: " + serviceClass.getName());
         }
-        ItemRegistry itemRegistry = bundleContext.getService(serviceReference);
-        if (itemRegistry == null) {
+        S service = bundleContext.getService(serviceReference);
+        if (service == null) {
             throw new IllegalStateException("ServiceReference did not point to existing service: " + serviceReference);
         }
-        return itemRegistry;
+        return service;
     }
 
     protected Collection<ChannelUID> getChannelUIDs() {

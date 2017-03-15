@@ -1,31 +1,23 @@
 package org.openhab.binding.intellihouse.rpc.dimmer;
 
-import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.*;
-
-import java.util.Set;
+import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.THING_TYPE_DIMMER;
 
 import org.eclipse.smarthome.core.events.EventPublisher;
-import org.eclipse.smarthome.core.items.Item;
-import org.eclipse.smarthome.core.items.ItemUtil;
-import org.eclipse.smarthome.core.items.events.ItemEventFactory;
 import org.eclipse.smarthome.core.library.types.PercentType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
-import org.eclipse.smarthome.core.thing.ThingUID;
 import org.eclipse.smarthome.core.thing.link.ItemChannelLinkRegistry;
-import org.eclipse.smarthome.core.types.State;
+import org.openhab.binding.intellihouse.rpc.ChannelRpcService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import house.intelli.core.rpc.AbstractRpcService;
 import house.intelli.core.rpc.VoidResponse;
 import house.intelli.core.rpc.dimmer.DimmerActorEventRequest;
 
-public class DimmerActorEventRpcService extends AbstractRpcService<DimmerActorEventRequest, VoidResponse> {
+public class DimmerActorEventRpcService extends ChannelRpcService<DimmerActorEventRequest, VoidResponse> {
 
     private final Logger logger = LoggerFactory.getLogger(DimmerActorEventRpcService.class);
 
     protected EventPublisher eventPublisher;
-    // protected ThingRegistry thingRegistry;
     protected ItemChannelLinkRegistry itemChannelLinkRegistry;
     // protected ItemRegistry itemRegistry;
 
@@ -40,14 +32,6 @@ public class DimmerActorEventRpcService extends AbstractRpcService<DimmerActorEv
     public void unsetEventPublisher(EventPublisher eventPublisher) {
         this.eventPublisher = null;
     }
-
-    // public void setThingRegistry(ThingRegistry thingRegistry) {
-    // this.thingRegistry = thingRegistry;
-    // }
-    //
-    // public void unsetThingRegistry(ThingRegistry thingRegistry) {
-    // this.thingRegistry = null;
-    // }
 
     public void setItemChannelLinkRegistry(ItemChannelLinkRegistry itemChannelLinkRegistry) {
         this.itemChannelLinkRegistry = itemChannelLinkRegistry;
@@ -67,10 +51,11 @@ public class DimmerActorEventRpcService extends AbstractRpcService<DimmerActorEv
 
     @Override
     public VoidResponse process(DimmerActorEventRequest request) throws Exception {
-        ThingUID thingUID = new ThingUID(THING_TYPE_DIMMER, request.getClientHostId().toString());
-        ChannelUID channelUID = new ChannelUID(thingUID, request.getChannelId());
+        logger.debug("process: request={}", request);
         PercentType percent = new PercentType(request.getDimmerValue());
-        stateUpdated(channelUID, percent);
+        for (ChannelUID channelUID : getChannelUIDs(THING_TYPE_DIMMER, request)) {
+            stateUpdated(channelUID, percent);
+        }
         return null;
     }
 
@@ -89,13 +74,4 @@ public class DimmerActorEventRpcService extends AbstractRpcService<DimmerActorEv
     // logger.error("Could not post 'ThingStatusInfoEvent' event: " + ex.getMessage(), ex);
     // }
     // }
-
-    public void stateUpdated(ChannelUID channelUID, State state) {
-        Set<Item> items = itemChannelLinkRegistry.getLinkedItems(channelUID);
-        for (Item item : items) {
-            State acceptedState = ItemUtil.convertToAcceptedState(state, item);
-            eventPublisher
-                    .post(ItemEventFactory.createStateEvent(item.getName(), acceptedState, channelUID.toString()));
-        }
-    }
 }
