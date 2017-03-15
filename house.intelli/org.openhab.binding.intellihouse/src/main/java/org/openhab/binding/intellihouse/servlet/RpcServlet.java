@@ -106,7 +106,7 @@ public class RpcServlet extends BaseServlet {
             Hashtable<String, String> props = new Hashtable<String, String>();
             httpService.registerServlet(WEBAPP_ALIAS + "/" + SERVLET_NAME, this, props, createHttpContext());
 
-            thingStatusOfflineTimer = new Timer("thingStatusOfflineTimer");
+            thingStatusOfflineTimer = new Timer("thingStatusOfflineTimer", true);
             thingStatusOfflineTimerTask = new TimerTask() {
                 @Override
                 public void run() {
@@ -168,14 +168,19 @@ public class RpcServlet extends BaseServlet {
                         res.getOutputStream())) {
                     rpcServer.receiveAndProcessRequest(rst);
                 }
-                Request request = rpcServer.getRequest();
+                Request<?> request = rpcServer.getRequest();
                 assertNotNull(request, "rpcServer.request");
                 Date now = new Date();
                 ThingStatusInfo thingStatusInfo = new ThingStatusInfo(ThingStatus.ONLINE, ThingStatusDetail.NONE, null);
                 for (Thing thing : getThings(request.getClientHostId())) {
                     thing.getConfiguration().put(THING_CONFIG_KEY_LAST_SEEN_DATE, now);
                     thing.getConfiguration().remove(THING_CONFIG_KEY_MAYBE_OFFLINE_SINCE_DATE);
-                    setThingStatus(thing, thingStatusInfo);
+
+                    // We prevent a configuration error to be overwritten by ONLINE, even if the outpost says properly
+                    // "hello"!
+                    if (!isThingStatusConfigurationError(thing)) {
+                        setThingStatus(thing, thingStatusInfo);
+                    }
                 }
             }
         } else {
@@ -218,12 +223,11 @@ public class RpcServlet extends BaseServlet {
             final Date lastSeenDate = (Date) thing.getConfiguration().get(THING_CONFIG_KEY_LAST_SEEN_DATE);
 
             if (lastSeenDate != null) {
-                if (now - lastSeenDate.getTime() > THING_OFFLINE_TIMEOUT) {
+                if (now - lastSeenDate.getTime() > THING_OFFLINE_TIMEOUT && !isThingStatusOffline(thing)) {
                     ThingStatusInfo thingStatusInfo = new ThingStatusInfo(ThingStatus.OFFLINE,
                             ThingStatusDetail.COMMUNICATION_ERROR,
                             String.format("Host '%s' was last seen %2$tY-%2$tm-%2$td %2$tH:%2$tM:%2$tS %2$tZ.",
                                     hostIdStr, lastSeenDate));
-                    // TODO proper ISO formatting of the date!
                     setThingStatus(thing, thingStatusInfo);
                 }
                 continue;
@@ -235,29 +239,27 @@ public class RpcServlet extends BaseServlet {
                 thing.getConfiguration().put(THING_CONFIG_KEY_MAYBE_OFFLINE_SINCE_DATE, maybeOfflineSinceDate);
                 continue;
             }
-            if (now - maybeOfflineSinceDate.getTime() > THING_OFFLINE_TIMEOUT) {
+            if (now - maybeOfflineSinceDate.getTime() > THING_OFFLINE_TIMEOUT && !isThingStatusOffline(thing)) {
                 ThingStatusInfo thingStatusInfo = new ThingStatusInfo(ThingStatus.OFFLINE,
                         ThingStatusDetail.COMMUNICATION_ERROR,
                         String.format(
                                 "Host '%s' was never seen. It is offline at least since %2$tY-%2$tm-%2$td %2$tH:%2$tM:%2$tS %2$tZ.",
                                 hostIdStr, maybeOfflineSinceDate));
-                // TODO proper ISO formatting of the date!
                 setThingStatus(thing, thingStatusInfo);
             }
         }
     }
 
-    protected boolean isThingStatusWritable(final Thing thing) {
+    protected boolean isThingStatusOffline(final Thing thing) {
         assertNotNull(thing, "thing");
-        ThingStatusInfo statusInfo = thing.getStatusInfo();
-        if (statusInfo == null) {
-            return false;
-        }
-        // If there is a configuration error, we do not want the status to be overwritten.
-        if (ThingStatusDetail.CONFIGURATION_ERROR.equals(statusInfo.getStatusDetail())) {
-            return false;
-        }
-        return true;
+        ThingStatusInfo statusInfo = assertNotNull(thing.getStatusInfo(), "thing.statusInfo");
+        return ThingStatus.OFFLINE.equals(statusInfo.getStatus());
+    }
+
+    protected boolean isThingStatusConfigurationError(final Thing thing) {
+        assertNotNull(thing, "thing");
+        ThingStatusInfo statusInfo = assertNotNull(thing.getStatusInfo(), "thing.statusInfo");
+        return ThingStatusDetail.CONFIGURATION_ERROR.equals(statusInfo.getStatusDetail());
     }
 
     protected List<Thing> getThings(final HostId hostId) {
@@ -276,12 +278,12 @@ public class RpcServlet extends BaseServlet {
     protected void setThingStatus(Thing thing, ThingStatusInfo thingStatusInfo) {
         assertNotNull(thing, "thing");
         assertNotNull(thingStatusInfo, "thingStatusInfo");
-        if (!isThingStatusWritable(thing)) {
-            logger.warn(
-                    "setThingStatus: thingUid={}: NOT setting status, because isThingStatusWritable(...) returned false!",
-                    thing.getUID());
-            return;
-        }
+        // if (!isThingStatusWritable(thing)) {
+        // logger.warn(
+        // "setThingStatus: thingUid={}: NOT setting status, because isThingStatusWritable(...) returned false!",
+        // thing.getUID());
+        // return;
+        // }
         ThingStatusInfo oldStatusInfo = thing.getStatusInfo();
         thing.setStatusInfo(thingStatusInfo);
         try {
