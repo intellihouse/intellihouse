@@ -20,4 +20,9 @@ public abstract class ChannelRequest<RES extends Response> extends Request<RES> 
 		ChannelRequest<?> cr = (ChannelRequest<?>) request;
 		this.setChannelId(cr.getChannelId());
 	}
+
+	@Override
+	protected String toString_getProperties() {
+		return super.toString_getProperties() + ", channelId=" + channelId;
+	}
 }
