@@ -1,6 +1,6 @@
 package house.intelli.core.service;
 
-public abstract class AbstractServiceRegistryDelegate<S> implements ServiceRegistryDelegate<S> {
+public abstract class AbstractServiceRegistryDelegate<S> implements ServiceRegistryDelegate<S>, AutoCloseable {
 
 	private ServiceRegistry<S> serviceRegistry;
 
@@ -13,4 +13,11 @@ public abstract class AbstractServiceRegistryDelegate<S> implements ServiceRegis
 		this.serviceRegistry = serviceRegistry;
 	}
 
+	@Override
+  public void close() {
+      final ServiceRegistry<S> serviceRegistry = getServiceRegistry();
+      if (serviceRegistry != null) {
+          serviceRegistry.removeDelegate(this);
+      }
+  }
 }

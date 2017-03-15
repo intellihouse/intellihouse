@@ -45,6 +45,7 @@ public class ServiceRegistry<S> {
 
 	public void addDelegate(final ServiceRegistryDelegate<S> delegate) {
 		assertNotNull(delegate, "delegate");
+		delegate.setServiceRegistry(this);
 		delegates.add(delegate);
 		fireServiceRegistryChanged();
 	}
@@ -53,6 +54,7 @@ public class ServiceRegistry<S> {
 		assertNotNull(delegate, "delegate");
 		delegates.remove(delegate);
 		fireServiceRegistryChanged();
+		delegate.setServiceRegistry(null);
 	}
 
 	public void addListener(final ServiceRegistryListener<S> listener) {

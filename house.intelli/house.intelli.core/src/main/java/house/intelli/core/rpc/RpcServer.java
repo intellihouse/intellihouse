@@ -17,6 +17,9 @@ public class RpcServer implements AutoCloseable {
 
 	private final RpcContext rpcContext;
 
+	private Request request;
+	private Response response;
+
 	protected RpcServer(final RpcContext rpcContext) {
 		this.rpcContext = assertNotNull(rpcContext, "rpcContext");
 	}
@@ -27,8 +30,8 @@ public class RpcServer implements AutoCloseable {
 			throw new IllegalArgumentException("rpcServerTransport.rpcContext != this.rpcContext");
 
 		try {
-			Request request = null;
-			Response response = null;
+			request = null;
+			response = null;
 			try {
 				request = rpcServerTransport.receiveRequest();
 				response = process(request);
@@ -90,6 +93,21 @@ public class RpcServer implements AutoCloseable {
 			response.copyRequestCoordinates(request); // warning! this might be a DeferredResponseRequest -- not the original request! but currently, this does not matter as the data copied is the same.
 		}
 
+		return response;
+	}
+
+	/**
+	 * Gets the last request after an invocation of {@link #receiveAndProcessRequest(RpcServerTransport)}.
+	 * @return the last request or <code>null</code>.
+	 */
+	public Request getRequest() {
+		return request;
+	}
+	/**
+	 * Gets the last response after an invocation of {@link #receiveAndProcessRequest(RpcServerTransport)}.
+	 * @return the last response or <code>null</code>.
+	 */
+	public Response getResponse() {
 		return response;
 	}
 
