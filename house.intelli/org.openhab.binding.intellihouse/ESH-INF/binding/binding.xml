@@ -5,7 +5,8 @@
         xsi:schemaLocation="http://eclipse.org/smarthome/schemas/binding/v1.0.0 http://eclipse.org/smarthome/schemas/binding-1.0.0.xsd">
 
     <name>IntelliHouse Binding</name>
-    <description>This is the binding for IntelliHouse.</description>
-    <author>Marco Nguitragool</author>
+    <description>Binding for IntelliHouse, communicating with / controlling Raspberry Pi
+    outposts running IntelliHouse.</description>
+    <author>CodeWizards GmbH</author>
 
 </binding:binding>
