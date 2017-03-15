@@ -12,22 +12,23 @@ import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.*;
 import java.util.Collections;
 import java.util.Set;
 
-import org.openhab.binding.intellihouse.handler.IntelliHouseHandler;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
+import org.openhab.binding.intellihouse.handler.IntelliHouseDimmerHandler;
+import org.openhab.binding.intellihouse.handler.IntelliHouseSwitchHandler;
 
 /**
- * The {@link IntelliHouseHandlerFactory} is responsible for creating things and thing 
+ * The {@link IntelliHouseHandlerFactory} is responsible for creating things and thing
  * handlers.
- * 
+ *
  * @author Marco Nguitragool - Initial contribution
  */
 public class IntelliHouseHandlerFactory extends BaseThingHandlerFactory {
-    
-    private final static Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.singleton(THING_TYPE_SAMPLE);
-    
+
+    private final static Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.singleton(THING_TYPE_DIMMER);
+
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
         return SUPPORTED_THING_TYPES_UIDS.contains(thingTypeUID);
@@ -38,11 +39,13 @@ public class IntelliHouseHandlerFactory extends BaseThingHandlerFactory {
 
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
-        if (thingTypeUID.equals(THING_TYPE_SAMPLE)) {
-            return new IntelliHouseHandler(thing);
+        if (thingTypeUID.equals(THING_TYPE_DIMMER)) {
+            return new IntelliHouseDimmerHandler(thing);
+        }
+        if (thingTypeUID.equals(THING_TYPE_SWITCH)) {
+            return new IntelliHouseSwitchHandler(thing);
         }
 
         return null;
     }
 }
-
