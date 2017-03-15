@@ -5,8 +5,8 @@
         xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
 
     <thing-type id="dimmer">
-        <label>IntelliHouse Binding Dimmer</label>
-        <description>Dimmer IntelliHouse Binding</description>
+        <label>IntelliHouse Dimmer</label>
+        <description>Dimmer controlling lights or other dimmable devices.</description>
 
 <!-- Channels are dynamic! The last segment of a channel's UID, i.e. the channel-id, is the same as the Spring-bean-id. 
         <channels>
@@ -20,6 +20,11 @@
             <channel id="channel7" typeId="light-channel"/>
         </channels>
 -->
+    </thing-type>
+    
+    <thing-type id="switch">
+        <label>IntelliHouse Switch</label>
+        <description>Switch lights or other devices on/off.</description>
     </thing-type>
 
     <channel-type id="dimmer-channel">

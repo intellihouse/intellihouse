@@ -7,6 +7,9 @@
  */
 package org.openhab.binding.intellihouse.handler;
 
+import static house.intelli.core.util.AssertUtil.*;
+import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.*;
+
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
@@ -37,49 +40,39 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
         super(thing);
     }
 
-    // @Override
-    // public void handleCommand(ChannelUID channelUID, Command command) {
-    // logger.info("handleCommand: channelUID={}, command={}", channelUID, command);
-    // final RpcContext rpcContext = getRpcContextOrFail();
-    //// if (channelUID.getId().equals(CHANNEL_1)) {
-    //// // TODO: handle command
-    ////
-    //// // Note: if communication with thing fails for some reason,
-    //// // indicate that by setting the status with detail information
-    //// // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-    //// // "Could not control device at IP address x.x.x.x");
-    ////
-    //// }
-    // }
-
     @Override
     public void initialize() {
-        logger.info("initialize: thingUid={}", getThing().getUID());
+        logger.info("initialize: thingUid={}: Beginning initialization.", getThing().getUID());
         final RpcContext rpcContext = getRpcContextOrFail();
-        // updateStatus(ThingStatus.UNKNOWN); // Status is "INITIALIZING" and we must not set it, now!
+        try {
+            serverHostId = new HostId((String) getThing().getConfiguration().get(THING_CONFIG_KEY_HOST_ID));
+        } catch (Exception x) {
+            logger.warn("initialize.run: thingUid=" + getThing().getUID() + ": hostId missing/illegal: " + x, x);
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "hostId missing/illegal!");
+            return;
+        }
+
+        // updateStatus(ThingStatus.UNKNOWN); // Status is "INITIALIZING" and we must *not* set it, now!!!
+
+        // We do *not* attempt to talk with the device here. Whether the device is online or offline is
+        // determined by the RpcServlet. Hence, we leave the current state "INITIALIZING" -- the RpcServlet
+        // should update it soon to either ONLINE or OFFLINE.
+
+        if (true) {
+            return;
+        }
+
         new Thread("InitializeThread:" + getThing().getUID()) {
             @Override
             public void run() {
                 try {
-                    try {
-                        serverHostId = new HostId((String) getThing().getConfiguration().get("hostId"));
-                    } catch (Exception x) {
-                        logger.warn(
-                                "initialize.run: thingUid=" + getThing().getUID() + ": hostId missing/illegal: " + x,
-                                x);
-                        updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-                                "hostId missing/illegal!");
-                        return;
-                    }
-
-                    if (true) { // TODO later!
-                        try (RpcClient rpcClient = rpcContext.createRpcClient()) {
-                            EchoRequest echoRequest = new EchoRequest();
-                            echoRequest.setServerHostId(serverHostId);
-                            echoRequest.setPayload("initialize");
-                            EchoResponse echoResponse = rpcClient.invoke(echoRequest);
-                            logger.info("");
-                        }
+                    try (RpcClient rpcClient = rpcContext.createRpcClient()) {
+                        EchoRequest echoRequest = new EchoRequest();
+                        echoRequest.setServerHostId(serverHostId);
+                        echoRequest.setPayload("initialize");
+                        EchoResponse echoResponse = rpcClient.invoke(echoRequest);
+                        assertNotNull(echoResponse, "echoResponse");
+                        logger.info("initialize: thingUid={}: Successfully initialized.", getThing().getUID());
                     }
                     updateStatus(ThingStatus.ONLINE);
                 } catch (Exception x) {

@@ -7,7 +7,8 @@
  */
 package org.openhab.binding.intellihouse.servlet;
 
-import static house.intelli.core.util.AssertUtil.assertNotNull;
+import static house.intelli.core.util.AssertUtil.*;
+import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.*;
 
 import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
@@ -15,11 +16,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -28,24 +29,28 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.smarthome.core.events.EventPublisher;
+import org.eclipse.smarthome.core.thing.Thing;
+import org.eclipse.smarthome.core.thing.ThingRegistry;
+import org.eclipse.smarthome.core.thing.ThingStatus;
+import org.eclipse.smarthome.core.thing.ThingStatusDetail;
+import org.eclipse.smarthome.core.thing.ThingStatusInfo;
+import org.eclipse.smarthome.core.thing.events.ThingEventFactory;
 import org.openhab.binding.intellihouse.IntelliHouseActivator;
+import org.openhab.binding.intellihouse.service.OsgiServiceRegistryDelegate;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceListener;
-import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.http.NamespaceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import house.intelli.core.jaxb.IntelliHouseJaxbContextProvider;
+import house.intelli.core.rpc.HostId;
 import house.intelli.core.rpc.JaxbRpcServerTransport;
+import house.intelli.core.rpc.Request;
 import house.intelli.core.rpc.RpcContext;
 import house.intelli.core.rpc.RpcContextMode;
 import house.intelli.core.rpc.RpcServer;
 import house.intelli.core.rpc.RpcService;
-import house.intelli.core.service.AbstractServiceRegistryDelegate;
 import house.intelli.core.service.ServiceRegistry;
-import house.intelli.core.service.ServiceRegistryDelegate;
 
 public class RpcServlet extends BaseServlet {
     private static final String METHOD_POST = "POST";
@@ -55,15 +60,19 @@ public class RpcServlet extends BaseServlet {
     public static final String SERVLET_NAME = "RPC";
 
     private EventPublisher eventPublisher;
+    private ThingRegistry thingRegistry;
 
     private RpcContext rpcContext;
 
     private BundleContext bundleContext;
 
-    private ServiceRegistry<RpcService> rcpServiceServiceRegistry;
-    private ServiceListener rpcServiceServiceListener;
-    private ServiceRegistryDelegate<RpcService> rpcServiceServiceRegistryDelegate;
+    @SuppressWarnings("rawtypes")
+    private OsgiServiceRegistryDelegate<RpcService> rpcServiceServiceRegistryDelegate;
+    private OsgiServiceRegistryDelegate<IntelliHouseJaxbContextProvider> jaxbContextProviderServiceRegistryDelegate;
     private ServiceRegistration<RpcContext> rpcContextServiceRegistration;
+
+    private Timer thingStatusOfflineTimer;
+    private TimerTask thingStatusOfflineTimerTask;
 
     public void setEventPublisher(EventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
@@ -83,61 +92,60 @@ public class RpcServlet extends BaseServlet {
 
             bundleContext = IntelliHouseActivator.getInstance().getBundleContext();
 
-            rcpServiceServiceRegistry = ServiceRegistry.getInstance(RpcService.class);
-            rpcServiceServiceRegistryDelegate = new AbstractServiceRegistryDelegate<RpcService>() {
-                @Override
-                public List<RpcService> getServices() {
-                    try {
-                        List<RpcService> rpcServices = new ArrayList<>();
-                        Collection<ServiceReference<RpcService>> serviceReferences = bundleContext
-                                .getServiceReferences(RpcService.class, null);
-                        for (ServiceReference<RpcService> serviceReference : serviceReferences) {
-                            RpcService service = bundleContext.getService(serviceReference);
-                            if (service != null) {
-                                rpcServices.add(service);
-                            }
-                        }
-                        return rpcServices;
-                    } catch (InvalidSyntaxException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            };
-            rcpServiceServiceRegistry.addDelegate(rpcServiceServiceRegistryDelegate);
-            rpcServiceServiceListener = event -> rcpServiceServiceRegistry.fireServiceRegistryChanged();
-            bundleContext.addServiceListener(rpcServiceServiceListener);
+            rpcServiceServiceRegistryDelegate = new OsgiServiceRegistryDelegate<>(RpcService.class, bundleContext);
+            ServiceRegistry.getInstance(RpcService.class).addDelegate(rpcServiceServiceRegistryDelegate);
 
-            if (rpcContext != null) {
-                rpcContext.close();
-            }
+            jaxbContextProviderServiceRegistryDelegate = new OsgiServiceRegistryDelegate<>(
+                    IntelliHouseJaxbContextProvider.class, bundleContext);
+            ServiceRegistry.getInstance(IntelliHouseJaxbContextProvider.class)
+                    .addDelegate(jaxbContextProviderServiceRegistryDelegate);
+
             rpcContext = new RpcContext(RpcContextMode.SERVER);
             rpcContextServiceRegistration = bundleContext.registerService(RpcContext.class, rpcContext, null);
 
             Hashtable<String, String> props = new Hashtable<String, String>();
             httpService.registerServlet(WEBAPP_ALIAS + "/" + SERVLET_NAME, this, props, createHttpContext());
 
-        } catch (NamespaceException e) {
-            logger.error("Error during servlet startup", e);
-        } catch (ServletException e) {
-            logger.error("Error during servlet startup", e);
+            thingStatusOfflineTimer = new Timer("thingStatusOfflineTimer");
+            thingStatusOfflineTimerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    try {
+                        updateThingStatusOffline();
+                    } catch (Throwable x) {
+                        logger.error("thingStatusOfflineTimerTask.run: " + x, x);
+                    }
+                }
+            };
+            thingStatusOfflineTimer.schedule(thingStatusOfflineTimerTask, THING_OFFLINE_CHECK_PERIOD,
+                    THING_OFFLINE_CHECK_PERIOD);
+        } catch (Exception e) {
+            logger.error("activate: " + e, e);
         }
     }
 
     protected void deactivate() {
-        if (rpcContextServiceRegistration != null) {
-            rpcContextServiceRegistration.unregister();
-            rpcContextServiceRegistration = null;
-        }
-        if (rcpServiceServiceRegistry != null && rpcServiceServiceRegistryDelegate != null) {
-            rcpServiceServiceRegistry.removeDelegate(rpcServiceServiceRegistryDelegate);
-        }
-        if (rpcServiceServiceListener != null) {
-            bundleContext.removeServiceListener(rpcServiceServiceListener);
-        }
-        httpService.unregister(WEBAPP_ALIAS + "/" + SERVLET_NAME);
-        if (rpcContext != null) {
-            rpcContext.close();
-            rpcContext = null;
+        try {
+            if (thingStatusOfflineTimer != null) {
+                thingStatusOfflineTimer.cancel();
+            }
+
+            httpService.unregister(WEBAPP_ALIAS + "/" + SERVLET_NAME);
+
+            if (rpcContextServiceRegistration != null) {
+                rpcContextServiceRegistration.unregister();
+            }
+            if (rpcServiceServiceRegistryDelegate != null) {
+                rpcServiceServiceRegistryDelegate.close();
+            }
+            if (jaxbContextProviderServiceRegistryDelegate != null) {
+                jaxbContextProviderServiceRegistryDelegate.close();
+            }
+            if (rpcContext != null) {
+                rpcContext.close();
+            }
+        } catch (Exception e) {
+            logger.error("deactivate: " + e, e);
         }
     }
 
@@ -150,27 +158,28 @@ public class RpcServlet extends BaseServlet {
     }
 
     @Override
-    public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException {
-        HttpServletRequest request = (HttpServletRequest) req;
-        HttpServletResponse response = (HttpServletResponse) res;
+    public void service(final ServletRequest _req, final ServletResponse _res) throws ServletException, IOException {
+        final HttpServletRequest req = (HttpServletRequest) _req;
+        final HttpServletResponse res = (HttpServletResponse) _res;
 
-        if (METHOD_POST.equals(request.getMethod())) {
+        if (METHOD_POST.equals(req.getMethod())) {
             try (RpcServer rpcServer = getRpcContextOrFail().createRpcServer()) {
-                try (MyRpcServerTransport rpcServerTransport = new MyRpcServerTransport(rpcContext,
-                        request.getInputStream(), res.getOutputStream())) {
-                    rpcServer.receiveAndProcessRequest(rpcServerTransport);
+                try (MyRpcServerTransport rst = new MyRpcServerTransport(rpcContext, req.getInputStream(),
+                        res.getOutputStream())) {
+                    rpcServer.receiveAndProcessRequest(rst);
+                }
+                Request request = rpcServer.getRequest();
+                assertNotNull(request, "rpcServer.request");
+                Date now = new Date();
+                ThingStatusInfo thingStatusInfo = new ThingStatusInfo(ThingStatus.ONLINE, ThingStatusDetail.NONE, null);
+                for (Thing thing : getThings(request.getClientHostId())) {
+                    thing.getConfiguration().put(THING_CONFIG_KEY_LAST_SEEN_DATE, now);
+                    thing.getConfiguration().remove(THING_CONFIG_KEY_MAYBE_OFFLINE_SINCE_DATE);
+                    setThingStatus(thing, thingStatusInfo);
                 }
             }
         } else {
-            for (Map.Entry<String, String[]> me : req.getParameterMap().entrySet()) {
-                logger.info("{} = {}", me.getKey(), Arrays.toString(me.getValue()));
-            }
-            response.sendError(405, "Method not supported! Please use POST!");
-            // ServletOutputStream out = res.getOutputStream();
-            // OutputStreamWriter w = new OutputStreamWriter(out, StandardCharsets.UTF_8);
-            // w.write("<html><head><title>Method not supported!</title></head><body><b>Method not supported! Please use
-            // POST!</b></body></html>");
-            // w.flush();
+            res.sendError(405, String.format("Method '%s' not supported! Please use 'POST' instead!", req.getMethod()));
         }
 
         // for (Object key : req.getParameterMap().keySet()) {
@@ -202,8 +211,99 @@ public class RpcServlet extends BaseServlet {
         // }
     }
 
-    private static class MyRpcServerTransport extends JaxbRpcServerTransport {
+    protected void updateThingStatusOffline() {
+        final long now = System.currentTimeMillis();
+        for (final Thing thing : thingRegistry.getAll()) {
+            final String hostIdStr = (String) thing.getConfiguration().get(THING_CONFIG_KEY_HOST_ID);
+            final Date lastSeenDate = (Date) thing.getConfiguration().get(THING_CONFIG_KEY_LAST_SEEN_DATE);
 
+            if (lastSeenDate != null) {
+                if (now - lastSeenDate.getTime() > THING_OFFLINE_TIMEOUT) {
+                    ThingStatusInfo thingStatusInfo = new ThingStatusInfo(ThingStatus.OFFLINE,
+                            ThingStatusDetail.COMMUNICATION_ERROR,
+                            String.format("Host '%s' was last seen %2$tY-%2$tm-%2$td %2$tH:%2$tM:%2$tS %2$tZ.",
+                                    hostIdStr, lastSeenDate));
+                    // TODO proper ISO formatting of the date!
+                    setThingStatus(thing, thingStatusInfo);
+                }
+                continue;
+            }
+
+            Date maybeOfflineSinceDate = (Date) thing.getConfiguration().get(THING_CONFIG_KEY_MAYBE_OFFLINE_SINCE_DATE);
+            if (maybeOfflineSinceDate == null) {
+                maybeOfflineSinceDate = new Date();
+                thing.getConfiguration().put(THING_CONFIG_KEY_MAYBE_OFFLINE_SINCE_DATE, maybeOfflineSinceDate);
+                continue;
+            }
+            if (now - maybeOfflineSinceDate.getTime() > THING_OFFLINE_TIMEOUT) {
+                ThingStatusInfo thingStatusInfo = new ThingStatusInfo(ThingStatus.OFFLINE,
+                        ThingStatusDetail.COMMUNICATION_ERROR,
+                        String.format(
+                                "Host '%s' was never seen. It is offline at least since %2$tY-%2$tm-%2$td %2$tH:%2$tM:%2$tS %2$tZ.",
+                                hostIdStr, maybeOfflineSinceDate));
+                // TODO proper ISO formatting of the date!
+                setThingStatus(thing, thingStatusInfo);
+            }
+        }
+    }
+
+    protected boolean isThingStatusWritable(final Thing thing) {
+        assertNotNull(thing, "thing");
+        ThingStatusInfo statusInfo = thing.getStatusInfo();
+        if (statusInfo == null) {
+            return false;
+        }
+        // If there is a configuration error, we do not want the status to be overwritten.
+        if (ThingStatusDetail.CONFIGURATION_ERROR.equals(statusInfo.getStatusDetail())) {
+            return false;
+        }
+        return true;
+    }
+
+    protected List<Thing> getThings(final HostId hostId) {
+        assertNotNull(hostId, "hostId");
+        List<Thing> result = new ArrayList<>();
+        final String hostIdStr = hostId.toString();
+        for (final Thing thing : thingRegistry.getAll()) {
+            final String hid = (String) thing.getConfiguration().get(THING_CONFIG_KEY_HOST_ID);
+            if (hostIdStr.equals(hid)) {
+                result.add(thing);
+            }
+        }
+        return result;
+    }
+
+    protected void setThingStatus(Thing thing, ThingStatusInfo thingStatusInfo) {
+        assertNotNull(thing, "thing");
+        assertNotNull(thingStatusInfo, "thingStatusInfo");
+        if (!isThingStatusWritable(thing)) {
+            logger.warn(
+                    "setThingStatus: thingUid={}: NOT setting status, because isThingStatusWritable(...) returned false!",
+                    thing.getUID());
+            return;
+        }
+        ThingStatusInfo oldStatusInfo = thing.getStatusInfo();
+        thing.setStatusInfo(thingStatusInfo);
+        try {
+            eventPublisher.post(ThingEventFactory.createStatusInfoEvent(thing.getUID(), thingStatusInfo));
+            if (!oldStatusInfo.equals(thingStatusInfo)) {
+                eventPublisher.post(
+                        ThingEventFactory.createStatusInfoChangedEvent(thing.getUID(), thingStatusInfo, oldStatusInfo));
+            }
+        } catch (Exception ex) {
+            logger.error("Could not post 'ThingStatusInfoEvent' event: " + ex.getMessage(), ex);
+        }
+    }
+
+    public void setThingRegistry(ThingRegistry thingRegistry) {
+        this.thingRegistry = thingRegistry;
+    }
+
+    public void unsetThingRegistry(ThingRegistry thingRegistry) {
+        this.thingRegistry = null;
+    }
+
+    private static class MyRpcServerTransport extends JaxbRpcServerTransport {
         private final InputStream in;
         private final OutputStream out;
 
@@ -218,7 +318,7 @@ public class RpcServlet extends BaseServlet {
             return new FilterInputStream(in) {
                 @Override
                 public void close() throws IOException {
-                    // *not* closing!
+                    // *not* closing! It was *not* opened by us (but given to us from the outside).
                 }
             };
         }
@@ -228,11 +328,9 @@ public class RpcServlet extends BaseServlet {
             return new FilterOutputStream(out) {
                 @Override
                 public void close() throws IOException {
-                    // *not* closing!
+                    // *not* closing! It was *not* opened by us (but given to us from the outside).
                 }
             };
         }
-
     }
-
 }
