@@ -20,7 +20,7 @@
 	<bean id="rpcClientTransportProvider" class="house.intelli.core.rpc.HttpRpcClientTransportProvider">
 		<property name="serverUrl">
 			<bean class="java.net.URL">
-				<constructor-arg value="https://MY-OPENHAB-SERVER/intellihouse/RPC" />
+				<constructor-arg value="https://MY-OPENHAB-SERVER:8443" />
 			</bean>
 		</property>
 	</bean>
