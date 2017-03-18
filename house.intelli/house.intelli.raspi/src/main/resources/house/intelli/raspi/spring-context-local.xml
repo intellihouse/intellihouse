@@ -24,6 +24,12 @@
 			</bean>
 		</property>
 	</bean>
+	<!-- As very secure alternative, you can replace "house.intelli.core.rpc.HttpRpcClientTransportProvider"
+	by "house.intelli.pgp.rpc.PgpHttpRpcClientTransportProvider" to make use of OpenPGP-encryption+signatures.
+	If (due to reverse-NAT or other networking tweaks) the serverUrl's host-name does not match the
+	server's hostId, the optional property 'serverHostId' of type house.intelli.core.rpc.HostId can be specified.
+	If it is omitted, the host-name is parsed from the URL and converted to a 'HostId'.
+	-->
 	<!-- END RPC configuration for connection to OpenHAB central server -->
 
 	<!-- BEGIN bedroom -->

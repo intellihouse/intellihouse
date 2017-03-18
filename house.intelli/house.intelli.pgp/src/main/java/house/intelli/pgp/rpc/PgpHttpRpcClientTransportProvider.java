@@ -24,7 +24,7 @@ public class PgpHttpRpcClientTransportProvider extends HttpRpcClientTransportPro
 		URL serverUrl = assertNotNull(getActualServerUrl(), "serverUrl");
 		PgpHttpRpcClientTransport result = new PgpHttpRpcClientTransport();
 		result.setServerUrl(serverUrl);
-		result.setServerHostId(assertNotNull(getServerHostId(), "serverHostId"));
+		result.setServerHostId(getServerHostId());
 		return result;
 	}
 }
