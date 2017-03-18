@@ -21,7 +21,7 @@ public abstract class JaxbRpcClientTransport extends AbstractRpcClientTransport 
 	protected abstract InputStream createResponseInputStream() throws IOException;
 
 	@Override
-	public void sendRequest(final Request request) throws IOException {
+	public void sendRequest(final Request<?> request) throws IOException {
 		assertNotNull(request, "request");
 		JAXBContext jaxbContext = getJaxbContext();
 		try (OutputStream outputStream = createRequestOutputStream()) {

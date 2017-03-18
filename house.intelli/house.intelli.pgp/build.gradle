@@ -1,0 +1,6 @@
+dependencies {
+	compile project(':house.intelli.core')
+
+//	compile group: 'org.bouncycastle', name: 'bcpg-jdk15on', version: bouncycastleVersion
+	compile group: 'org.bouncycastle', name: 'org.bouncycastle.openpgp.wot' , version: bouncycastleWotVersion
+}

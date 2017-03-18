@@ -56,7 +56,7 @@ public class PollInverseRequestsThread extends Thread {
 					PollInverseRequestsResponse response = rpcClient.invoke(request);
 
 					// We pass these requests to an Executor. This thread must not block!
-					for (Request inverseRequest : response.getInverseRequests())
+					for (Request<?> inverseRequest : response.getInverseRequests())
 						putInverseRequest(inverseRequest);
 				}
 				sleepOnError = SLEEP_ON_ERROR_MIN;
@@ -72,7 +72,7 @@ public class PollInverseRequestsThread extends Thread {
 		}
 	}
 
-	protected void putInverseRequest(final Request inverseRequest) {
+	protected void putInverseRequest(final Request<?> inverseRequest) {
 		assertNotNull(inverseRequest, "inverseRequest");
 
 		executorService.submit(new Runnable() {
@@ -96,7 +96,7 @@ public class PollInverseRequestsThread extends Thread {
 		});
 	}
 
-	protected Response processLocally(final Request inverseRequest) throws Exception {
+	protected Response processLocally(final Request<?> inverseRequest) throws Exception {
 		assertNotNull(inverseRequest, "inverseRequest");
 		return rpcContext.getRpcServiceExecutor().processLocally(inverseRequest);
 	}

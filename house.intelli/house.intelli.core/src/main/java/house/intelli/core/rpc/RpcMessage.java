@@ -63,11 +63,11 @@ public abstract class RpcMessage {
 		this.serverHostId = channelId;
 	}
 
-	public void copyRequestCoordinates(Request<?> request) {
-		assertNotNull(request, "request");
-		this.setRequestId(request.getRequestId());
-		this.setClientHostId(request.getClientHostId());
-		this.setServerHostId(request.getServerHostId());
+	public void copyRequestCoordinates(RpcMessage message) {
+		assertNotNull(message, "message");
+		this.setRequestId(message.getRequestId());
+		this.setClientHostId(message.getClientHostId());
+		this.setServerHostId(message.getServerHostId());
 	}
 
 	@Override

@@ -404,9 +404,7 @@ public final class IOUtil {
 	 * 		This means it either was not existing already before or it has been
 	 * 		successfully deleted. <code>false</code> if the directory could not be
 	 * 		deleted.
-	 * @deprecated user File.deleteRecursively instead
 	 */
-	@Deprecated
 	public static boolean deleteDirectoryRecursively(final File dir)
 	{
 		if (!dir.exists())
@@ -456,9 +454,7 @@ public final class IOUtil {
 	 * @return True, if the file or directory does not exist anymore. This means it either
 	 * was not existing already before or it has been successfully deleted. False, if the
 	 * directory could not be deleted.
-	 * @deprecated Plz use File.deleteRecursively instead!
 	 */
-	@Deprecated
 	public static boolean deleteDirectoryRecursively(final String dir)
 	{
 		final File dirF = new File(dir);

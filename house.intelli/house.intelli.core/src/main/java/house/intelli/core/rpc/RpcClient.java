@@ -92,7 +92,7 @@ public class RpcClient implements AutoCloseable {
 		}
 	}
 
-	protected void prepareRequest(Request request) {
+	protected void prepareRequest(Request<?> request) {
 		assertNotNull(request, "request");
 		assertNotNull(request.getServerHostId(), "request.serverHostId");
 

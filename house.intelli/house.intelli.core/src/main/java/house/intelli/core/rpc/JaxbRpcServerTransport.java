@@ -19,7 +19,7 @@ public abstract class JaxbRpcServerTransport extends AbstractRpcServerTransport 
 	protected abstract OutputStream createResponseOutputStream() throws IOException;
 
 	@Override
-	public Request receiveRequest() throws IOException {
+	public Request<?> receiveRequest() throws IOException {
 		JAXBContext jaxbContext = getJaxbContext();
 		Object unmarshalled;
 		try (InputStream inputStream = createRequestInputStream()) {
@@ -28,7 +28,7 @@ public abstract class JaxbRpcServerTransport extends AbstractRpcServerTransport 
 		} catch (JAXBException x) {
 			throw new IOException(x);
 		}
-		return (Request) unmarshalled;
+		return (Request<?>) unmarshalled;
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 package house.intelli.core.rpc.channel;
 
-import house.intelli.core.rpc.Request;
 import house.intelli.core.rpc.Response;
+import house.intelli.core.rpc.RpcMessage;
 
 public abstract class ChannelResponse extends Response {
 
@@ -15,9 +15,17 @@ public abstract class ChannelResponse extends Response {
 	}
 
 	@Override
-	public void copyRequestCoordinates(Request request) {
-		super.copyRequestCoordinates(request);
-		ChannelRequest cr = (ChannelRequest) request;
-		this.setChannelId(cr.getChannelId());
+	public void copyRequestCoordinates(RpcMessage message) {
+		super.copyRequestCoordinates(message);
+
+		if (message instanceof ChannelRequest<?>)
+			this.setChannelId(((ChannelRequest<?>) message).getChannelId());
+		else if (message instanceof ChannelResponse)
+			this.setChannelId(((ChannelResponse) message).getChannelId());
+	}
+
+	@Override
+	protected String toString_getProperties() {
+		return super.toString_getProperties() + ", channelId=" + channelId;
 	}
 }

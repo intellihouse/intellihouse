@@ -7,7 +7,7 @@ public interface RpcServerTransport extends AutoCloseable {
 	RpcContext getRpcContext();
 	void setRpcContext(RpcContext rpcContext);
 
-	Request receiveRequest() throws IOException;
+	Request<?> receiveRequest() throws IOException;
 
 	void sendResponse(Response response) throws IOException;
 
