@@ -136,7 +136,7 @@ public class BcWithLocalGnuPgPgp extends AbstractPgp {
 				try {
 					runnable.run();
 				} catch (Exception x) {
-					logger.error("finalizer.finalize: " + x, x);
+					logger.error("finalizer.finalize: " + x + ' ', x);
 				}
 			}
 		}

@@ -64,7 +64,7 @@ public class DimmerActorEventNotifier {
 					try {
 						invokeDimmerActorEventRequest(beanId, dimmerValue);
 					} catch (Exception x) {
-						logger.error("dimmerValuePropertyChangeListener.propertyChange.run: " + x, x);
+						logger.error("dimmerValuePropertyChangeListener.propertyChange.run: " + x + ' ', x);
 					}
 				}
 			});

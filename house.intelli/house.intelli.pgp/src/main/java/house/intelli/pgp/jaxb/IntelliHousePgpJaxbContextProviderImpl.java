@@ -1,10 +1,18 @@
 package house.intelli.pgp.jaxb;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import house.intelli.core.jaxb.AbstractIntelliHouseJaxbContextProvider;
 import house.intelli.pgp.rpc.PgpRequest;
 import house.intelli.pgp.rpc.PgpResponse;
 
 public class IntelliHousePgpJaxbContextProviderImpl extends AbstractIntelliHouseJaxbContextProvider {
+	private static final Logger logger = LoggerFactory.getLogger(IntelliHousePgpJaxbContextProviderImpl.class);
+
+	public IntelliHousePgpJaxbContextProviderImpl() {
+		logger.info("<init>");
+	}
 
 	@Override
 	public Class<?>[] getClassesToBeBound() {

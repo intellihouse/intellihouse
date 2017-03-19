@@ -24,7 +24,6 @@ public class PgpHttpRpcClientTransport extends HttpRpcClientTransport {
 	}
 	public void setServerHostId(HostId serverHostId) {
 		pgpTransportSupport.setServerHostId(serverHostId);
-		resolveServerHostIdIfNeeded(); // is called after this.setServerUrl(...), hence we can resolve.
 	}
 
 	@Override
@@ -78,12 +77,4 @@ public class PgpHttpRpcClientTransport extends HttpRpcClientTransport {
 		else
 			return res;
 	}
-
-	private void resolveServerHostIdIfNeeded() {
-		if (getServerHostId() == null) {
-			String host = assertNotNull(getServerUrl(), "serverUrl").getHost();
-			setServerHostId(new HostId(host));
-		}
-	}
-
 }

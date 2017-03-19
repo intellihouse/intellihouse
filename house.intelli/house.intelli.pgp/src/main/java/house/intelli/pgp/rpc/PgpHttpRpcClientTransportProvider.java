@@ -12,19 +12,27 @@ public class PgpHttpRpcClientTransportProvider extends HttpRpcClientTransportPro
 
 	private HostId serverHostId;
 
-	public HostId getServerHostId() {
+	public synchronized HostId getServerHostId() {
 		return serverHostId;
 	}
-	public void setServerHostId(HostId serverHostId) {
+	public synchronized void setServerHostId(HostId serverHostId) {
 		this.serverHostId = serverHostId;
 	}
 
 	@Override
 	protected RpcClientTransport _createRpcClientTransport() {
+		resolveServerHostIdIfNeeded();
 		URL serverUrl = assertNotNull(getActualServerUrl(), "serverUrl");
 		PgpHttpRpcClientTransport result = new PgpHttpRpcClientTransport();
 		result.setServerUrl(serverUrl);
 		result.setServerHostId(getServerHostId());
 		return result;
+	}
+
+	private void resolveServerHostIdIfNeeded() {
+		if (getServerHostId() == null) {
+			String host = assertNotNull(getServerUrl(), "serverUrl").getHost();
+			setServerHostId(new HostId(host));
+		}
 	}
 }

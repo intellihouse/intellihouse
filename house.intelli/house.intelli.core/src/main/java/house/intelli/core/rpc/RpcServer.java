@@ -5,6 +5,9 @@ import static house.intelli.core.util.AssertUtil.*;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import house.intelli.core.Uid;
 
 /**
@@ -14,6 +17,7 @@ import house.intelli.core.Uid;
  * @author mn
  */
 public class RpcServer implements AutoCloseable {
+	private static final Logger logger = LoggerFactory.getLogger(RpcServer.class);
 
 	private final RpcContext rpcContext;
 
@@ -36,6 +40,7 @@ public class RpcServer implements AutoCloseable {
 				request = rpcServerTransport.receiveRequest();
 				response = process(request);
 			} catch (Exception x) {
+				logger.error("receiveAndProcessRequest: " + x + ' ', x);
 				Error error = RemoteExceptionUtil.createError(x);
 				response = new ErrorResponse(error);
 

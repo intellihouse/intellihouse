@@ -63,7 +63,7 @@ public class InverseRequestRegistry {
 				try {
 					evict();
 				} catch (Throwable x) {
-					logger.error("evictTimerTask.run: " + x, x);
+					logger.error("evictTimerTask.run: " + x + ' ', x);
 				}
 			}
 		};

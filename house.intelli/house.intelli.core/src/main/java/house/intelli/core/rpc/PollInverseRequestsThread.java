@@ -61,7 +61,7 @@ public class PollInverseRequestsThread extends Thread {
 				}
 				sleepOnError = SLEEP_ON_ERROR_MIN;
 			} catch (Throwable x) {
-				logger.error("run:" + x, x);
+				logger.error("run:" + x + ' ', x);
 				try {
 					sleep(sleepOnError); // prevent too many errors, hammering onto the server and spamming the log
 				} catch (InterruptedException e) {
@@ -109,7 +109,7 @@ public class PollInverseRequestsThread extends Thread {
 			request.setInverseResponse(inverseResponse);
 			rpcClient.invoke(request);
 		} catch (Exception x) {
-			logger.error("putInverseResponse: " + x, x);
+			logger.error("putInverseResponse: " + x + ' ', x);
 			// TODO handle this otherwise, too? we should retry later!!!
 		}
 	}

@@ -16,6 +16,9 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import house.intelli.core.auth.SignatureException;
 import house.intelli.core.jaxb.IntelliHouseJaxbContext;
 import house.intelli.core.rpc.HostId;
@@ -29,6 +32,8 @@ import house.intelli.pgp.PgpRegistry;
 import house.intelli.pgp.PgpSignature;
 
 public class PgpTransportSupport {
+
+	private static final Logger logger = LoggerFactory.getLogger(PgpTransportSupport.class);
 
 	private HostId serverHostId;
 	private JAXBContext jaxbContext;
@@ -47,7 +52,9 @@ public class PgpTransportSupport {
 	}
 
 	public HostId resolveRealServerHostId(final HostId hostId) {
-		assertNotNull(hostId, "hostId");
+		if (hostId == null)
+			return null;
+
 		final HostId serverHostId = assertNotNull(getServerHostId(), "serverHostId");
 		if (HostId.SERVER.equals(hostId))
 			return serverHostId;
@@ -109,52 +116,80 @@ public class PgpTransportSupport {
 		assertNotNull(plainData, "plainData");
 		assertNotNull(senderHostId, "senderHostId");
 		assertNotNull(recipientHostId, "recipientHostId");
+		final long startTimestampTotal = System.currentTimeMillis();
 
+		final long startTimestampLookupPgpKeyForSenderHostId = System.currentTimeMillis();
 		PgpKey senderKey = getMasterKeyOrFail(senderHostId);
+		final long stopTimestampLookupPgpKeyForSenderHostId = System.currentTimeMillis();
+
+		final long startTimestampLookupPgpKeyForRecipientHostId = System.currentTimeMillis();
 		PgpKey recipientKey = getMasterKeyOrFail(recipientHostId);
+		final long stopTimestampLookupPgpKeyForRecipientHostId = System.currentTimeMillis();
 
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
 		PgpEncoder encoder = pgp.createEncoder(new ByteArrayInputStream(plainData), bout);
 		encoder.setSignPgpKey(senderKey);
 		encoder.getEncryptPgpKeys().add(recipientKey);
-		encoder.encode();
 
+		final long startTimestampEncode = System.currentTimeMillis();
+		encoder.encode();
+		final long stopTimestampEncode = System.currentTimeMillis();
+
+		if (logger.isDebugEnabled()) {
+			logger.debug("encryptAndSign: lookupSenderKeyDuration={}ms, lookupRecipientKeyDuration={}ms, encodeDuration={}ms, totalDuration={}ms",
+					stopTimestampLookupPgpKeyForSenderHostId - startTimestampLookupPgpKeyForSenderHostId,
+					stopTimestampLookupPgpKeyForRecipientHostId - startTimestampLookupPgpKeyForRecipientHostId,
+					stopTimestampEncode - startTimestampEncode,
+					System.currentTimeMillis() - startTimestampTotal);
+		}
 		return bout.toByteArray();
 	}
 
 	public byte[] decryptAndVerifySignature(final byte[] encryptedData, final HostId senderHostId) throws IOException {
 		assertNotNull(encryptedData, "encryptedData");
 		assertNotNull(senderHostId, "senderHostId");
+		final long startTimestampTotal = System.currentTimeMillis();
 
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
 		PgpDecoder decoder = pgp.createDecoder(new ByteArrayInputStream(encryptedData), bout);
+		final long startTimestampDecode = System.currentTimeMillis();
 		try {
 			decoder.decode();
 		} catch (SignatureException e) {
 			throw new IOException(e);
 		}
+		final long stopTimestampDecode = System.currentTimeMillis();
+
 		PgpSignature signature = decoder.getPgpSignature();
 		if (signature == null)
 			throw new IOException("encryptedData was not signed!");
 
+		final long startTimestampLookupPgpKey = System.currentTimeMillis();
 		PgpKey pgpKey = pgp.getPgpKey(signature.getPgpKeyId());
 		if (pgpKey == null)
 			throw new IOException(String.format("encryptedData was signed by *unknown* key %s!",
 					signature.getPgpKeyId().toHumanString()));
+		final long stopTimestampLookupPgpKey = System.currentTimeMillis();
 
 		List<String> userIds = pgpKey.getUserIds();
-		if (! userIds.contains(encryptedData.toString()))
+		if (! userIds.contains(senderHostId.toString()))
 			throw new IOException(String.format("encryptedData was signed by key '%s' which does not have the userId '%s' associated! userIds of this key are: %s",
-					signature.getPgpKeyId().toHumanString(), encryptedData, userIds));
+					signature.getPgpKeyId().toHumanString(), senderHostId, userIds));
 
 		PgpKeyValidity keyValidity = pgp.getKeyValidity(pgpKey);
 		PgpKeyValidity minimumKeyValidity = PgpKeyValidity.FULL;
 		if (minimumKeyValidity.compareTo(keyValidity) > 0)
 			throw new IOException(String.format("encryptedData was signed by key '%s' (userId '%s'), which is not trusted/valid! minimumKeyValidity=%s, foundKeyValidity=%s",
-					signature.getPgpKeyId().toHumanString(), encryptedData, minimumKeyValidity, keyValidity));
+					signature.getPgpKeyId().toHumanString(), senderHostId, minimumKeyValidity, keyValidity));
 
+		if (logger.isDebugEnabled()) {
+			logger.debug("decryptAndVerifySignature: decodeDuration={}ms, lookupKeyDuration={}ms, totalDuration={}ms",
+					stopTimestampDecode - startTimestampDecode,
+					stopTimestampLookupPgpKey - startTimestampLookupPgpKey,
+					System.currentTimeMillis() - startTimestampTotal);
+		}
 		return bout.toByteArray();
 	}
 

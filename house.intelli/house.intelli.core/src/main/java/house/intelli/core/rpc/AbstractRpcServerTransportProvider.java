@@ -2,7 +2,7 @@ package house.intelli.core.rpc;
 
 import static house.intelli.core.util.AssertUtil.*;
 
-public abstract class AbstractRpcClientTransportProvider implements RpcClientTransportProvider {
+public abstract class AbstractRpcServerTransportProvider implements RpcServerTransportProvider {
 
 	private RpcContext rpcContext;
 
@@ -20,20 +20,20 @@ public abstract class AbstractRpcClientTransportProvider implements RpcClientTra
 	}
 
 	@Override
-	public final RpcClientTransport createRpcClientTransport() {
+	public final RpcServerTransport createRpcServerTransport() {
 		final RpcContext rpcContext = assertNotNull(getRpcContext(), "rpcContext");
-		RpcClientTransport rpcClientTransport = _createRpcClientTransport();
-		rpcClientTransport.setRpcContext(rpcContext);
-		return rpcClientTransport;
+		RpcServerTransport rpcServerTransport = _createRpcServerTransport();
+		rpcServerTransport.setRpcContext(rpcContext);
+		return rpcServerTransport;
 	}
 
-	protected abstract RpcClientTransport _createRpcClientTransport();
+	protected abstract RpcServerTransport _createRpcServerTransport();
 
 	@Override
-	public RpcClientTransportProvider clone() {
-		RpcClientTransportProvider clone;
+	public RpcServerTransportProvider clone() {
+		RpcServerTransportProvider clone;
 		try {
-			clone = (RpcClientTransportProvider) super.clone();
+			clone = (RpcServerTransportProvider) super.clone();
 		} catch (CloneNotSupportedException e) { // should really never happen!
 			throw new RuntimeException(e);
 		}

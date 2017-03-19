@@ -31,7 +31,7 @@ public class PgpRegistry {
 			try {
 				((AutoCloseable) pgp).close();
 			} catch (Exception e) {
-				logger.error("clearCache: " + e, e);
+				logger.error("clearCache: " + e + ' ', e);
 			}
 		}
 		pgp = null;

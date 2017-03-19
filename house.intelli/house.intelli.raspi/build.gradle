@@ -2,6 +2,7 @@ import org.apache.tools.ant.filters.*
 
 dependencies {
 	compile project(':house.intelli.core')
+	compile project(':house.intelli.pgp')
 
 	compile 'com.pi4j:pi4j-core:1.1'
 //	compile 'com.pi4j:pi4j-gpio-extension:1.1'

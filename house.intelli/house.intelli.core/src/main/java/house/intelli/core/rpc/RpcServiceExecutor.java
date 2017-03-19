@@ -59,7 +59,7 @@ public class RpcServiceExecutor {
 				try {
 					evict();
 				} catch (Throwable x) {
-					logger.error("evictTimerTask.run: " + x, x);
+					logger.error("evictTimerTask.run: " + x + ' ', x);
 				}
 			}
 		};
@@ -134,7 +134,7 @@ public class RpcServiceExecutor {
 					throw new IllegalStateException("Unknown mode: " + rpcContext.getMode());
 			}
 		} catch (Exception x) {
-			logger.error("processLocally: " + x, x);
+			logger.error("processLocally: " + x + ' ', x);
 			throw x;
 		}
 	}
@@ -155,7 +155,7 @@ public class RpcServiceExecutor {
 			response.copyRequestCoordinates(request);
 			return response;
 		} catch (Exception x) {
-			logger.error("processLocally: " + x, x);
+			logger.error("processLocally: " + x + ' ', x);
 			throw x;
 		}
 	}

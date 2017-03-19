@@ -20,6 +20,8 @@ import house.intelli.core.jaxb.IntelliHouseJaxbContextProvider;
 import house.intelli.core.rpc.RpcService;
 import house.intelli.core.service.ServiceRegistry;
 import house.intelli.core.util.IOUtil;
+import house.intelli.pgp.Pgp;
+import house.intelli.pgp.PgpRegistry;
 import house.intelli.raspi.service.SpringServiceRegistryDelegate;
 
 public class IntelliHouseRaspi {
@@ -44,9 +46,11 @@ public class IntelliHouseRaspi {
 					ServiceRegistry.getInstance(IntelliHouseJaxbContextProvider.class).addDelegate(
 							new SpringServiceRegistryDelegate<>(IntelliHouseJaxbContextProvider.class, applicationContext));
 
+					setupPgp();
+
 					logger.info("Created Spring ApplicationContext successfully.");
 				} catch (Throwable x) {
-					logger.error("Creating Spring ApplicationContext failed: " + x, x);
+					logger.error("Creating Spring ApplicationContext failed: " + x + ' ', x);
 					System.exit(1);
 				}
 			}
@@ -54,6 +58,15 @@ public class IntelliHouseRaspi {
 
 		while (! Thread.currentThread().isInterrupted()) {
 			Thread.sleep(500L);
+		}
+	}
+
+	private static void setupPgp() {
+		try {
+			Pgp pgp = PgpRegistry.getInstance().getPgpOrFail();
+			pgp.updateTrustDb();
+		} catch (Throwable x) {
+			LoggerFactory.getLogger(IntelliHouseRaspi.class).warn("setupPgp: " + x + ' ', x);
 		}
 	}
 

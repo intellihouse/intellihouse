@@ -117,6 +117,8 @@ subprojects {
 			def manifestFile = "${projectDir}/src/main/resources/META-INF/MANIFEST.MF"
 			if ( new File( manifestFile ).exists() )
 				from (manifestFile)
+
+			instruction 'Service-Component', 'OSGI-INF/*.xml'
 		}
 		manifest.attributes Provider: 'CodeWizards GmbH'
 	}
