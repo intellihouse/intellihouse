@@ -7,22 +7,26 @@
  */
 package org.openhab.binding.intellihouse.servlet;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static house.intelli.core.util.AssertUtil.assertNotNull;
+import static house.intelli.core.util.StringUtil.*;
+import static house.intelli.core.util.Util.equal;
 import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.*;
 
-import java.io.FilterInputStream;
-import java.io.FilterOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
@@ -38,19 +42,29 @@ import org.eclipse.smarthome.core.thing.events.ThingEventFactory;
 import org.openhab.binding.intellihouse.IntelliHouseActivator;
 import org.openhab.binding.intellihouse.service.OsgiServiceRegistryDelegate;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import house.intelli.core.jaxb.IntelliHouseJaxbContextProvider;
 import house.intelli.core.rpc.HostId;
-import house.intelli.core.rpc.JaxbRpcServerTransport;
+import house.intelli.core.rpc.HttpRpcServerTransportProvider;
 import house.intelli.core.rpc.Request;
 import house.intelli.core.rpc.RpcContext;
 import house.intelli.core.rpc.RpcContextMode;
 import house.intelli.core.rpc.RpcServer;
+import house.intelli.core.rpc.RpcServerTransport;
+import house.intelli.core.rpc.RpcServerTransportProvider;
 import house.intelli.core.rpc.RpcService;
+import house.intelli.core.rpc.ServletRpcServerTransport;
 import house.intelli.core.service.ServiceRegistry;
+import house.intelli.pgp.Pgp;
+import house.intelli.pgp.PgpKey;
+import house.intelli.pgp.PgpOwnerTrust;
+import house.intelli.pgp.PgpRegistry;
+import house.intelli.pgp.StaticPgpAuthenticationCallback;
+import house.intelli.pgp.rpc.PgpTransportSupport;
 
 public class RpcServlet extends BaseServlet {
     private static final String METHOD_POST = "POST";
@@ -58,6 +72,10 @@ public class RpcServlet extends BaseServlet {
     private final Logger logger = LoggerFactory.getLogger(RpcServlet.class);
 
     public static final String SERVLET_NAME = "RPC";
+
+    public static final String CONFIG_KEY_TRANSPORT = "transportProvider";
+    public static final String CONFIG_KEY_LOCAL_HOST_ID = "localHostId";
+    public static final String CONFIG_KEY_PGP_PASSPHRASE = "pgpPassphrase";
 
     private EventPublisher eventPublisher;
     private ThingRegistry thingRegistry;
@@ -74,21 +92,20 @@ public class RpcServlet extends BaseServlet {
     private Timer thingStatusOfflineTimer;
     private TimerTask thingStatusOfflineTimerTask;
 
-    public void setEventPublisher(EventPublisher eventPublisher) {
-        this.eventPublisher = eventPublisher;
-    }
+    private Map<String, Object> configProps = Collections.emptyMap();
 
-    public void unsetEventPublisher(EventPublisher eventPublisher) {
-        this.eventPublisher = null;
-    }
+    private RpcServerTransportProvider transportProvider;
 
-    public BundleContext getBundleContext() {
-        return bundleContext;
-    }
+    private final AtomicInteger singleThreadAssertCounter = new AtomicInteger();
 
-    protected void activate() {
+    protected void activate(Map<String, Object> configProps) {
+        int singleThreadAssertCounterValue = singleThreadAssertCounter.getAndIncrement();
         try {
-            logger.debug("Starting up RPC servlet at " + WEBAPP_ALIAS + "/" + SERVLET_NAME);
+            logger.debug("activate: Starting up RPC servlet at " + WEBAPP_ALIAS + "/" + SERVLET_NAME);
+            if (singleThreadAssertCounterValue != 0) {
+                throw new IllegalStateException("singleThreadAssertCounterValue != 0");
+            }
+            this.configProps = Collections.unmodifiableMap(new HashMap<>(configProps));
 
             bundleContext = IntelliHouseActivator.getInstance().getBundleContext();
 
@@ -100,8 +117,10 @@ public class RpcServlet extends BaseServlet {
             ServiceRegistry.getInstance(IntelliHouseJaxbContextProvider.class)
                     .addDelegate(jaxbContextProviderServiceRegistryDelegate);
 
-            rpcContext = new RpcContext(RpcContextMode.SERVER);
+            rpcContext = new RpcContext(RpcContextMode.SERVER, getLocalHostId());
             rpcContextServiceRegistration = bundleContext.registerService(RpcContext.class, rpcContext, null);
+
+            setupPgp();
 
             Hashtable<String, String> props = new Hashtable<String, String>();
             httpService.registerServlet(WEBAPP_ALIAS + "/" + SERVLET_NAME, this, props, createHttpContext());
@@ -121,11 +140,70 @@ public class RpcServlet extends BaseServlet {
                     THING_OFFLINE_CHECK_PERIOD);
         } catch (Exception e) {
             logger.error("activate: " + e, e);
+        } finally {
+            singleThreadAssertCounter.decrementAndGet();
+        }
+    }
+
+    protected void modified(Map<String, Object> configProps) {
+        int singleThreadAssertCounterValue = singleThreadAssertCounter.getAndIncrement();
+        try {
+            logger.debug("modified: New configuration for RPC servlet at " + WEBAPP_ALIAS + "/" + SERVLET_NAME);
+            if (singleThreadAssertCounterValue != 0) {
+                throw new IllegalStateException("singleThreadAssertCounterValue != 0");
+            }
+            this.configProps = Collections.unmodifiableMap(new HashMap<>(configProps));
+
+            if (!equal(getLocalHostId(), rpcContext == null ? null : rpcContext.getLocalHostId())) {
+                if (rpcContextServiceRegistration != null) {
+                    rpcContextServiceRegistration.unregister();
+                }
+                rpcContext = new RpcContext(RpcContextMode.SERVER, getLocalHostId());
+                rpcContextServiceRegistration = bundleContext.registerService(RpcContext.class, rpcContext, null);
+            }
+            setupPgp();
+        } finally {
+            singleThreadAssertCounter.decrementAndGet();
+        }
+    }
+
+    private HostId getLocalHostId() {
+        Object o = configProps.get(CONFIG_KEY_LOCAL_HOST_ID);
+        String s = trim(o == null ? null : o.toString());
+        if (isEmpty(s)) {
+            return HostId.getLocalHostId();
+        } else {
+            return new HostId(s);
+        }
+    }
+
+    private void setupPgp() {
+        try {
+            StaticPgpAuthenticationCallback callback = new StaticPgpAuthenticationCallback();
+            callback.setDefaultPassphrase(trim(String.valueOf(configProps.get(CONFIG_KEY_PGP_PASSPHRASE))));
+            PgpRegistry.getInstance().setPgpAuthenticationCallback(callback);
+            Pgp pgp = PgpRegistry.getInstance().getPgpOrFail();
+            PgpTransportSupport support = new PgpTransportSupport();
+            HostId localHostId = getLocalHostId();
+            PgpKey masterKey = support.getMasterKeyOrFail(localHostId);
+            if (!masterKey.isSecretKeyAvailable()) {
+                throw new IllegalStateException(String.format(
+                        "PGP key with id='%s' found for localHostId='%s' does not have a secret key available!",
+                        masterKey.getPgpKeyId().toHumanString(), localHostId));
+            }
+            pgp.setOwnerTrust(masterKey, PgpOwnerTrust.ULTIMATE);
+            pgp.updateTrustDb();
+        } catch (Throwable x) {
+            logger.warn("setupPgp: " + x + ' ', x);
         }
     }
 
     protected void deactivate() {
+        int singleThreadAssertCounterValue = singleThreadAssertCounter.getAndIncrement();
         try {
+            if (singleThreadAssertCounterValue != 0) {
+                throw new IllegalStateException("singleThreadAssertCounterValue != 0");
+            }
             if (thingStatusOfflineTimer != null) {
                 thingStatusOfflineTimer.cancel();
             }
@@ -146,6 +224,8 @@ public class RpcServlet extends BaseServlet {
             }
         } catch (Exception e) {
             logger.error("deactivate: " + e, e);
+        } finally {
+            singleThreadAssertCounter.decrementAndGet();
         }
     }
 
@@ -164,8 +244,7 @@ public class RpcServlet extends BaseServlet {
 
         if (METHOD_POST.equals(req.getMethod())) {
             try (RpcServer rpcServer = getRpcContextOrFail().createRpcServer()) {
-                try (MyRpcServerTransport rst = new MyRpcServerTransport(rpcContext, req.getInputStream(),
-                        res.getOutputStream())) {
+                try (RpcServerTransport rst = createRpcServerTransport(req.getInputStream(), res.getOutputStream())) {
                     rpcServer.receiveAndProcessRequest(rst);
                 }
                 Request<?> request = rpcServer.getRequest();
@@ -214,6 +293,54 @@ public class RpcServlet extends BaseServlet {
         // }
         // }
         // }
+    }
+
+    protected RpcServerTransport createRpcServerTransport(final ServletInputStream inputStream,
+            final ServletOutputStream outputStream) {
+        assertNotNull(inputStream, "inputStream");
+        assertNotNull(outputStream, "outputStream");
+
+        Object tpcn = configProps.get(CONFIG_KEY_TRANSPORT);
+        String transportProviderClassName = trim(tpcn == null ? null : tpcn.toString());
+        if (isEmpty(transportProviderClassName)) {
+            transportProviderClassName = HttpRpcServerTransportProvider.class.getName();
+        }
+        RpcServerTransportProvider transportProvider = getTransportProvider();
+        if (transportProvider == null || !equal(transportProviderClassName, transportProvider.getClass().getName())) {
+            ServiceReference<?> serviceReference = bundleContext.getServiceReference(transportProviderClassName);
+            Object service = serviceReference == null ? null : bundleContext.getService(serviceReference);
+            if (service == null) {
+                throw new IllegalStateException(
+                        String.format("The service of type %s configured by the config-key '%s' could not be found!",
+                                transportProviderClassName, CONFIG_KEY_TRANSPORT));
+            }
+            try {
+                transportProvider = (RpcServerTransportProvider) service;
+            } catch (ClassCastException x) {
+                throw new IllegalStateException(String.format(
+                        "The service of type %s configured by the config-key '%s' does not implement the interface %s!",
+                        transportProviderClassName, CONFIG_KEY_TRANSPORT, RpcServerTransportProvider.class.getName()));
+            }
+            setTransportProvider(transportProvider);
+        }
+        transportProvider = transportProvider.clone();
+        transportProvider.setRpcContext(getRpcContextOrFail());
+        RpcServerTransport rpcServerTransport = transportProvider.createRpcServerTransport();
+
+        if (rpcServerTransport instanceof ServletRpcServerTransport) {
+            ServletRpcServerTransport transport = (ServletRpcServerTransport) rpcServerTransport;
+            transport.setInputStream(inputStream);
+            transport.setOutputStream(outputStream);
+        }
+        return rpcServerTransport;
+    }
+
+    protected synchronized RpcServerTransportProvider getTransportProvider() {
+        return transportProvider;
+    }
+
+    protected synchronized void setTransportProvider(RpcServerTransportProvider transportProvider) {
+        this.transportProvider = transportProvider;
     }
 
     protected void updateThingStatusOffline() {
@@ -297,6 +424,18 @@ public class RpcServlet extends BaseServlet {
         }
     }
 
+    public BundleContext getBundleContext() {
+        return bundleContext;
+    }
+
+    public void setEventPublisher(EventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
+
+    public void unsetEventPublisher(EventPublisher eventPublisher) {
+        this.eventPublisher = null;
+    }
+
     public void setThingRegistry(ThingRegistry thingRegistry) {
         this.thingRegistry = thingRegistry;
     }
@@ -305,34 +444,4 @@ public class RpcServlet extends BaseServlet {
         this.thingRegistry = null;
     }
 
-    private static class MyRpcServerTransport extends JaxbRpcServerTransport {
-        private final InputStream in;
-        private final OutputStream out;
-
-        public MyRpcServerTransport(RpcContext rpcContext, InputStream in, OutputStream out) {
-            setRpcContext(assertNotNull(rpcContext, "rpcContext"));
-            this.in = assertNotNull(in, "in");
-            this.out = assertNotNull(out, "out");
-        }
-
-        @Override
-        protected InputStream createRequestInputStream() throws IOException {
-            return new FilterInputStream(in) {
-                @Override
-                public void close() throws IOException {
-                    // *not* closing! It was *not* opened by us (but given to us from the outside).
-                }
-            };
-        }
-
-        @Override
-        protected OutputStream createResponseOutputStream() throws IOException {
-            return new FilterOutputStream(out) {
-                @Override
-                public void close() throws IOException {
-                    // *not* closing! It was *not* opened by us (but given to us from the outside).
-                }
-            };
-        }
-    }
 }

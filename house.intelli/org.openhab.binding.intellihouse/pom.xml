@@ -21,25 +21,25 @@
 	<dependencies>
 		<dependency>
 			<groupId>house.intelli</groupId>
-			<artifactId>house.intelli.core</artifactId>
+			<artifactId>house.intelli.pgp</artifactId>
 			<version>0.9.0-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	
 	<properties> <!-- ...copied from openHAB's master-POM -->
-        <ohdr.version>1.0.10</ohdr.version>
-        <ohc.version>2.0.0.x</ohc.version>
+		<ohdr.version>1.0.10</ohdr.version>
+		<ohc.version>2.0.0.x</ohc.version>
 
-        <tycho-version>0.24.0</tycho-version>
-        <tycho-groupid>org.eclipse.tycho</tycho-groupid>
+		<tycho-version>0.24.0</tycho-version>
+		<tycho-groupid>org.eclipse.tycho</tycho-groupid>
 
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <wagon.version>1.0-beta-2</wagon.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<wagon.version>1.0-beta-2</wagon.version>
 
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
+		<maven.compiler.source>1.7</maven.compiler.source>
+		<maven.compiler.target>1.7</maven.compiler.target>
 
-        <repo.url>https://api.bintray.com/maven/openhab/mvn/openhab</repo.url>
+		<repo.url>https://api.bintray.com/maven/openhab/mvn/openhab</repo.url>
 
 		<!-- JDBC Databasedriver Versions -->
 		<derby.version>10.12.1.1</derby.version>
@@ -49,70 +49,135 @@
 		<mysql.version>5.1.38</mysql.version>
 		<postgresql.version>9.4.1212</postgresql.version>
 		<sqlite.version>3.8.11.2</sqlite.version>
-    </properties>
+	</properties>
 
 	<repositories> <!-- ...copied from openHAB's master-POM -->
-        <!-- openHAB releases -->
-        <repository>
-            <id>jcenter</id>
-            <name>JCenter Repository</name>
-            <url>https://jcenter.bintray.com/</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
+		<!-- openHAB releases -->
+		<repository>
+			<id>jcenter</id>
+			<name>JCenter Repository</name>
+			<url>https://jcenter.bintray.com/</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
 
-        <repository>
-            <id>openhab-bintray</id>
-            <name>Bintray Repository for openHAB</name>
-            <url>https://dl.bintray.com/openhab/mvn/</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
+		<repository>
+			<id>openhab-bintray</id>
+			<name>Bintray Repository for openHAB</name>
+			<url>https://dl.bintray.com/openhab/mvn/</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
 
-        <!-- openHAB snapshots -->
-        <repository>
-            <id>jfrog</id>
-            <name>JFrog OSS Repository</name>
-            <url>http://oss.jfrog.org/libs-snapshot/</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
+		<!-- openHAB snapshots -->
+		<repository>
+			<id>jfrog</id>
+			<name>JFrog OSS Repository</name>
+			<url>http://oss.jfrog.org/libs-snapshot/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
 
-        <!-- SmartHome p2 repository -->
-        <repository>
-            <id>p2-smarthome</id>
-            <url>http://download.eclipse.org/smarthome/updates-stable</url>
-            <layout>p2</layout>
-        </repository>
+		<!-- SmartHome p2 repository -->
+		<repository>
+			<id>p2-smarthome</id>
+			<url>http://download.eclipse.org/smarthome/updates-stable</url>
+			<layout>p2</layout>
+		</repository>
 
-        <!-- openHAB core p2 repository -->
-        <repository>
-            <id>p2-openhab-core</id>
-            <url>https://dl.bintray.com/openhab/p2/openhab-core/${ohc.version}</url>
-            <layout>p2</layout>
-        </repository>
+		<!-- openHAB core p2 repository -->
+		<repository>
+			<id>p2-openhab-core</id>
+			<url>https://dl.bintray.com/openhab/p2/openhab-core/${ohc.version}</url>
+			<layout>p2</layout>
+		</repository>
 
-        <!-- openHAB dependencies p2 repository -->
-        <repository>
-            <id>p2-openhab-deps-repo</id>
-            <url>https://dl.bintray.com/openhab/p2/openhab-deps-repo/${ohdr.version}</url>
-            <layout>p2</layout>
-        </repository>
+		<!-- openHAB dependencies p2 repository -->
+		<repository>
+			<id>p2-openhab-deps-repo</id>
+			<url>https://dl.bintray.com/openhab/p2/openhab-deps-repo/${ohdr.version}</url>
+			<layout>p2</layout>
+		</repository>
 
-    </repositories>
+	</repositories>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.0.0</version>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/distributions/</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.8</version>
+				<executions>
+					<execution>
+						<phase>install</phase>
+						<configuration>
+							<target>
+								<delete verbose="true" failonerror="false">
+									<!-- There are duplicate files of all "*-SNAPSHOT.jar"-files: They exist once
+									with "-SNAPSHOT" and once with ".SNAPSHOT". We thus delete the ones with ".SNAPSHOT". -->
+									<fileset dir="${project.build.directory}/distributions/"
+										includes="*.SNAPSHOT.jar" />
+									
+									<!-- Also delete all libraries that are already in the openHAB runtime. -->
+									<fileset dir="${project.build.directory}/distributions/">
+										<include name="com.google.*" />
+										<include name="commons-*" />
+										<include name="javax.*" />
+										<include name="org.antlr.*" />
+										<!-- openHAB contains commons-collections 3.x, but we need 4.x :-(
+										-->
+										<include name="org.apache.commons.*" />
+										<include name="org.eclipse.*" />
+										<include name="org.objectweb.*" />
+										<include name="org.slf4j.*" />
+										<include name="slf4j-*" />
+										
+										<!-- openHAB contains commons-collections 3.x, but we need 4.x :-( -->
+										<exclude name="org.apache.commons.collections4-*" />
+									</fileset>>
+								</delete>
+								<copy
+									file="${project.build.directory}/${project.artifactId}-${project.version}.jar"
+									todir="${project.build.directory}/distributions/"
+								/>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>

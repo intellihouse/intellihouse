@@ -4,6 +4,4 @@
    <service>
      <provide interface="house.intelli.core.rpc.RpcService"/>
    </service>
-   <reference bind="setEventPublisher" cardinality="1..1" interface="org.eclipse.smarthome.core.events.EventPublisher" name="EventPublisher" policy="dynamic" unbind="unsetEventPublisher"/>
-   <reference bind="setItemChannelLinkRegistry" cardinality="1..1" interface="org.eclipse.smarthome.core.thing.link.ItemChannelLinkRegistry" name="ItemChannelLinkRegistry" policy="dynamic" unbind="unsetItemChannelLinkRegistry"/>
 </scr:component>
