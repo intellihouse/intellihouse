@@ -58,7 +58,7 @@ public class PgpHttpRpcClientTransport extends HttpRpcClientTransport {
 		if (clientHostId.equals(getRpcContext().getLocalHostId())) {
 			PgpResponse pgpResponse = (PgpResponse) assertNotNull(res, "res");
 
-			byte[] plainResponse = pgpTransportSupport.decryptAndVerifySignature(pgpResponse.getEncryptedResponse(), serverHostId);
+			byte[] plainResponse = pgpTransportSupport.decryptAndVerifySignature(pgpResponse.getEncryptedResponse(), serverHostId, clientHostId);
 
 			RpcMessage rpcMessage = pgpTransportSupport.deserializeRpcMessage(plainResponse);
 			Response response = (Response) rpcMessage;
