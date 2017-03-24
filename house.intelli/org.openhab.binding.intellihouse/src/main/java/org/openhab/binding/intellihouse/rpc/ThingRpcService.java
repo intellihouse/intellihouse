@@ -19,6 +19,17 @@ import house.intelli.core.rpc.HostId;
 import house.intelli.core.rpc.Request;
 import house.intelli.core.rpc.Response;
 
+/**
+ * Abstract base-class making work with {@link Thing}s easy. Implementors should sub-class this,
+ * if they want to implement a {@link Thing}-related service.
+ * <p>
+ * Note: Very often, it's even better to sub-class {@link ChannelRpcService} instead.
+ *
+ * @author mn
+ *
+ * @param <REQ> request type.
+ * @param <RES> response type.
+ */
 public abstract class ThingRpcService<REQ extends Request<RES>, RES extends Response>
         extends AbstractRpcService<REQ, RES> {
 
