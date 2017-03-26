@@ -2,8 +2,14 @@ package house.intelli.pgp.rpc;
 
 import static house.intelli.core.util.AssertUtil.*;
 
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,17 +20,32 @@ public class SessionManager {
 
 	private static final Logger logger = LoggerFactory.getLogger(SessionManager.class);
 
+	private static final long EVICT_PERIOD = 30L * 60L * 1000L;
+	private static final long EVICT_ADDITIONAL_AGE = 15L * 60L * 1000L;
+
 	private static final SessionManager instance = new SessionManager();
 
 	private final Map<Uid, Session> sessionId2Session = new HashMap<>();
 	private final Map<SessionHostIdPair, Session> sessionHostIdPair2Session = new HashMap<>();
-	// TODO evict!
+
+	private final Timer evictTimer = new Timer("SessionManager.evictTimer", true);
+	private final TimerTask evictTimerTask = new TimerTask() {
+		@Override
+		public void run() {
+			try {
+				evict();
+			} catch (Throwable x) {
+				logger.error("evictTimerTask.run: " + x + ' ', x);
+			}
+		}
+	};
 
 	public static SessionManager getInstance() {
 		return instance;
 	}
 
 	protected SessionManager() {
+		evictTimer.schedule(evictTimerTask, EVICT_PERIOD, EVICT_PERIOD);
 	}
 
 	public synchronized Session getSession(final Uid sessionId) {
@@ -57,13 +78,27 @@ public class SessionManager {
 		logger.debug("putSession: {}", session);
 	}
 
-	public Session getSessionOrFail(final Uid sessionId) {
+	public Session getSessionOrFail(final Uid sessionId) throws SessionNotFoundException {
 		assertNotNull(sessionId, "sessionId");
 		final Session session = getSession(sessionId);
 		if (session == null)
-			throw new IllegalArgumentException("There is no session with sessionId=" + sessionId);
+			throw new SessionNotFoundException("There is no session with sessionId=" + sessionId);
 
 		return session;
 	}
 
+	protected synchronized void evict() {
+		final Date oldestSessionCreatedNotYetEvicted = new Date(System.currentTimeMillis() - Session.SESSION_MAX_AGE - EVICT_ADDITIONAL_AGE);
+		final Set<Uid> evictedSessionIds = new HashSet<>();
+		for (final Iterator<Map.Entry<Uid, Session>> it = sessionId2Session.entrySet().iterator(); it.hasNext(); ) {
+			final Map.Entry<Uid, Session> me = it.next();
+			final Session session = me.getValue();
+			if (session.getCreated().before(oldestSessionCreatedNotYetEvicted)) {
+				evictedSessionIds.add(session.getSessionId());
+				it.remove();
+				sessionHostIdPair2Session.remove(session.getSessionHostIdPair());
+			}
+		}
+		logger.info("evict: evictedSessionIds={}", evictedSessionIds);
+	}
 }

@@ -1,6 +1,7 @@
 package house.intelli.core.rpc;
 
 import static house.intelli.core.util.AssertUtil.*;
+import static house.intelli.core.util.Util.*;
 
 import java.util.Date;
 
@@ -31,6 +32,49 @@ public class RpcClient implements AutoCloseable {
 	}
 
 	public <REQ extends Request<RES>, RES extends Response> RES invoke(final REQ request) throws RpcException {
+		assertNotNull(request, "request");
+		int retryCount = 0;
+		final int maxRetryCount = 3;
+		while (true) {
+			try {
+				RES response = _invoke(request);
+				return response;
+			} catch (Throwable x) {
+				logger.error("invoke: " + x + ' ', x);
+
+				if (! isRetriableError(x) && ! isRetriableRequest(request))
+					throw x;
+
+				if (++retryCount > maxRetryCount)
+					throw x;
+
+				logger.info("invoke: RETRYING! retryCount={}", retryCount);
+				try {
+					Thread.sleep(1000L);
+				} catch (InterruptedException e) {
+					doNothing();
+				}
+			}
+		}
+	}
+
+	private boolean isRetriableRequest(Request<?> request) {
+		return request.isIdempotent();
+	}
+
+	private boolean isRetriableError(final Throwable x) {
+		Throwable t = x;
+		while (t != null) {
+			RetriableError annotation = t.getClass().getAnnotation(RetriableError.class);
+			if (annotation != null) {
+				return annotation.value();
+			}
+			t = t.getCause();
+		}
+		return false;
+	}
+
+	protected <REQ extends Request<RES>, RES extends Response> RES _invoke(final REQ request) throws RpcException {
 		assertNotNull(request, "request");
 		prepareRequest(request);
 

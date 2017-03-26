@@ -21,6 +21,8 @@ public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
 
 	private final PgpTransportSupport pgpTransportSupport = new PgpTransportSupport();
 
+	private Request<?> rawRequest;
+
 	public PgpHttpRpcServerTransport() {
 	}
 
@@ -30,12 +32,16 @@ public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
 		pgpTransportSupport.setServerHostId(localHostId);
 
 		Request<?> req = super.receiveRequest();
+		setRawRequest(assertNotNull(req, "req"));
 
 		HostId serverHostId = pgpTransportSupport.resolveRealServerHostId(req.getServerHostId());
 		HostId clientHostId = pgpTransportSupport.resolveRealServerHostId(req.getClientHostId());
 
 		if (serverHostId.equals(localHostId)) {
-			PgpRequest pgpRequest = (PgpRequest) assertNotNull(req, "req");
+			if (! (req instanceof PgpRequest)) // We reject unencrypted communication!
+				throw new IllegalStateException("Client sent plain-text request: " + req);
+
+			PgpRequest pgpRequest = (PgpRequest) req;
 
 			byte[] plainRequest = pgpTransportSupport.decryptAndVerifySignature(pgpRequest.getEncryptedRequest(), clientHostId, serverHostId);
 
@@ -44,11 +50,11 @@ public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
 
 			// Only accept messages where the signed content of sender+recipient matches the outer envelope data!
 			if (! equal(pgpRequest.getClientHostId(), request.getClientHostId()))
-				throw new IOException(String.format("pgpRequest.clientHostId != request.clientHostId :: %s != %s",
+				throw new IOException(String.format("pgpRequest.clientHostId != rawRequest.clientHostId :: %s != %s",
 						pgpRequest.getClientHostId(), request.getClientHostId()));
 
 			if (! equal(pgpRequest.getServerHostId(), request.getServerHostId()))
-				throw new IOException(String.format("pgpRequest.serverHostId != request.serverHostId :: %s != %s",
+				throw new IOException(String.format("pgpRequest.serverHostId != rawRequest.serverHostId :: %s != %s",
 						pgpRequest.getServerHostId(), request.getServerHostId()));
 
 			return request;
@@ -60,6 +66,19 @@ public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
 	@Override
 	public void sendResponse(Response response) throws IOException {
 		assertNotNull(response, "response");
+
+		final Request<?> rawRequest = getRawRequest();
+		if (rawRequest != null)
+			response.copyRequestCoordinates(rawRequest);
+
+		if (! (rawRequest instanceof PgpRequest)) { // If the client sent a plain-text rawRequest (which we didn't process), we send the rawRequest plain-text.
+			if (! (response instanceof ErrorResponse))
+					throw new IllegalStateException("response should be an ErrorResponse when the client attempts to communicate unencrypted data!");
+
+			super.sendResponse(response);
+			return;
+		}
+
 		final HostId localHostId = getRpcContext().getLocalHostId();
 		pgpTransportSupport.setServerHostId(localHostId);
 
@@ -81,16 +100,27 @@ public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
 			} catch (Exception x) {
 				logger.error("sendResponse: " +x + ' ', x);
 
-				// If the client tries to communicate in plain-text with a Pgp-expecting server,
-				// this fails and we send the error in plain-text back.
-				if (response instanceof ErrorResponse) {
-					super.sendResponse(response);
-					return;
-				}
+//				// If the client tries to communicate in plain-text with a Pgp-expecting server,
+//				// this fails and we send the error in plain-text back.
+//				if (response instanceof ErrorResponse) { // TODO reduce this as far as possible!
+//					super.sendResponse(response);
+//					return;
+//				}
 				throw x;
 			}
 		}
 		super.sendResponse(pgpResponse);
+	}
+
+	protected void setRawRequest(Request<?> request) {
+		if (this.rawRequest != null)
+			throw new IllegalStateException("this.request already assigned!");
+
+		this.rawRequest = assertNotNull(request, "rawRequest");
+	}
+
+	protected Request<?> getRawRequest() {
+		return rawRequest;
 	}
 
 }

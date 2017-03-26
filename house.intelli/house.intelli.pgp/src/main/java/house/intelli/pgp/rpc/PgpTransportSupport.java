@@ -350,7 +350,8 @@ public class PgpTransportSupport {
 					ENCRYPTED_DATA_MODE_SYMMETRIC, ENCRYPTED_DATA_MODE_PGP, mode));
 	}
 
-	private byte[] serializeSessionRequest(Session session) throws IOException {
+	private byte[] serializeSessionRequest(final Session session) throws IOException {
+		assertNotNull(session, "session");
 		try {
 			ByteArrayOutputStream sessionRequestOut = new ByteArrayOutputStream();
 			getJaxbContext().createMarshaller().marshal(new SessionRequest(session), sessionRequestOut);
@@ -360,7 +361,8 @@ public class PgpTransportSupport {
 		}
 	}
 
-	private SessionRequest deserializeSessionRequest(byte[] sessionRequestBytes) throws IOException {
+	private SessionRequest deserializeSessionRequest(final byte[] sessionRequestBytes) throws IOException {
+		assertNotNull(sessionRequestBytes, "sessionRequestBytes");
 		try {
 			Object deserialized = getJaxbContext().createUnmarshaller().unmarshal(new ByteArrayInputStream(sessionRequestBytes));
 			return (SessionRequest) deserialized;
@@ -368,6 +370,16 @@ public class PgpTransportSupport {
 			throw new IOException(e);
 		}
 	}
+
+//	private Object deserialize(final byte[] serialized) throws IOException {
+//		assertNotNull(serialized, "serialized");
+//		try {
+//			Object deserialized = getJaxbContext().createUnmarshaller().unmarshal(new ByteArrayInputStream(serialized));
+//			return deserialized;
+//		} catch (JAXBException e) {
+//			throw new IOException(e);
+//		}
+//	}
 
 	private void writeLongByteArray(DataOutputStream dout, byte[] byteArray) throws IOException {
 		assertNotNull(dout, "dout");

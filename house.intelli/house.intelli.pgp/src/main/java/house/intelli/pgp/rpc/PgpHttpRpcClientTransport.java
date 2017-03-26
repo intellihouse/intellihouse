@@ -6,6 +6,7 @@ import static house.intelli.core.util.Util.*;
 import java.io.IOException;
 
 import house.intelli.core.Uid;
+import house.intelli.core.rpc.ErrorResponse;
 import house.intelli.core.rpc.HostId;
 import house.intelli.core.rpc.HttpRpcClientTransport;
 import house.intelli.core.rpc.Request;
@@ -51,12 +52,16 @@ public class PgpHttpRpcClientTransport extends HttpRpcClientTransport {
 	@Override
 	public Response receiveResponse() throws IOException {
 		final Response res = super.receiveResponse();
+		assertNotNull(res, "res");
 
 		HostId serverHostId = pgpTransportSupport.resolveRealServerHostId(res.getServerHostId());
 		HostId clientHostId = pgpTransportSupport.resolveRealServerHostId(res.getClientHostId());
 
 		if (clientHostId.equals(getRpcContext().getLocalHostId())) {
-			PgpResponse pgpResponse = (PgpResponse) assertNotNull(res, "res");
+			if (res instanceof ErrorResponse)
+				return res;
+
+			PgpResponse pgpResponse = (PgpResponse) res;
 
 			byte[] plainResponse = pgpTransportSupport.decryptAndVerifySignature(pgpResponse.getEncryptedResponse(), serverHostId, clientHostId);
 

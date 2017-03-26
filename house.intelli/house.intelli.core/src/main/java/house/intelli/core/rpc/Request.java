@@ -2,6 +2,8 @@ package house.intelli.core.rpc;
 
 import java.util.Date;
 
+import javax.xml.bind.annotation.XmlTransient;
+
 public abstract class Request<RES extends Response> extends RpcMessage {
 
 	public static final long TIMEOUT_UNDEFINED = 0;
@@ -31,6 +33,11 @@ public abstract class Request<RES extends Response> extends RpcMessage {
 			throw new IllegalArgumentException("timeout < 0");
 
 		this.timeout = timeout;
+	}
+
+	@XmlTransient
+	public boolean isIdempotent() {
+		return false;
 	}
 
 	@Override
