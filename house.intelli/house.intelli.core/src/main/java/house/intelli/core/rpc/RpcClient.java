@@ -33,6 +33,9 @@ public class RpcClient implements AutoCloseable {
 
 	public <REQ extends Request<RES>, RES extends Response> RES invoke(final REQ request) throws RpcException {
 		assertNotNull(request, "request");
+		prepareRequest(request);
+
+		final long timeoutTimestamp = request.getCreated().getTime() + request.getTimeout();
 		int retryCount = 0;
 		final int maxRetryCount = 3;
 		while (true) {
@@ -41,6 +44,9 @@ public class RpcClient implements AutoCloseable {
 				return response;
 			} catch (Throwable x) {
 				logger.error("invoke: " + x + ' ', x);
+
+				if (System.currentTimeMillis() > timeoutTimestamp)
+					throw x;
 
 				if (! isRetriableError(x) && ! isRetriableRequest(request))
 					throw x;
@@ -76,9 +82,8 @@ public class RpcClient implements AutoCloseable {
 
 	protected <REQ extends Request<RES>, RES extends Response> RES _invoke(final REQ request) throws RpcException {
 		assertNotNull(request, "request");
-		prepareRequest(request);
 
-		final long timeoutTimestamp = System.currentTimeMillis() + request.getTimeout();
+		final long timeoutTimestamp = request.getCreated().getTime() + request.getTimeout();
 		DeferredResponseRequest deferredResponseRequest = null;
 		try {
 			while (true) {

@@ -54,10 +54,10 @@ allprojects {
 		mavenLocal()
 
 		maven {
-			url 'http://subshare.org/maven/snapshot'
+			url 'https://codewizards.co/maven/release'
 		}
 		maven {
-			url 'http://subshare.org/maven/release'
+			url 'https://codewizards.co/maven/snapshot'
 		}
 	}
 
