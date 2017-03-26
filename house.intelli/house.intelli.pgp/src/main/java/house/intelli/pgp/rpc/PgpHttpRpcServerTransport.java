@@ -71,7 +71,10 @@ public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
 		if (rawRequest != null)
 			response.copyRequestCoordinates(rawRequest);
 
-		if (! (rawRequest instanceof PgpRequest)) { // If the client sent a plain-text rawRequest (which we didn't process), we send the rawRequest plain-text.
+		if (! (rawRequest instanceof PgpRequest)) {
+			// If the client sent a plain-text rawRequest (which we didn't process), we send the error-response in
+			// plain-text, so that the client knows what he's doing wrong -- that doesn't expose any secret
+			// information and is very helpful to the person trying to set up things.
 			if (! (response instanceof ErrorResponse))
 					throw new IllegalStateException("response should be an ErrorResponse when the client attempts to communicate unencrypted data!");
 
