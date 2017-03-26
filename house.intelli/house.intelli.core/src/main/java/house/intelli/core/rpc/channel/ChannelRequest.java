@@ -29,4 +29,9 @@ public abstract class ChannelRequest<RES extends Response> extends Request<RES> 
 	protected String toString_getProperties() {
 		return super.toString_getProperties() + ", channelId=" + channelId;
 	}
+
+	@Override
+	public boolean isIdempotent() {
+		return true;
+	}
 }

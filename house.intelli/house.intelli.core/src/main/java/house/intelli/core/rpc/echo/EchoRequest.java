@@ -31,4 +31,9 @@ public class EchoRequest extends Request<EchoResponse> {
 	public void setSleep(long sleep) {
 		this.sleep = sleep;
 	}
+
+	@Override
+	public boolean isIdempotent() {
+		return true;
+	}
 }
