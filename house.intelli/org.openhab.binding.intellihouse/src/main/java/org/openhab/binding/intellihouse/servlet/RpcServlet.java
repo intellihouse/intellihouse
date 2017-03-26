@@ -248,17 +248,21 @@ public class RpcServlet extends BaseServlet {
                     rpcServer.receiveAndProcessRequest(rst);
                 }
                 Request<?> request = rpcServer.getRequest();
-                assertNotNull(request, "rpcServer.request");
-                Date now = new Date();
-                ThingStatusInfo thingStatusInfo = new ThingStatusInfo(ThingStatus.ONLINE, ThingStatusDetail.NONE, null);
-                for (Thing thing : getThings(request.getClientHostId())) {
-                    thing.getConfiguration().put(THING_CONFIG_KEY_LAST_SEEN_DATE, now);
-                    thing.getConfiguration().remove(THING_CONFIG_KEY_MAYBE_OFFLINE_SINCE_DATE);
+                // request is null, if the RpcServer was unable to read (e.g. decrypt) a request!
+                if (request != null) {
+                    Date now = new Date();
+                    ThingStatusInfo thingStatusInfo = new ThingStatusInfo(ThingStatus.ONLINE, ThingStatusDetail.NONE,
+                            null);
+                    for (Thing thing : getThings(request.getClientHostId())) {
+                        thing.getConfiguration().put(THING_CONFIG_KEY_LAST_SEEN_DATE, now);
+                        thing.getConfiguration().remove(THING_CONFIG_KEY_MAYBE_OFFLINE_SINCE_DATE);
 
-                    // We prevent a configuration error to be overwritten by ONLINE, even if the outpost says properly
-                    // "hello"!
-                    if (!isThingStatusConfigurationError(thing)) {
-                        setThingStatus(thing, thingStatusInfo);
+                        // We prevent a configuration error to be overwritten by ONLINE, even if the outpost says
+                        // properly
+                        // "hello"!
+                        if (!isThingStatusConfigurationError(thing)) {
+                            setThingStatus(thing, thingStatusInfo);
+                        }
                     }
                 }
             }
