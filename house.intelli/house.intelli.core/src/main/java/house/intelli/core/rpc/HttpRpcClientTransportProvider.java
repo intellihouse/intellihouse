@@ -20,14 +20,7 @@ public class HttpRpcClientTransportProvider extends AbstractRpcClientTransportPr
 		if (serverUrl == null)
 			return null;
 
-		String path = serverUrl.getPath(); // never returns null according to javadoc
-		while (path.endsWith("/"))
-			path = path.substring(0, path.length() - 1);
-
-		if (path.isEmpty())
-			return appendEncodedPath(serverUrl, "intellihouse/RPC");
-		else
-			return serverUrl;
+		return appendEncodedPath(serverUrl, "intellihouse/RPC");
 	}
 
 	@Override
