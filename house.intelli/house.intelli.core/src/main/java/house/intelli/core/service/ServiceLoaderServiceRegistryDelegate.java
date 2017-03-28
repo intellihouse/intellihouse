@@ -21,7 +21,10 @@ public class ServiceLoaderServiceRegistryDelegate<S> extends AbstractServiceRegi
 
 	@Override
 	public List<S> getServices() {
-		Iterator<S> iterator = ServiceLoader.load(serviceClass).iterator();
+		// We do *not* use the Thread-context-class-loader, because this causes trouble in OSGi.
+		// We do *not* want things to be found in OSGi outside of the current bundle. There
+		// are OSGi-specific ServiceLoaderServiceRegistryDelegate implementations!
+		Iterator<S> iterator = ServiceLoader.load(serviceClass, serviceClass.getClassLoader()).iterator();
 		List<S> result = new LinkedList<>();
 		while (iterator.hasNext())
 			result.add(iterator.next());

@@ -40,6 +40,9 @@ public class PgpRegistry {
 	public synchronized Pgp getPgpOrFail() {
 		Pgp pgp = this.pgp;
 		if (pgp == null) {
+			logger.info("Pgp.class.identityHashCode={}", Integer.toHexString(System.identityHashCode(Pgp.class)));
+      logger.info("Pgp.class.classLoader={}", Pgp.class.getClassLoader());
+
 			for (final Pgp p : ServiceLoader.load(Pgp.class)) {
 				if (! p.isSupported())
 					continue;
