@@ -114,6 +114,27 @@
 			<layout>p2</layout>
 		</repository>
 
+		<repository>
+			<id>codewizards-release</id>
+			<url>https://codewizards.co/maven/release</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>codewizards-snapshot</id>
+			<url>https://codewizards.co/maven/snapshot</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
 	</repositories>
 
 	<build>
