@@ -59,11 +59,13 @@ import house.intelli.core.rpc.RpcServerTransportProvider;
 import house.intelli.core.rpc.RpcService;
 import house.intelli.core.rpc.ServletRpcServerTransport;
 import house.intelli.core.service.ServiceRegistry;
+import house.intelli.core.util.ReflectionUtil;
 import house.intelli.pgp.Pgp;
 import house.intelli.pgp.PgpKey;
 import house.intelli.pgp.PgpOwnerTrust;
 import house.intelli.pgp.PgpRegistry;
 import house.intelli.pgp.StaticPgpAuthenticationCallback;
+import house.intelli.pgp.gnupg.BcWithLocalGnuPgPgp;
 import house.intelli.pgp.rpc.PgpTransportSupport;
 
 public class RpcServlet extends BaseServlet {
@@ -182,6 +184,17 @@ public class RpcServlet extends BaseServlet {
             StaticPgpAuthenticationCallback callback = new StaticPgpAuthenticationCallback();
             callback.setDefaultPassphrase(trim(String.valueOf(configProps.get(CONFIG_KEY_PGP_PASSPHRASE))));
             PgpRegistry.getInstance().setPgpAuthenticationCallback(callback);
+
+            logger.info("Pgp.class.identityHashCode={}", Integer.toHexString(System.identityHashCode(Pgp.class)));
+            logger.info("Pgp.class.classLoader={}", Pgp.class.getClassLoader());
+            logger.info("BcWithLocalGnuPgPgp.class.classLoader={}", BcWithLocalGnuPgPgp.class.getClassLoader());
+            for (Class<?> iface : ReflectionUtil.getAllInterfaces(BcWithLocalGnuPgPgp.class)) {
+                logger.info("BcWithLocalGnuPgPgp.class.interfaces[{}].identityHashCode={}", iface.getName(),
+                        Integer.toHexString(System.identityHashCode(iface)));
+                logger.info("BcWithLocalGnuPgPgp.class.interfaces[{}].classLoader={}", iface.getName(),
+                        iface.getClassLoader());
+            }
+
             Pgp pgp = PgpRegistry.getInstance().getPgpOrFail();
             PgpTransportSupport support = new PgpTransportSupport();
             HostId localHostId = getLocalHostId();

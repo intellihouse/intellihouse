@@ -16,6 +16,7 @@ Import-Package:
  house.intelli.core.service,
  house.intelli.core.util,
  house.intelli.pgp,
+ house.intelli.pgp.gnupg,
  house.intelli.pgp.rpc,
  javax.servlet,
  javax.servlet.http,
