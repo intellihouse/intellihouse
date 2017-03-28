@@ -23,13 +23,13 @@ public class HttpRpcClientTransportProviderTest {
 			rpcContext.close();
 	}
 
-	@Test
-	public void fullServerUrl() throws Exception {
-		HttpRpcClientTransportProvider rpcClientTransportProvider = new HttpRpcClientTransportProvider();
-		rpcClientTransportProvider.setServerUrl(new URL("http://localhost:8080/intellihouse/RPC"));
-		rpcContext.setRpcClientTransportProvider(rpcClientTransportProvider);
-		assertThat(rpcClientTransportProvider.getActualServerUrl().toString()).isEqualTo("http://localhost:8080/intellihouse/RPC");
-	}
+//	@Test // NOT SUPPORTED ANYMORE! We now always append the internal suffix and expect the config to contain the base-URL!
+//	public void fullServerUrl() throws Exception {
+//		HttpRpcClientTransportProvider rpcClientTransportProvider = new HttpRpcClientTransportProvider();
+//		rpcClientTransportProvider.setServerUrl(new URL("http://localhost:8080/intellihouse/RPC"));
+//		rpcContext.setRpcClientTransportProvider(rpcClientTransportProvider);
+//		assertThat(rpcClientTransportProvider.getActualServerUrl().toString()).isEqualTo("http://localhost:8080/intellihouse/RPC");
+//	}
 
 	@Test
 	public void baseServerUrlWithoutFinalSlash() throws Exception {
