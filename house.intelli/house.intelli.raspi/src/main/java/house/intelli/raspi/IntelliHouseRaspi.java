@@ -21,6 +21,8 @@ import house.intelli.core.rpc.RpcService;
 import house.intelli.core.service.ServiceRegistry;
 import house.intelli.core.util.IOUtil;
 import house.intelli.pgp.Pgp;
+import house.intelli.pgp.PgpKey;
+import house.intelli.pgp.PgpOwnerTrust;
 import house.intelli.pgp.PgpRegistry;
 import house.intelli.raspi.service.SpringServiceRegistryDelegate;
 
@@ -64,6 +66,12 @@ public class IntelliHouseRaspi {
 	private static void setupPgp() {
 		try {
 			Pgp pgp = PgpRegistry.getInstance().getPgpOrFail();
+
+			// Automatically trust all our own keys ULTIMATELY (i.e. all those we have a secret key for).
+			for (PgpKey pgpKey : pgp.getMasterKeysWithSecretKey())
+				pgp.setOwnerTrust(pgpKey, PgpOwnerTrust.ULTIMATE);
+
+			// And update the trust database to make sure the transitive trust is fine.
 			pgp.updateTrustDb();
 		} catch (Throwable x) {
 			LoggerFactory.getLogger(IntelliHouseRaspi.class).warn("setupPgp: " + x + ' ', x);

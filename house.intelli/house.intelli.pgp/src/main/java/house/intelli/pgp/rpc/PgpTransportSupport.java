@@ -9,6 +9,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,8 +95,13 @@ public class PgpTransportSupport {
 
 	public PgpKey getMasterKey(final HostId hostId) {
 		assertNotNull(hostId, "hostId");
+		final Date now = new Date();
 		if (hostIdStr2PgpKey.isEmpty()) {
 			for (PgpKey pgpKey : pgp.getMasterKeys()) {
+				if (! pgpKey.isValid(now)) {
+					logger.info("getMasterKey: Ignoring non-valid key: {}", pgpKey);
+					continue;
+				}
 				for (String userId : pgpKey.getUserIds()) {
 					final String hostIdStr = userId.trim();
 					hostIdStr2PgpKey.put(hostIdStr, pgpKey);
