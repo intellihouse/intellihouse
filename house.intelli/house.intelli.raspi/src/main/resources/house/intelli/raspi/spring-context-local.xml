@@ -48,7 +48,7 @@
 		<property name="pgpAuthenticationCallback">
 			<bean class="house.intelli.pgp.StaticPgpAuthenticationCallback">
 				<!-- Specify a passphrase for each key, either identified by key-ID (either
-				with or without colons -- but not mixed!) or by user-ID, or simply specify
+				with or without colons - but not mixed!) or by user-ID, or simply specify
 				a defaultPassphrase for all keys. -->
 				<property name="keyId2Passphrase">
 					<map>
