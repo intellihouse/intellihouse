@@ -2,7 +2,7 @@ package house.intelli.core.util;
 
 import static house.intelli.core.util.StringUtil.*;
 
-import java.awt.EventQueue;
+import house.intelli.core.event.EventQueue;
 
 public final class AssertUtil {
 	private AssertUtil() {

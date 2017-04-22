@@ -232,6 +232,7 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 	public void setLightOn(boolean lightOn) {
 		assertEventThread();
 		if (setPropertyValue(PropertyEnum.lightOn, lightOn)) {
+			_setDimmerValue(lightOn ? LIGHT_DIMMER_VALUES[lightDimmerValuesIndex] : MIN_DIMMER_VALUE);
 			applyLightsDimmerValue();
 		}
 	}
@@ -269,15 +270,26 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 
 	@Override
 	public int getDimmerValue() {
-		return LIGHT_DIMMER_VALUES[lightDimmerValuesIndex];
+		return dimmerValue;
 	}
+
 	@Override
 	public void setDimmerValue(final int dimmerValue) {
+		if (getDimmerValue() == dimmerValue) {
+			logger.debug("setDimmerValue: ignoring: bean={} old=dimmerValue={}", this, dimmerValue);
+			return;
+		}
 		if (dimmerValue < MIN_DIMMER_VALUE)
 			throw new IllegalArgumentException("dimmerValue < MIN_DIMMER_VALUE");
 
 		if (dimmerValue > MAX_DIMMER_VALUE)
 			throw new IllegalArgumentException("dimmerValue > MAX_DIMMER_VALUE");
+
+		if (dimmerValue == MIN_DIMMER_VALUE) {
+			_setDimmerValue(dimmerValue);
+			setLightOn(false);
+			return;
+		}
 
 		int bestDistance = Integer.MAX_VALUE;
 		int bestIndex = -1;
@@ -288,6 +300,12 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 				bestIndex = i;
 			}
 		}
+		_setDimmerValue(dimmerValue);
 		setLightDimmerValuesIndex(bestIndex);
+		setLightOn(true);
+	}
+
+	protected void _setDimmerValue(final int dimmerValue) {
+		setPropertyValue(DimmerActor.PropertyEnum.dimmerValue, dimmerValue);
 	}
 }

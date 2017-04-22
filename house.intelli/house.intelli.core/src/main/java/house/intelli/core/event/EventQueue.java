@@ -43,4 +43,8 @@ public final class EventQueue {
 			throw new RuntimeException(e);
 		}
 	}
+
+	public static boolean isDispatchThread() {
+		return java.awt.EventQueue.isDispatchThread();
+	}
 }
