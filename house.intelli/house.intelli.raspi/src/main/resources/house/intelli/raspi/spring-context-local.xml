@@ -79,10 +79,10 @@
 		<property name="pin" ref="GPIO_23" />
 	</bean>
 	<bean id="bedroomLight2" class="house.intelli.raspi.DimmerActorImpl">
-		<property name="pin" ref="GPIO_24" />
+		<property name="pin" ref="GPIO_27" />
 	</bean>
 	<bean id="bedroomLight3" class="house.intelli.raspi.DimmerActorImpl">
-		<property name="pin" ref="GPIO_26" />
+		<property name="pin" ref="GPIO_28" />
 	</bean>
 
 	<bean id="bedroomPowerSupply" class="house.intelli.raspi.RelayActorImpl">
