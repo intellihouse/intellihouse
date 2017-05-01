@@ -54,11 +54,14 @@ public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> 
 		openDigitalInput();
 	}
 
+	@Override
 	public boolean isDown() {
+		assertEventThread();
 		return down;
 	}
 
-	protected void setDown(boolean down) {
+	@Override
+	public void setDown(boolean down) {
 		assertEventThread();
 		setPropertyValue(KeyButtonSensor.PropertyEnum.down, down);
 	}

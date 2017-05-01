@@ -42,7 +42,7 @@ public class DimmerActorWriteRpcService extends AbstractRpcService<DimmerActorWr
 			throw new IllegalArgumentException("No bean found with beanId=channelId=" + channelId);
 
 		if (! (bean instanceof DimmerActor))
-			throw new IllegalArgumentException("Bean with beanId=channelId=" + channelId + " is not an instance of DimmerActorImpl, but: " + bean.getClass().getName());
+			throw new IllegalArgumentException("Bean with beanId=channelId=" + channelId + " is not an instance of DimmerActor, but: " + bean.getClass().getName());
 
 		final DimmerActor dimmerActor = (DimmerActor) bean;
 

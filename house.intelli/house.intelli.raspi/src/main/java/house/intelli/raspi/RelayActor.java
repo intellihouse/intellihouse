@@ -9,4 +9,8 @@ public interface RelayActor extends Bean<RelayActor.Property> {
 	static enum PropertyEnum implements Property {
 		energized
 	}
+
+	boolean isEnergized();
+
+	void setEnergized(boolean energized);
 }

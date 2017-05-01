@@ -1,4 +1,4 @@
-package house.intelli.raspi.rpc.dimmer;
+package house.intelli.raspi.rpc.relay;
 
 import static house.intelli.core.util.AssertUtil.*;
 
@@ -10,18 +10,18 @@ import org.springframework.stereotype.Component;
 
 import house.intelli.core.event.EventQueue;
 import house.intelli.core.rpc.AbstractRpcService;
-import house.intelli.core.rpc.dimmer.DimmerActorReadRequest;
-import house.intelli.core.rpc.dimmer.DimmerActorReadResponse;
-import house.intelli.raspi.DimmerActor;
+import house.intelli.core.rpc.relay.RelayActorWriteRequest;
+import house.intelli.core.rpc.relay.RelayActorWriteResponse;
+import house.intelli.raspi.RelayActor;
 
 @Component
-public class DimmerActorReadRpcService extends AbstractRpcService<DimmerActorReadRequest, DimmerActorReadResponse> {
+public class RelayActorWriteRpcService extends AbstractRpcService<RelayActorWriteRequest, RelayActorWriteResponse> {
 
-	private static final Logger logger = LoggerFactory.getLogger(DimmerActorReadRpcService.class);
+	private static final Logger logger = LoggerFactory.getLogger(RelayActorWriteRpcService.class);
 
 	private ApplicationContext applicationContext;
 
-	public DimmerActorReadRpcService() {
+	public RelayActorWriteRpcService() {
 		logger.info("<init>");
 	}
 
@@ -35,21 +35,22 @@ public class DimmerActorReadRpcService extends AbstractRpcService<DimmerActorRea
 	}
 
 	@Override
-	public DimmerActorReadResponse process(DimmerActorReadRequest request) throws Exception {
+	public RelayActorWriteResponse process(RelayActorWriteRequest request) throws Exception {
 		final String channelId = assertNotNull(request.getChannelId(), "request.channelId");
 		final Object bean = applicationContext.getBean(channelId);
 		if (bean == null)
 			throw new IllegalArgumentException("No bean found with beanId=channelId=" + channelId);
 
-		if (! (bean instanceof DimmerActor))
-			throw new IllegalArgumentException("Bean with beanId=channelId=" + channelId + " is not an instance of DimmerActor, but: " + bean.getClass().getName());
+		if (! (bean instanceof RelayActor))
+			throw new IllegalArgumentException("Bean with beanId=channelId=" + channelId + " is not an instance of RelayActor, but: " + bean.getClass().getName());
 
-		final DimmerActor dimmerActor = (DimmerActor) bean;
+		final RelayActor relayActor = (RelayActor) bean;
 
-		final DimmerActorReadResponse[] response = new DimmerActorReadResponse[1];
+		final RelayActorWriteResponse[] response = new RelayActorWriteResponse[1];
 		EventQueue.invokeAndWait(() -> {
-			response[0] = new DimmerActorReadResponse();
-			response[0].setDimmerValue(dimmerActor.getDimmerValue());
+			relayActor.setEnergized(request.isEnergized());
+			response[0] = new RelayActorWriteResponse();
+			response[0].setEnergized(relayActor.isEnergized());
 		});
 		return response[0];
 	}

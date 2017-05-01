@@ -11,7 +11,7 @@ import com.pi4j.io.gpio.PinState;
 
 import house.intelli.core.bean.AbstractBean;
 
-public class RelayActorImpl extends AbstractBean<RelayActor.Property> implements AutoCloseable {
+public class RelayActorImpl extends AbstractBean<RelayActor.Property> implements RelayActor, AutoCloseable {
 
 	public static enum PropertyEnum implements RelayActor.Property {
 		pin
@@ -37,12 +37,14 @@ public class RelayActorImpl extends AbstractBean<RelayActor.Property> implements
 		applyEnergized();
 	}
 
+	@Override
 	public boolean isEnergized() {
 		assertEventThread();
 		return energized;
 	}
 
-	public void setEnergized(boolean energized) { // not synchronized to prevent deadlocks in listeners
+  @Override
+	public void setEnergized(boolean energized) {
 		assertEventThread();
 		if (setPropertyValue(RelayActor.PropertyEnum.energized, energized))
 			applyEnergized();

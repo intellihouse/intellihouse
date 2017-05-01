@@ -11,4 +11,8 @@ public interface KeyButtonSensor extends Bean<KeyButtonSensor.Property> {
 		down
 	}
 
+	boolean isDown();
+
+	void setDown(boolean down);
+
 }
