@@ -51,9 +51,9 @@ public class IntelliHouseDimmerHandler extends IntelliHouseHandler {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.toString());
             }
             if (response != null) {
-                int dimmerValue = response.getDimmerValue();
+                PercentType responsePercent = new PercentType(response.getDimmerValue());
                 updateStatus(ThingStatus.ONLINE);
-                updateState(channelUID, new PercentType(dimmerValue));
+                updateState(channelUID, responsePercent);
             }
         }
     }
@@ -75,8 +75,9 @@ public class IntelliHouseDimmerHandler extends IntelliHouseHandler {
             response = rpcClient.invoke(request);
         }
         if (response != null) {
-            int dimmerValue = response.getDimmerValue();
-            updateState(channelUID, new PercentType(dimmerValue));
+            PercentType responsePercent = new PercentType(response.getDimmerValue());
+            updateStatus(ThingStatus.ONLINE);
+            updateState(channelUID, responsePercent);
         }
     }
 }

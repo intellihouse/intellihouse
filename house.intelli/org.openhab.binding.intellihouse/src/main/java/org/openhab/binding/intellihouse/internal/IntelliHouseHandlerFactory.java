@@ -9,7 +9,9 @@ package org.openhab.binding.intellihouse.internal;
 
 import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.*;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.eclipse.smarthome.core.thing.Thing;
@@ -27,7 +29,8 @@ import org.openhab.binding.intellihouse.handler.IntelliHouseSwitchHandler;
  */
 public class IntelliHouseHandlerFactory extends BaseThingHandlerFactory {
 
-    private final static Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.singleton(THING_TYPE_DIMMER);
+    private final static Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections
+            .unmodifiableSet(new HashSet<>(Arrays.<ThingTypeUID> asList(THING_TYPE_DIMMER, THING_TYPE_SWITCH)));
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
