@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="org.openhab.binding.intellihouse.rpc.relay.RelayActorEventRpcService">
+   <implementation class="org.openhab.binding.intellihouse.rpc.relay.RelayActorEventRpcService"/>
+   <service>
+     <provide interface="house.intelli.core.rpc.RpcService"/>
+   </service>
+</scr:component>
