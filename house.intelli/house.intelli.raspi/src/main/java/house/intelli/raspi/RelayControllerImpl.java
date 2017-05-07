@@ -73,6 +73,9 @@ public class RelayControllerImpl extends AbstractBean<RelayActor.Property> imple
 				++downCount;
 		}
 		setDownCount(downCount);
+		// Since downCount is very likely 0 and thus unchanged, no event is triggered and thus
+		// nothing applied. We thus call applyDown(...) now.
+		applyDown(isDown());
 	}
 
 	private void onKeyButtonDown() {
