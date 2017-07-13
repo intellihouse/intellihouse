@@ -7,6 +7,7 @@ import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.Pin;
+import com.pi4j.io.gpio.PinPullResistance;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
@@ -81,6 +82,7 @@ public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> 
 		digitalInput = gpioController.provisionDigitalInputPin(pin);
 		digitalInput.setDebounce(100, PinState.HIGH);
 		digitalInput.setDebounce(200, PinState.LOW);
+		digitalInput.setPullResistance(PinPullResistance.OFF);
 		digitalInput.addListener(listener);
 		_setDown(digitalInput.getState());
 	}

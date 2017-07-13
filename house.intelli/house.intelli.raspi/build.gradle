@@ -4,8 +4,13 @@ dependencies {
 	compile project(':house.intelli.core')
 	compile project(':house.intelli.pgp')
 
-	compile 'com.pi4j:pi4j-core:1.1'
+//	compile 'com.pi4j:pi4j-core:1.1'
 //	compile 'com.pi4j:pi4j-gpio-extension:1.1'
+
+	// Unable to determine hardware version. I see: Hardware   : BCM2835
+	// https://www.raspberrypi.org/forums/viewtopic.php?f=28&t=182191
+	// https://github.com/WiringPi/WiringPi-Python/issues/49
+	compile 'com.pi4j:pi4j-core:1.2-SNAPSHOT' 
 
 	compile "org.slf4j:log4j-over-slf4j:$slf4jVersion", "ch.qos.logback:logback-classic:$logbackVersion"
 
@@ -17,6 +22,12 @@ dependencies {
     // 'test.useTestNG()' to your build script.
     testCompile 'junit:junit:4.12'
 	
+}
+
+repositories {
+    maven {
+        url "https://oss.sonatype.org/content/groups/public"
+    }
 }
 
 jar {
