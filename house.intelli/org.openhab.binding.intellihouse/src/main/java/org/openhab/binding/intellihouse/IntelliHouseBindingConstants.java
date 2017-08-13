@@ -36,13 +36,13 @@ public class IntelliHouseBindingConstants {
      */
     public static final String THING_CONFIG_KEY_HOST_ID = "hostId";
     /**
-     * {@link Date} of the last time this thing was seen online. This is not configuration, but
-     * state written by the {@code RpcServlet}.
+     * {@link Date} encoded as {@linkplain DateUtil#toString() ISO8601 string} of the last time this thing was seen
+     * online. This is not configuration, but state written by the {@code RpcServlet}.
      */
     public static final String THING_CONFIG_KEY_LAST_SEEN_DATE = "lastSeenDate";
     /**
-     * {@link Date} of the first time this thing was considered offline. This is not configuration, but
-     * state written by the {@code RpcServlet}.
+     * {@link Date} encoded as {@linkplain DateUtil#toString() ISO8601 string} of the first time this thing was
+     * considered offline. This is not configuration, but state written by the {@code RpcServlet}.
      * <p>
      * Important: The presence of this date doesn't mean that the device is offline. This date is only
      * used, if the thing does not have any {@link #THING_CONFIG_KEY_LAST_SEEN_DATE lastSeenDate} assigned.

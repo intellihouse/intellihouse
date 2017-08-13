@@ -39,6 +39,7 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.ThingStatusInfo;
 import org.eclipse.smarthome.core.thing.events.ThingEventFactory;
+import org.openhab.binding.intellihouse.DateUtil;
 import org.openhab.binding.intellihouse.IntelliHouseActivator;
 import org.openhab.binding.intellihouse.service.OsgiServiceRegistryDelegate;
 import org.osgi.framework.BundleContext;
@@ -267,7 +268,7 @@ public class RpcServlet extends BaseServlet {
                     ThingStatusInfo thingStatusInfo = new ThingStatusInfo(ThingStatus.ONLINE, ThingStatusDetail.NONE,
                             null);
                     for (Thing thing : getThings(request.getClientHostId())) {
-                        thing.getConfiguration().put(THING_CONFIG_KEY_LAST_SEEN_DATE, now);
+                        thing.getConfiguration().put(THING_CONFIG_KEY_LAST_SEEN_DATE, DateUtil.toString(now));
                         thing.getConfiguration().remove(THING_CONFIG_KEY_MAYBE_OFFLINE_SINCE_DATE);
 
                         // We prevent a configuration error to be overwritten by ONLINE, even if the outpost says
@@ -364,7 +365,8 @@ public class RpcServlet extends BaseServlet {
         final long now = System.currentTimeMillis();
         for (final Thing thing : thingRegistry.getAll()) {
             final String hostIdStr = (String) thing.getConfiguration().get(THING_CONFIG_KEY_HOST_ID);
-            final Date lastSeenDate = (Date) thing.getConfiguration().get(THING_CONFIG_KEY_LAST_SEEN_DATE);
+            final Date lastSeenDate = DateUtil
+                    .toDate((String) thing.getConfiguration().get(THING_CONFIG_KEY_LAST_SEEN_DATE));
 
             if (lastSeenDate != null) {
                 if (now - lastSeenDate.getTime() > THING_OFFLINE_TIMEOUT && !isThingStatusOffline(thing)) {
@@ -377,10 +379,12 @@ public class RpcServlet extends BaseServlet {
                 continue;
             }
 
-            Date maybeOfflineSinceDate = (Date) thing.getConfiguration().get(THING_CONFIG_KEY_MAYBE_OFFLINE_SINCE_DATE);
+            Date maybeOfflineSinceDate = DateUtil
+                    .toDate((String) thing.getConfiguration().get(THING_CONFIG_KEY_MAYBE_OFFLINE_SINCE_DATE));
             if (maybeOfflineSinceDate == null) {
                 maybeOfflineSinceDate = new Date();
-                thing.getConfiguration().put(THING_CONFIG_KEY_MAYBE_OFFLINE_SINCE_DATE, maybeOfflineSinceDate);
+                thing.getConfiguration().put(THING_CONFIG_KEY_MAYBE_OFFLINE_SINCE_DATE,
+                        DateUtil.toString(maybeOfflineSinceDate));
                 continue;
             }
             if (now - maybeOfflineSinceDate.getTime() > THING_OFFLINE_TIMEOUT && !isThingStatusOffline(thing)) {
@@ -460,5 +464,4 @@ public class RpcServlet extends BaseServlet {
     public void unsetThingRegistry(ThingRegistry thingRegistry) {
         this.thingRegistry = null;
     }
-
 }

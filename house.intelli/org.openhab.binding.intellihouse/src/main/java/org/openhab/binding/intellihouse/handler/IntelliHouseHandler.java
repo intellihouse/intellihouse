@@ -10,6 +10,8 @@ package org.openhab.binding.intellihouse.handler;
 import static house.intelli.core.util.AssertUtil.assertNotNull;
 import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.THING_CONFIG_KEY_HOST_ID;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -77,7 +79,7 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
         linkRegistry.addRegistryChangeListener(new RegistryChangeListener<ItemChannelLink>() {
             @Override
             public void added(final ItemChannelLink link) {
-                final ChannelUID channelUID = assertNotNull(link, "link").getUID();
+                final ChannelUID channelUID = getLinkedUID(assertNotNull(link, "link"));
                 assertNotNull(channelUID, "link.uid");
                 if (thingUID.equals(channelUID.getThingUID())) {
                     if (initializedChannelUIDs.add(channelUID)) {
@@ -199,7 +201,7 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
         final ThingUID thingUid = thing.getUID();
         Set<ChannelUID> channelUids = new LinkedHashSet<>();
         for (ItemChannelLink itemChannelLink : linkRegistry.getAll()) {
-            ChannelUID channelUid = itemChannelLink.getUID();
+            ChannelUID channelUid = getLinkedUID(itemChannelLink);
             if (thingUid.equals(channelUid.getThingUID())) {
                 channelUids.add(channelUid);
             }
@@ -222,5 +224,43 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
             throw new IllegalStateException("ServiceReference did not point to existing service: " + serviceReference);
         }
         return rpcContext;
+    }
+
+    // OpenHAB dev sometimes really sucks! They don't get the development-environment-update
+    // properly done so that I can select an older version! The new ItemChannelLink has a new
+    // method called "getLinkedUID()" for what was "getUID()" before. And they introduced a new
+    // "getUID()" doing sth. else! FUCK!!!
+    // TODO remove this method when we use OpenHAB 2.2.x.
+    protected static ChannelUID getLinkedUID(ItemChannelLink itemChannelLink) {
+        assertNotNull(itemChannelLink, "itemChannelLink");
+
+        Method method;
+        try {
+            method = ItemChannelLink.class.getMethod("getLinkedUID");
+        } catch (NoSuchMethodException x) {
+            method = null;
+        }
+
+        if (method == null) {
+            try {
+                method = ItemChannelLink.class.getMethod("getUID");
+            } catch (NoSuchMethodException x) {
+                throw new IllegalStateException("Neither 'getLinkedUID' nor 'getUID' exists! WTF?!");
+            }
+        }
+
+        Object result;
+        try {
+            result = method.invoke(itemChannelLink);
+        } catch (IllegalAccessException x) {
+            throw new RuntimeException(x);
+        } catch (InvocationTargetException x) {
+            throw new RuntimeException(x.getTargetException());
+        }
+        if (!(result instanceof ChannelUID))
+            throw new IllegalStateException(
+                    "Method '" + method + "' did not return a ChannelUID instance, but: " + result);
+
+        return (ChannelUID) result;
     }
 }

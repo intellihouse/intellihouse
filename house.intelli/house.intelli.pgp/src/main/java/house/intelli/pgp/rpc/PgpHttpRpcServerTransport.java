@@ -16,7 +16,6 @@ import house.intelli.core.rpc.Response;
 import house.intelli.core.rpc.RpcMessage;
 
 public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
-
 	private static final Logger logger = LoggerFactory.getLogger(PgpHttpRpcServerTransport.class);
 
 	private final PgpTransportSupport pgpTransportSupport = new PgpTransportSupport();
@@ -38,6 +37,8 @@ public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
 		HostId clientHostId = pgpTransportSupport.resolveRealServerHostId(req.getClientHostId());
 
 		if (serverHostId.equals(localHostId)) {
+			logger.debug("receiveRequest: Decrypting request: {}", req);
+
 			if (! (req instanceof PgpRequest)) // We reject unencrypted communication!
 				throw new IllegalStateException("Client sent plain-text request: " + req);
 
@@ -47,6 +48,8 @@ public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
 
 			RpcMessage rpcMessage = pgpTransportSupport.deserializeRpcMessage(plainRequest);
 			Request<?> request = (Request<?>) rpcMessage;
+
+			logger.debug("receiveRequest: Decrypted request: {}", request);
 
 			// Only accept messages where the signed content of sender+recipient matches the outer envelope data!
 			if (! equal(pgpRequest.getClientHostId(), request.getClientHostId()))
@@ -59,8 +62,10 @@ public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
 
 			return request;
 		}
-		else
+		else {
+			logger.debug("receiveRequest: Relaying request: {}", req);
 			return req;
+		}
 	}
 
 	@Override
@@ -86,9 +91,12 @@ public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
 		pgpTransportSupport.setServerHostId(localHostId);
 
 		PgpResponse pgpResponse;
-		if (response instanceof PgpResponse) // forward unchanged
+		if (response instanceof PgpResponse) { // forward unchanged
+			logger.debug("sendResponse: Relaying response: {}", response);
 			pgpResponse = (PgpResponse) response;
+		}
 		else { // wrap inside a new PgpResponse
+			logger.debug("sendResponse: Encrypting response: {}", response);
 			try {
 				pgpResponse = new PgpResponse();
 				pgpResponse.copyRequestCoordinates(response);
@@ -96,10 +104,16 @@ public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
 				byte[] plainResponse = pgpTransportSupport.serializeRpcMessage(response);
 
 				HostId clientHostId = pgpTransportSupport.resolveRealServerHostId(response.getClientHostId());
-				HostId serverHostId = pgpTransportSupport.resolveRealServerHostId(response.getServerHostId());
+//				HostId serverHostId = pgpTransportSupport.resolveRealServerHostId(response.getServerHostId());
+
+				// If it is encrypted + signed, it must always be signed by us -- even if we forward e.g. an error-message for someone else (which might be plain-text).
+				HostId serverHostId = localHostId;
+				pgpResponse.setServerHostId(pgpTransportSupport.resolveAliasHostId(serverHostId));
 
 				pgpResponse.setEncryptedResponse(
 						pgpTransportSupport.encryptAndSign(plainResponse, serverHostId, clientHostId));
+
+				logger.debug("sendResponse: Encrypted response: {}", pgpResponse);
 			} catch (Exception x) {
 				logger.error("sendResponse: " +x + ' ', x);
 

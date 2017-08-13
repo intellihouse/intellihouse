@@ -17,6 +17,8 @@ import house.intelli.core.rpc.dimmer.DimmerActorReadRequest;
 import house.intelli.core.rpc.dimmer.DimmerActorReadResponse;
 import house.intelli.core.rpc.dimmer.DimmerActorWriteRequest;
 import house.intelli.core.rpc.dimmer.DimmerActorWriteResponse;
+import house.intelli.core.rpc.keybutton.KeyButtonSensorEventRequest;
+import house.intelli.core.rpc.keybutton.KeyButtonSensorRemotePropagationRequest;
 import house.intelli.core.rpc.relay.RelayActorEventRequest;
 import house.intelli.core.rpc.relay.RelayActorReadRequest;
 import house.intelli.core.rpc.relay.RelayActorReadResponse;
@@ -58,6 +60,9 @@ public class IntelliHouseJaxbContextProviderImpl extends AbstractIntelliHouseJax
 		classes.add(RelayActorReadResponse.class);
 		classes.add(RelayActorWriteRequest.class);
 		classes.add(RelayActorWriteResponse.class);
+
+		classes.add(KeyButtonSensorEventRequest.class);
+		classes.add(KeyButtonSensorRemotePropagationRequest.class);
 		// END RpcService-related DTOs for which there might be no RpcService registered
 
 		return classes.toArray(new Class<?>[classes.size()]);

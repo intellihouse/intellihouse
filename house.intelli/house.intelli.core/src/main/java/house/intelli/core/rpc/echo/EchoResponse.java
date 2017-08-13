@@ -16,4 +16,8 @@ public class EchoResponse extends Response {
 		this.payload = payload;
 	}
 
+	@Override
+	protected String toString_getProperties() {
+		return super.toString_getProperties() + ", payload=" + payload;
+	}
 }

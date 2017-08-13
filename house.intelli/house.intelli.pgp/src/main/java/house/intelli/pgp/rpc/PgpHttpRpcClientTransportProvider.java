@@ -17,6 +17,9 @@ public class PgpHttpRpcClientTransportProvider extends HttpRpcClientTransportPro
 	}
 	public synchronized void setServerHostId(HostId serverHostId) {
 		this.serverHostId = serverHostId;
+
+		if (serverHostId != null)
+			PgpRequestService.setServerHostId(serverHostId);
 	}
 
 	@Override

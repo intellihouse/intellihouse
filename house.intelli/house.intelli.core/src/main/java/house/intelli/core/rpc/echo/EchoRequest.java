@@ -36,4 +36,9 @@ public class EchoRequest extends Request<EchoResponse> {
 	public boolean isIdempotent() {
 		return true;
 	}
+
+	@Override
+	protected String toString_getProperties() {
+		return super.toString_getProperties() + ", payload=" + payload + ", throwExceptionClassName=" + throwExceptionClassName + ", sleep=" + sleep;
+	}
 }

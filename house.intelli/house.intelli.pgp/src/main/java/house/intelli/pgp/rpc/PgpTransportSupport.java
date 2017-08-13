@@ -84,6 +84,17 @@ public class PgpTransportSupport {
 			return hostId;
 	}
 
+	public HostId resolveAliasHostId(final HostId hostId) {
+		if (hostId == null)
+			return null;
+
+		final HostId serverHostId = assertNotNull(getServerHostId(), "serverHostId");
+		if (serverHostId.equals(hostId))
+			return HostId.SERVER;
+		else
+			return hostId;
+	}
+
 	public PgpKey getMasterKeyOrFail(final HostId hostId) {
 		assertNotNull(hostId, "hostId");
 		PgpKey masterKey = getMasterKey(hostId);

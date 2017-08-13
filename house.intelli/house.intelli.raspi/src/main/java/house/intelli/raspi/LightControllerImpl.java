@@ -45,9 +45,9 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 	private int lightDimmerValuesIndex = -1;
 	private Boolean lightOn;
 
-	private List<KeyButtonSensorImpl> keyButtons = new ArrayList<>();
-	private List<DimmerActorImpl> lights = new ArrayList<>();
-	private List<RelayActorImpl> powerSupplies = new ArrayList<>();
+	private List<KeyButtonSensor> keyButtons = new ArrayList<>();
+	private List<DimmerActor> lights = new ArrayList<>();
+	private List<RelayActor> powerSupplies = new ArrayList<>();
 	private boolean switchOffOnKeyButtonUp;
 	private DimDirection dimDirection = DimDirection.DOWN;
 	private int dimmerValue;
@@ -55,24 +55,24 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 	private static final Timer timer = new Timer("LightControllerImpl.timer", true);
 	private TimerTask timerTask;
 
-	public List<KeyButtonSensorImpl> getKeyButtons() {
+	public List<KeyButtonSensor> getKeyButtons() {
 		return keyButtons;
 	}
-	public void setKeyButtons(List<KeyButtonSensorImpl> keyButtonSensorImpls) {
-		this.keyButtons = keyButtonSensorImpls == null ? new ArrayList<>() : keyButtonSensorImpls;
+	public void setKeyButtons(List<KeyButtonSensor> keyButtonSensors) {
+		this.keyButtons = keyButtonSensors == null ? new ArrayList<>() : keyButtonSensors;
 	}
 
-	public List<DimmerActorImpl> getLights() {
+	public List<DimmerActor> getLights() {
 		return lights;
 	}
-	public void setLights(List<DimmerActorImpl> lights) {
+	public void setLights(List<DimmerActor> lights) {
 		this.lights = lights == null ? new ArrayList<>() : lights;
 	}
 
-	public List<RelayActorImpl> getPowerSupplies() {
+	public List<RelayActor> getPowerSupplies() {
 		return powerSupplies;
 	}
-	public void setPowerSupplies(List<RelayActorImpl> powerSupplies) {
+	public void setPowerSupplies(List<RelayActor> powerSupplies) {
 		this.powerSupplies = powerSupplies == null ? new ArrayList<>() : powerSupplies;
 	}
 
@@ -185,12 +185,12 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 	private void onDimmerValueChange() {
 		assertEventThread();
 		boolean energized = false;
-		for (DimmerActorImpl light : lights) {
+		for (DimmerActor light : lights) {
 			int dimmerValue = light.getDimmerValue();
-			if (DimmerActorImpl.MIN_DIMMER_VALUE != dimmerValue)
+			if (DimmerActor.MIN_DIMMER_VALUE != dimmerValue)
 				energized = true;
 		}
-		for (RelayActorImpl powerSupply : powerSupplies) {
+		for (RelayActor powerSupply : powerSupplies) {
 			powerSupply.setEnergized(energized);
 		}
 	}
@@ -201,10 +201,10 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 		lights = Collections.unmodifiableList(lights);
 		powerSupplies = Collections.unmodifiableList(powerSupplies);
 
-		for (KeyButtonSensorImpl keyButton : keyButtons) {
+		for (KeyButtonSensor keyButton : keyButtons) {
 			keyButton.addPropertyChangeListener(KeyButtonSensor.PropertyEnum.down, keyButtonDownListener);
 		}
-		for (DimmerActorImpl light : lights) {
+		for (DimmerActor light : lights) {
 			light.addPropertyChangeListener(DimmerActor.PropertyEnum.dimmerValue, dimmerValueListener);
 		}
 		setLightOn(false);
@@ -239,7 +239,7 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 
 	private void applyLightsDimmerValue() {
 		assertEventThread();
-		for (DimmerActorImpl light : lights) {
+		for (DimmerActor light : lights) {
 			light.setDimmerValue(isLightOn() ? LIGHT_DIMMER_VALUES[lightDimmerValuesIndex] : DimmerActorImpl.MIN_DIMMER_VALUE);
 		}
 	}
@@ -257,10 +257,10 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 	protected void _close() {
 		assertEventThread();
 
-		for (KeyButtonSensorImpl keyButton : keyButtons) {
+		for (KeyButtonSensor keyButton : keyButtons) {
 			keyButton.removePropertyChangeListener(KeyButtonSensor.PropertyEnum.down, keyButtonDownListener);
 		}
-		for (DimmerActorImpl light : lights) {
+		for (DimmerActor light : lights) {
 			light.removePropertyChangeListener(DimmerActor.PropertyEnum.dimmerValue, dimmerValueListener);
 		}
 		keyButtons = new ArrayList<>(keyButtons);

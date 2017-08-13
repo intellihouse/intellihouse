@@ -105,10 +105,6 @@ public final class Util {
 		return object.getClass().getName() + '@' + Integer.toHexString(System.identityHashCode(object));
 	}
 
-	public static void main(String[] args) {
-		System.out.println(toIdentityString(new Object()));
-	}
-
 	/**
 	 * Does really nothing.
 	 * <p>

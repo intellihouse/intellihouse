@@ -112,7 +112,7 @@ public abstract class AbstractPgpEncoder implements PgpEncoder {
 	@Override
 	public void setSignPgpKey(final PgpKey signPgpKey) {
 		if (signPgpKey != null && !signPgpKey.isSecretKeyAvailable())
-			throw new IllegalArgumentException("signPgpKey.privateKeyAvailable == false :: A private key is required for signing!");
+			throw new IllegalArgumentException("signPgpKey.privateKeyAvailable == false :: A private key is required for signing! signPgpKey.pgpKeyId=" + signPgpKey.getPgpKeyId() + ", signPgpKey.userIds=" + signPgpKey.getUserIds());
 
 		this.signPgpKey = signPgpKey;
 	}
