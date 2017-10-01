@@ -3,7 +3,6 @@ package house.intelli.raspi;
 import static house.intelli.core.event.EventQueue.*;
 import static house.intelli.core.util.AssertUtil.*;
 
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import house.intelli.core.bean.AbstractBean;
 
-public class RelayControllerImpl extends AbstractBean<RelayActor.Property> implements RelayActor, AutoCloseable {
+public class RelayControllerImpl extends AbstractBean<RelayActor.Property> implements RelayActor, AutoOff, AutoCloseable {
 	private final Logger logger = LoggerFactory.getLogger(RelayControllerImpl.class);
 
 	public static enum PropertyEnum implements RelayActor.Property {
@@ -33,6 +32,8 @@ public class RelayControllerImpl extends AbstractBean<RelayActor.Property> imple
 	private int downCount;
 	private boolean down;
 	private boolean energized;
+	private int autoOffPeriod;
+	private final AutoOffSupport autoOffSupport = new AutoOffSupport(this);
 
 	public RelayControllerImpl() {
 	}
@@ -51,15 +52,13 @@ public class RelayControllerImpl extends AbstractBean<RelayActor.Property> imple
 		this.powerSupplies = powerSupplies == null ? new ArrayList<>() : powerSupplies;
 	}
 
-	private final PropertyChangeListener keyButtonDownListener = new PropertyChangeListener() {
-		@Override
-		public void propertyChange(PropertyChangeEvent evt) {
-			boolean down = (boolean) evt.getNewValue();
-			if (down)
-				onKeyButtonDown();
-			else
-				onKeyButtonUp();
-		}
+	private final PropertyChangeListener keyButtonDownListener = event -> {
+		assertEventThread();
+		boolean down = (boolean) event.getNewValue();
+		if (down)
+			onKeyButtonDown();
+		else
+			onKeyButtonUp();
 	};
 
 	public void init() {
@@ -172,6 +171,16 @@ public class RelayControllerImpl extends AbstractBean<RelayActor.Property> imple
 			applyEnergized(energized);
 	}
 
+	@Override
+	public int getAutoOffPeriod() {
+		return autoOffPeriod;
+	}
+	@Override
+	public void setAutoOffPeriod(int autoOffPeriod) {
+		assertEventThread();
+		this.autoOffPeriod = autoOffPeriod;
+	}
+
 	protected void applyDown(boolean down) {
 		assertEventThread();
 		if (isLatching()) {
@@ -189,16 +198,20 @@ public class RelayControllerImpl extends AbstractBean<RelayActor.Property> imple
 		for (RelayActorImpl powerSupply : powerSupplies) {
 			powerSupply.setEnergized(energized);
 		}
+		if (energized)
+			autoOffSupport.scheduleDeferredAutoOff();
+		else
+			autoOffSupport.cancelDeferredAutoOff();
+	}
+
+	@Override
+	public void onAutoOff(AutoOffEvent event) {
+		setEnergized(false);
 	}
 
 	@Override
 	public void close() {
-		invokeAndWait(new Runnable() {
-			@Override
-			public void run() {
-				_close();
-			}
-		});
+		invokeAndWait(() -> _close());
 	}
 
 	protected void _close() {

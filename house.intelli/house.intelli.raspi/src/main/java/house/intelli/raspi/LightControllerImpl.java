@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import house.intelli.core.bean.AbstractBean;
 
-public class LightControllerImpl extends AbstractBean<DimmerActor.Property> implements DimmerActor, AutoCloseable {
+public class LightControllerImpl extends AbstractBean<DimmerActor.Property> implements DimmerActor, AutoOff, AutoCloseable {
 	private final Logger logger = LoggerFactory.getLogger(LightControllerImpl.class);
 
 	public static enum PropertyEnum implements DimmerActor.Property {
@@ -54,6 +54,8 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 
 	private static final Timer timer = new Timer("LightControllerImpl.timer", true);
 	private TimerTask timerTask;
+	private int autoOffPeriod;
+	private final AutoOffSupport autoOffSupport = new AutoOffSupport(this);
 
 	public List<KeyButtonSensor> getKeyButtons() {
 		return keyButtons;
@@ -193,6 +195,10 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 		for (RelayActor powerSupply : powerSupplies) {
 			powerSupply.setEnergized(energized);
 		}
+		if (energized)
+			autoOffSupport.scheduleDeferredAutoOff();
+		else
+			autoOffSupport.cancelDeferredAutoOff();
 	}
 
 	public void init() {
@@ -242,6 +248,25 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 		for (DimmerActor light : lights) {
 			light.setDimmerValue(isLightOn() ? LIGHT_DIMMER_VALUES[lightDimmerValuesIndex] : DimmerActorImpl.MIN_DIMMER_VALUE);
 		}
+		if (isLightOn())
+			autoOffSupport.scheduleDeferredAutoOff();
+		else
+			autoOffSupport.cancelDeferredAutoOff();
+	}
+
+	@Override
+	public int getAutoOffPeriod() {
+		return autoOffPeriod;
+	}
+	@Override
+	public void setAutoOffPeriod(int autoOffPeriod) {
+		assertEventThread();
+		this.autoOffPeriod = autoOffPeriod;
+	}
+
+	@Override
+	public void onAutoOff(AutoOffEvent event) {
+		setLightOn(false);
 	}
 
 	@Override

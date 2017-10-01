@@ -3,6 +3,9 @@ package house.intelli.raspi;
 import static house.intelli.core.event.EventQueue.*;
 import static house.intelli.core.util.AssertUtil.*;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
@@ -21,24 +24,57 @@ public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> 
 		inverse
 	}
 
+	private static final long DEBOUNCE_EVENT_PERIOD = 100;
+
 	private Pin pin;
 	private boolean inverse;
 	private GpioPinDigitalInput digitalInput;
 
 	private boolean down;
+	private PinState debounceCandidatePinState;
+	private final Timer debounceTimer = new Timer("KeyButtonSensorImpl.debounceTimer@" + Integer.toHexString(System.identityHashCode(this)), true);
+	private TimerTask debounceTimerTask;
 
 	private GpioPinListenerDigital listener = new GpioPinListenerDigital() {
 		@Override
 		public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
 			final PinState state = event.getState();
-			invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					_setDown(state);
-				}
-			});
+			invokeLater(() -> setDebounceCandidatePinState(state));
 		}
 	};
+
+	private void setDebounceCandidatePinState(final PinState state) {
+		assertNotNull(state, "state");
+		assertEventThread();
+		if (debounceCandidatePinState == state)
+			return;
+
+		debounceCandidatePinState = state;
+		scheduleDebounceTimerTask();
+	}
+
+	private void scheduleDebounceTimerTask() {
+		assertEventThread();
+		if (debounceTimerTask != null) {
+			debounceTimerTask.cancel();
+			debounceTimerTask = null;
+		}
+
+		debounceTimerTask = new TimerTask() {
+			@Override
+			public void run() {
+				invokeLater(() -> {
+					debounceTimerTask = null;
+					PinState state = digitalInput.getState();
+					if (state == debounceCandidatePinState)
+						_setDown(state);
+					else
+						setDebounceCandidatePinState(state);
+				});
+			}
+		};
+		debounceTimer.schedule(debounceTimerTask, DEBOUNCE_EVENT_PERIOD);
+	}
 
 	public Pin getPin() {
 		return pin;
@@ -106,16 +142,11 @@ public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> 
 
 		GpioController gpioController = GpioFactory.getInstance();
 		digitalInput = gpioController.provisionDigitalInputPin(pin);
-		if (isInverse()) {
-			digitalInput.setDebounce(100, PinState.LOW); // logical 'down'
-			digitalInput.setDebounce(200, PinState.HIGH);
-			digitalInput.setPullResistance(PinPullResistance.PULL_UP);
-		}
-		else {
-			digitalInput.setDebounce(100, PinState.HIGH); // logical 'down'
-			digitalInput.setDebounce(200, PinState.LOW);
-			digitalInput.setPullResistance(PinPullResistance.PULL_DOWN);
-		}
+
+		// The lib's debounce implementation does not filter false positives. It seems to react immediately, hence
+		// we implement our own debounce -- see above.
+		digitalInput.setDebounce(0);
+		digitalInput.setPullResistance(PinPullResistance.OFF);
 		digitalInput.addListener(listener);
 		_setDown(digitalInput.getState());
 	}
