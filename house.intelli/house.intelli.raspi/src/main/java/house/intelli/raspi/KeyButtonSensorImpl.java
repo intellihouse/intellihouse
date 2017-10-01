@@ -17,10 +17,12 @@ import house.intelli.core.bean.AbstractBean;
 public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> implements KeyButtonSensor, AutoCloseable {
 
 	public static enum PropertyEnum implements KeyButtonSensor.Property {
-		pin
+		pin,
+		inverse
 	}
 
 	private Pin pin;
+	private boolean inverse;
 	private GpioPinDigitalInput digitalInput;
 
 	private boolean down;
@@ -68,7 +70,31 @@ public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> 
 	}
 
 	protected void _setDown(PinState pinState) {
-		setDown(PinState.HIGH == pinState);
+		if (isInverse())
+			setDown(PinState.LOW == pinState);
+		else
+			setDown(PinState.HIGH == pinState);
+	}
+
+	/**
+	 * Invert the mapping from the input-pin's electronic state to the logical {@link #isDown() down} state?
+	 * <p>
+	 * If this is <code>false</code> (the default), {@link PinState#HIGH} is mapped to
+	 * {@link #isDown() down}{@code == true} and {@link PinState#LOW} is mapped to {@link #isDown() down} {@code == false}.
+	 * <p>
+	 * If this is <code>true</code>, the mapping is inverted, i.e. {@link PinState#LOW} is mapped to
+	 * {@link #isDown() down}{@code == true} and {@link PinState#HIGH} is mapped to {@link #isDown() down} {@code == false}.
+	 *
+	 * @return whether to invert the mapping from {@link PinState#HIGH} / {@link PinState#LOW}
+	 * to {@link #isDown() down} being <code>true</code> / <code>false</code>.
+	 */
+	public boolean isInverse() {
+		assertEventThread();
+		return inverse;
+	}
+	public void setInverse(boolean inverse) {
+		assertEventThread();
+		setPropertyValue(PropertyEnum.inverse, inverse);
 	}
 
 	private void openDigitalInput() {
@@ -80,9 +106,16 @@ public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> 
 
 		GpioController gpioController = GpioFactory.getInstance();
 		digitalInput = gpioController.provisionDigitalInputPin(pin);
-		digitalInput.setDebounce(100, PinState.HIGH);
-		digitalInput.setDebounce(200, PinState.LOW);
-		digitalInput.setPullResistance(PinPullResistance.OFF);
+		if (isInverse()) {
+			digitalInput.setDebounce(100, PinState.LOW); // logical 'down'
+			digitalInput.setDebounce(200, PinState.HIGH);
+			digitalInput.setPullResistance(PinPullResistance.PULL_UP);
+		}
+		else {
+			digitalInput.setDebounce(100, PinState.HIGH); // logical 'down'
+			digitalInput.setDebounce(200, PinState.LOW);
+			digitalInput.setPullResistance(PinPullResistance.PULL_DOWN);
+		}
 		digitalInput.addListener(listener);
 		_setDown(digitalInput.getState());
 	}

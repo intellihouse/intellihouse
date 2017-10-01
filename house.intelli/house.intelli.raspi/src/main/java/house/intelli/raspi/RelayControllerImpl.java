@@ -19,6 +19,7 @@ public class RelayControllerImpl extends AbstractBean<RelayActor.Property> imple
 
 	public static enum PropertyEnum implements RelayActor.Property {
 		latching,
+		inverse,
 		downCount,
 		down,
 		energized
@@ -113,9 +114,9 @@ public class RelayControllerImpl extends AbstractBean<RelayActor.Property> imple
 		assertEventThread();
 		return latching;
 	}
-	public void setLatching(boolean fridgeMode) {
+	public void setLatching(boolean latching) {
 		assertEventThread();
-		setPropertyValue(PropertyEnum.latching, fridgeMode);
+		setPropertyValue(PropertyEnum.latching, latching);
 	}
 
 	/**
@@ -133,7 +134,7 @@ public class RelayControllerImpl extends AbstractBean<RelayActor.Property> imple
 	}
 	public void setInverse(boolean inverse) {
 		assertEventThread();
-		this.inverse = inverse;
+		setPropertyValue(PropertyEnum.inverse, inverse);
 	}
 
 	public boolean isDown() {
