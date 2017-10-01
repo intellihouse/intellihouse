@@ -24,7 +24,7 @@ public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> 
 		inverse
 	}
 
-	private static final long DEBOUNCE_EVENT_PERIOD = 100;
+	private static final long DEBOUNCE_PERIOD = 100;
 
 	private Pin pin;
 	private boolean inverse;
@@ -73,7 +73,7 @@ public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> 
 				});
 			}
 		};
-		debounceTimer.schedule(debounceTimerTask, DEBOUNCE_EVENT_PERIOD);
+		debounceTimer.schedule(debounceTimerTask, DEBOUNCE_PERIOD);
 	}
 
 	public Pin getPin() {
