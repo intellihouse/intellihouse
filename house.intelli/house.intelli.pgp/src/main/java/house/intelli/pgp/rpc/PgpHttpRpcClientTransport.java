@@ -66,6 +66,7 @@ public class PgpHttpRpcClientTransport extends HttpRpcClientTransport {
 	public Response receiveResponse() throws IOException {
 		final Response res = super.receiveResponse();
 		assertNotNull(res, "res");
+		pgpTransportSupport.handleSessionNotFoundException(res);
 
 		HostId serverHostId = pgpTransportSupport.resolveRealServerHostId(res.getServerHostId());
 		HostId clientHostId = pgpTransportSupport.resolveRealServerHostId(res.getClientHostId());
@@ -85,6 +86,7 @@ public class PgpHttpRpcClientTransport extends HttpRpcClientTransport {
 			Response response = (Response) rpcMessage;
 
 			logger.debug("receiveResponse: Decrypted response: {}", response);
+			pgpTransportSupport.handleSessionNotFoundException(response);
 
 			// Only accept messages where the signed content of sender+recipient matches the outer envelope data!
 			if (! equal(pgpResponse.getClientHostId(), response.getClientHostId()))

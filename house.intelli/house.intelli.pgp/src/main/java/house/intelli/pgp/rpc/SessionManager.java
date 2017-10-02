@@ -78,13 +78,34 @@ public class SessionManager {
 		logger.debug("putSession: {}", session);
 	}
 
+	public synchronized boolean removeSession(final Uid sessionId) {
+		assertNotNull(sessionId, "sessionId");
+		final Session session = sessionId2Session.remove(sessionId);
+		if (session != null) {
+			sessionHostIdPair2Session.remove(session.getSessionHostIdPair());
+			return true;
+		}
+		return false;
+	}
+
+	private static final String SESSION_NOT_FOUND_EXCEPTION_MESSAGE_PREFIX = "There is no session with sessionId=";
+
 	public Session getSessionOrFail(final Uid sessionId) throws SessionNotFoundException {
 		assertNotNull(sessionId, "sessionId");
 		final Session session = getSession(sessionId);
 		if (session == null)
-			throw new SessionNotFoundException("There is no session with sessionId=" + sessionId);
+			throw new SessionNotFoundException(SESSION_NOT_FOUND_EXCEPTION_MESSAGE_PREFIX + sessionId);
 
 		return session;
+	}
+
+	public static Uid getSessionIdFromSessionNotFoundExceptionMessage(final String message) {
+		assertNotNull(message, "message");
+		if (! message.startsWith(SESSION_NOT_FOUND_EXCEPTION_MESSAGE_PREFIX))
+			throw new IllegalArgumentException(String.format("message does not start with prefix '%s'!", SESSION_NOT_FOUND_EXCEPTION_MESSAGE_PREFIX));
+
+		String sessionIdString = message.substring(SESSION_NOT_FOUND_EXCEPTION_MESSAGE_PREFIX.length());
+		return new Uid(sessionIdString);
 	}
 
 	protected synchronized void evict() {

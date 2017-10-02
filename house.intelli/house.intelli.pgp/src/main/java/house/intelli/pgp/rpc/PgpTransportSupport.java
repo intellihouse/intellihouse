@@ -30,7 +30,10 @@ import org.slf4j.LoggerFactory;
 import house.intelli.core.Uid;
 import house.intelli.core.auth.SignatureException;
 import house.intelli.core.jaxb.IntelliHouseJaxbContext;
+import house.intelli.core.rpc.Error;
+import house.intelli.core.rpc.ErrorResponse;
 import house.intelli.core.rpc.HostId;
+import house.intelli.core.rpc.Response;
 import house.intelli.core.rpc.RpcMessage;
 import house.intelli.pgp.Pgp;
 import house.intelli.pgp.PgpDecoder;
@@ -365,6 +368,36 @@ public class PgpTransportSupport {
 		else
 			throw new IllegalArgumentException(String.format("Mode illegal! expected=(%s|%s), found=%s",
 					ENCRYPTED_DATA_MODE_SYMMETRIC, ENCRYPTED_DATA_MODE_PGP, mode));
+	}
+
+	public void handleSessionNotFoundException(Response response) {
+		if (! (response instanceof ErrorResponse))
+			return;
+
+		final ErrorResponse errorResponse = (ErrorResponse) response;
+		final Uid sessionId = getSessionNotFoundExceptionSessionId(errorResponse.getError());
+		if (sessionId == null)
+				return;
+
+		final SessionManager sessionManager = SessionManager.getInstance();
+		sessionManager.removeSession(sessionId);
+	}
+
+	private Uid getSessionNotFoundExceptionSessionId(final Error error) {
+		if (error == null)
+			return null;
+
+		Class<?> clazz;
+		try {
+			clazz = Class.forName(error.getClassName());
+		} catch (final ClassNotFoundException e) {
+			clazz = null;
+		}
+
+		if (clazz != null && SessionNotFoundException.class.isAssignableFrom(clazz))
+			return SessionManager.getSessionIdFromSessionNotFoundExceptionMessage(error.getMessage());
+
+		return getSessionNotFoundExceptionSessionId(error.getCause());
 	}
 
 	private byte[] serializeSessionRequest(final Session session) throws IOException {
