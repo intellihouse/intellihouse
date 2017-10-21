@@ -7,3 +7,5 @@ The idea is to put one (or more) Raspberry-Pi in every room and connect the hard
 Every node (both Raspberry Pis and openHAB-server) has its own OpenPGP-key-pair. All communication is encrypted and signed using OpenPGP!
 
 _intellihouse_ is thus one of the most secure smart-home-solutions available!
+
+Read more in the [Wiki](https://github.com/intellihouse/intellihouse/wiki).
