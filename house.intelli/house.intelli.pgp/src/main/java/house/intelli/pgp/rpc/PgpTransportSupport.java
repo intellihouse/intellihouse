@@ -22,6 +22,7 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
 import org.bouncycastle.crypto.StreamCipher;
+import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.slf4j.Logger;
@@ -51,6 +52,7 @@ public class PgpTransportSupport {
 	private JAXBContext jaxbContext;
 
 	private static final SymmetricCryptoType symmetricCryptoType = SymmetricCryptoType.TWOFISH_CFB_NOPADDING; // maybe we make this configurable later...
+	private static final HashType hashType = HashType.SHA256; // maybe we make this configurable later...
 
 	private final Pgp pgp = PgpRegistry.getInstance().getPgpOrFail();
 	private final Map<String, PgpKey> hostIdStr2PgpKey = new HashMap<>();
@@ -183,16 +185,18 @@ public class PgpTransportSupport {
 			// write IV
 			writeShortByteArray(dout, cipherWithIv.iv);
 
+			// There is no need to sign this data, because only the two session partners know the key.
+			// But we generate an SHA256 hash to make sure, nobody can manipulate the data.
+			final byte[] plainDataWithHash = combinePlainDataWithHash(plainData);
+
 			// encrypt data and write cipher-text to output-stream
-			byte[] enc = new byte[plainData.length * 3 / 2];
+			final byte[] enc = new byte[plainDataWithHash.length * 3 / 2];
 			final long startTimestampEncode = System.currentTimeMillis();
-			int encLen = cipherWithIv.cipher.processBytes(plainData, 0, plainData.length, enc, 0);
+			int encLen = cipherWithIv.cipher.processBytes(plainDataWithHash, 0, plainDataWithHash.length, enc, 0);
 			final long stopTimestampEncode = System.currentTimeMillis();
 			writeLongByteArray(dout, enc, 0, encLen);
 
 			releaseCipher(cipherWithIv);
-
-			// There is no need to sign this data, because only the two session partners know the key.
 
 			if (logger.isDebugEnabled()) {
 				logger.debug("encryptAndSign: mode=SYMMETRIC, encodeDuration={}ms, totalDuration={}ms",
@@ -273,18 +277,20 @@ public class PgpTransportSupport {
 			// *He* (our communication partner) already uses this, so it is obviously confirmed by him, and we can mark this.
 			session.confirmByHostId(senderHostId);
 
-			byte[] iv = readShortByteArray(din);
-			byte[] enc = readLongByteArray(din);
+			final byte[] iv = readShortByteArray(din);
+			final byte[] enc = readLongByteArray(din);
 
-			byte[] buf = new byte[enc.length * 3 / 2]; // decrypted data should never be larger than encrypted data, but we're careful
+			final byte[] buf = new byte[enc.length * 3 / 2]; // decrypted data should never be larger than encrypted data, but we're careful
 			StreamCipher cipher = acquireInitializedCipherForDecryption(symmetricCryptoType, session.getSessionKey(), iv);
 			final long startTimestampDecode = System.currentTimeMillis();
-			int plainDataLength = cipher.processBytes(enc, 0, enc.length, buf, 0);
+			int plainDataWithHashLength = cipher.processBytes(enc, 0, enc.length, buf, 0);
 			final long stopTimestampDecode = System.currentTimeMillis();
 			releaseCipher(cipher);
 
-			byte[] plainData = new byte[plainDataLength];
-			System.arraycopy(buf, 0, plainData, 0, plainDataLength);
+			final byte[] plainDataWithHash = new byte[plainDataWithHashLength];
+			System.arraycopy(buf, 0, plainDataWithHash, 0, plainDataWithHashLength);
+
+			final byte[] plainData = splitPlainDataFromHashWithVerification(plainDataWithHash);
 
 			if (logger.isDebugEnabled()) {
 				logger.debug("decryptAndVerifySignature: mode=SYMMETRIC, decodeDuration={}ms, totalDuration={}ms",
@@ -421,31 +427,21 @@ public class PgpTransportSupport {
 		}
 	}
 
-//	private Object deserialize(final byte[] serialized) throws IOException {
-//		assertNotNull(serialized, "serialized");
-//		try {
-//			Object deserialized = getJaxbContext().createUnmarshaller().unmarshal(new ByteArrayInputStream(serialized));
-//			return deserialized;
-//		} catch (JAXBException e) {
-//			throw new IOException(e);
-//		}
-//	}
-
-	private void writeLongByteArray(DataOutputStream dout, byte[] byteArray) throws IOException {
+	private static void writeLongByteArray(DataOutputStream dout, byte[] byteArray) throws IOException {
 		assertNotNull(dout, "dout");
 		assertNotNull(byteArray, "byteArray");
 		dout.writeInt(byteArray.length);
 		dout.write(byteArray);
 	}
 
-	private void writeLongByteArray(DataOutputStream dout, byte[] byteArray, int offset, int length) throws IOException {
+	private static void writeLongByteArray(DataOutputStream dout, byte[] byteArray, int offset, int length) throws IOException {
 		assertNotNull(dout, "dout");
 		assertNotNull(byteArray, "byteArray");
 		dout.writeInt(length);
 		dout.write(byteArray, offset, length);
 	}
 
-	private void writeShortByteArray(DataOutputStream dout, byte[] byteArray) throws IOException {
+	private static void writeShortByteArray(DataOutputStream dout, byte[] byteArray) throws IOException {
 		assertNotNull(dout, "dout");
 		assertNotNull(byteArray, "byteArray");
 		if (byteArray.length > 255)
@@ -455,7 +451,7 @@ public class PgpTransportSupport {
 		dout.write(byteArray);
 	}
 
-	private byte[] readLongByteArray(DataInputStream din) throws IOException {
+	private static byte[] readLongByteArray(DataInputStream din) throws IOException {
 		assertNotNull(din, "din");
 		int byteArrayLength = din.readInt();
 		byte[] byteArray = new byte[byteArrayLength];
@@ -463,7 +459,7 @@ public class PgpTransportSupport {
 		return byteArray;
 	}
 
-	private byte[] readShortByteArray(DataInputStream din) throws IOException {
+	private static byte[] readShortByteArray(DataInputStream din) throws IOException {
 		assertNotNull(din, "din");
 		int byteArrayLength = din.readByte() & 0xFF;
 		byte[] byteArray = new byte[byteArrayLength];
@@ -509,5 +505,53 @@ public class PgpTransportSupport {
 	private static void releaseCipher(final StreamCipher cipher) {
 		assertNotNull(cipher, "cipher");
 		CipherManager.getInstance().releaseCipher(cipher);
+	}
+
+	protected static byte[] sha256(final byte[] in) {
+		assertNotNull(in, "in");
+		final SHA256Digest digest = new SHA256Digest();
+		final byte[] out = new byte[digest.getDigestSize()];
+		digest.update(in, 0, in.length);
+		digest.doFinal(out, 0);
+		return out;
+	}
+
+	protected static byte[] combinePlainDataWithHash(final byte[] plainData) throws IOException {
+		assertNotNull(plainData, "in");
+		ByteArrayOutputStream bout = new ByteArrayOutputStream(plainData.length + 128);
+		DataOutputStream dout = new DataOutputStream(bout);
+		dout.writeInt(hashType.ordinal());
+		writeLongByteArray(dout, plainData);
+		writeShortByteArray(dout, sha256(plainData));
+		return bout.toByteArray();
+	}
+
+	protected static byte[] splitPlainDataFromHashWithVerification(final byte[] in) throws IOException {
+		assertNotNull(in, "in");
+		DataInputStream din = new DataInputStream(new ByteArrayInputStream(in));
+		int hashTypeOrdinal = din.readInt();
+		if (hashTypeOrdinal < 0)
+			throw new IOException("hashTypeOrdinal < 0!!! hashTypeOrdinal=" + hashTypeOrdinal);
+
+		if (hashTypeOrdinal >= HashType.values().length)
+			throw new IOException("hashTypeOrdinal >= HashType.values.length!!! hashTypeOrdinal=" + hashTypeOrdinal);
+
+		final HashType hashType = HashType.values()[hashTypeOrdinal];
+		final byte[] plainData = readLongByteArray(din);
+		final byte[] declaredHash = readShortByteArray(din);
+
+		final byte[] foundHash;
+		switch (hashType) {
+			case SHA256:
+				foundHash = sha256(plainData);
+				break;
+			default:
+				throw new UnsupportedOperationException("hashType: " + hashType);
+		}
+
+		if (! Arrays.equals(declaredHash, foundHash))
+			throw new IOException("Data corruption: Declared hash does not match found hash!!!");
+
+		return plainData;
 	}
 }
