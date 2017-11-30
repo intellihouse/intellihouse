@@ -10,10 +10,11 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanNameAware;
 
 import house.intelli.core.bean.AbstractBean;
 
-public class RelayControllerImpl extends AbstractBean<RelayActor.Property> implements RelayActor, AutoOff, AutoCloseable {
+public class RelayControllerImpl extends AbstractBean<RelayActor.Property> implements RelayActor, AutoOff, AutoCloseable, BeanNameAware {
 	private final Logger logger = LoggerFactory.getLogger(RelayControllerImpl.class);
 
 	public static enum PropertyEnum implements RelayActor.Property {
@@ -24,6 +25,7 @@ public class RelayControllerImpl extends AbstractBean<RelayActor.Property> imple
 		energized
 	}
 
+	private String beanName;
 	private List<KeyButtonSensorImpl> keyButtons = new ArrayList<>();
 	private List<RelayActorImpl> powerSupplies = new ArrayList<>();
 
@@ -36,6 +38,14 @@ public class RelayControllerImpl extends AbstractBean<RelayActor.Property> imple
 	private final AutoOffSupport autoOffSupport = new AutoOffSupport(this);
 
 	public RelayControllerImpl() {
+	}
+
+	public String getBeanName() {
+		return beanName;
+	}
+	@Override
+	public void setBeanName(String beanName) {
+		this.beanName = beanName;
 	}
 
 	public List<KeyButtonSensorImpl> getKeyButtons() {
@@ -224,4 +234,12 @@ public class RelayControllerImpl extends AbstractBean<RelayActor.Property> imple
 		powerSupplies = new ArrayList<>(powerSupplies);
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "beanName=" + beanName;
+	}
 }

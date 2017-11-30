@@ -6,6 +6,8 @@ import static house.intelli.core.util.AssertUtil.*;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.springframework.beans.factory.BeanNameAware;
+
 import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
@@ -17,7 +19,7 @@ import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 
 import house.intelli.core.bean.AbstractBean;
 
-public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> implements KeyButtonSensor, AutoCloseable {
+public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> implements KeyButtonSensor, AutoCloseable, BeanNameAware {
 
 	public static enum PropertyEnum implements KeyButtonSensor.Property {
 		pin,
@@ -26,6 +28,7 @@ public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> 
 
 	private static final long DEBOUNCE_PERIOD = 100;
 
+	private String beanName;
 	private Pin pin;
 	private boolean inverse;
 	private GpioPinDigitalInput digitalInput;
@@ -74,6 +77,15 @@ public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> 
 			}
 		};
 		debounceTimer.schedule(debounceTimerTask, DEBOUNCE_PERIOD);
+	}
+
+	@Override
+	public String getBeanName() {
+		return beanName;
+	}
+	@Override
+	public void setBeanName(String beanName) {
+		setPropertyValue(KeyButtonSensor.PropertyEnum.beanName, beanName);
 	}
 
 	public Pin getPin() {
@@ -170,5 +182,14 @@ public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> 
 				closeDigitalInput();
 			}
 		});
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "beanName=" + beanName;
 	}
 }

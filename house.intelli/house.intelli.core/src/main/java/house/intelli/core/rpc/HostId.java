@@ -43,6 +43,8 @@ public class HostId implements Comparable<HostId> {
 	 */
 	public static final HostId SERVER = new HostId("server");
 
+	private static volatile HostId localHostId;
+
 	/**
 	 * Gets the {@code HostId} of this computer.
 	 * <p>
@@ -57,7 +59,13 @@ public class HostId implements Comparable<HostId> {
 	 * if it cannot be determined.
 	 */
 	public static HostId getLocalHostId() throws IllegalStateException {
+		if (localHostId == null)
+			localHostId = _getLocalHostId();
 
+		return localHostId;
+	}
+
+	protected static HostId _getLocalHostId() throws IllegalStateException {
 		///////// Read environment variable 'HOSTNAME' /////////
 		// This env var is provided by bash and may be missing, if another shell is used.
 

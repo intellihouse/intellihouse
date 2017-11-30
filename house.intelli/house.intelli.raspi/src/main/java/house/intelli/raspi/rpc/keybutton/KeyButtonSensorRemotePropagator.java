@@ -12,12 +12,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import house.intelli.core.rpc.RemoteBeanRef;
 import house.intelli.core.rpc.RpcClient;
 import house.intelli.core.rpc.RpcContext;
 import house.intelli.core.rpc.RpcException;
 import house.intelli.core.rpc.keybutton.KeyButtonSensorRemotePropagationRequest;
 import house.intelli.raspi.KeyButtonSensorRemote;
-import house.intelli.raspi.RemoteBeanRef;
 
 /**
  * Registers listeners for all {@link KeyButtonSensorRemote} objects in the {@link KeyButtonSensorEventNotifier}
@@ -49,6 +49,7 @@ public class KeyButtonSensorRemotePropagator {
 	};
 
 	public KeyButtonSensorRemotePropagator() {
+		logger.debug("<init>");
 		timer.schedule(timerTask, PROPAGATION_PERIOD, PROPAGATION_PERIOD);
 	}
 

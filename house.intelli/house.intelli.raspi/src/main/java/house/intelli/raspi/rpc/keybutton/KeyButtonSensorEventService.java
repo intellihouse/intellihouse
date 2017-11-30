@@ -15,10 +15,10 @@ import org.springframework.stereotype.Component;
 
 import house.intelli.core.event.EventQueue;
 import house.intelli.core.rpc.AbstractRpcService;
+import house.intelli.core.rpc.RemoteBeanRef;
 import house.intelli.core.rpc.VoidResponse;
 import house.intelli.core.rpc.keybutton.KeyButtonSensorEventRequest;
 import house.intelli.raspi.KeyButtonSensorRemote;
-import house.intelli.raspi.RemoteBeanRef;
 
 @Component
 public class KeyButtonSensorEventService extends AbstractRpcService<KeyButtonSensorEventRequest, VoidResponse> {
@@ -42,7 +42,8 @@ public class KeyButtonSensorEventService extends AbstractRpcService<KeyButtonSen
 	public VoidResponse process(final KeyButtonSensorEventRequest request) throws Exception {
 		final RemoteBeanRef remoteBeanRef = new RemoteBeanRef();
 		remoteBeanRef.setHostId(assertNotNull(request.getClientHostId(), "request.clientHostId"));
-		remoteBeanRef.setBeanId(assertNotNull(request.getChannelId(), "request.channelId"));
+		remoteBeanRef.setBeanId(assertNotNull(request.getChannelId(), "request.channelId")); // SENDER id!
+		logger.debug("process: remoteBeanRef={}", remoteBeanRef);
 
 		final List<KeyButtonSensorRemote> list = getRemoteBeanRef2KeyButtonSensorRemote().get(remoteBeanRef);
 		if (list == null || list.isEmpty())

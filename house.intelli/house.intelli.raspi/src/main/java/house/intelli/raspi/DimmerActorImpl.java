@@ -26,6 +26,7 @@ public class DimmerActorImpl extends AbstractBean<DimmerActor.Property> implemen
 
 	private static final boolean USE_DIGITAL_OUTPUT_FOR_EXTREME_VALUES = false;
 
+	private String beanName;
 	private Pin pin;
 	private GpioPinPwmOutput pwmOutput;
 	private GpioPinDigitalOutput digitalOutput;
@@ -47,6 +48,15 @@ public class DimmerActorImpl extends AbstractBean<DimmerActor.Property> implemen
 		assertEventThread();
 		assertNotNull(pin, "pin");
 		applyDimmerValue();
+	}
+
+	@Override
+	public String getBeanName() {
+		return beanName;
+	}
+	@Override
+	public void setBeanName(String beanName) {
+		this.beanName = beanName;
 	}
 
 	public Pin getPin() {
@@ -191,5 +201,14 @@ public class DimmerActorImpl extends AbstractBean<DimmerActor.Property> implemen
 				closePwmOutput();
 			}
 		});
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "beanName=" + beanName;
 	}
 }

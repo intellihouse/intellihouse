@@ -8,28 +8,21 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import house.intelli.core.bean.AbstractBean;
+import house.intelli.core.rpc.RemoteBeanRef;
+import house.intelli.core.rpc.lightcontroller.DimDirection;
+import house.intelli.core.rpc.lightcontroller.LightControllerState;
 
-public class LightControllerImpl extends AbstractBean<DimmerActor.Property> implements DimmerActor, AutoOff, AutoCloseable {
+public class LightControllerImpl extends AbstractBean<DimmerActor.Property> implements LightController, AutoOff, AutoCloseable {
 	private final Logger logger = LoggerFactory.getLogger(LightControllerImpl.class);
-
-	public static enum PropertyEnum implements DimmerActor.Property {
-		lightDimmerValuesIndex,
-		lightOn,
-		switchOffOnKeyButtonUp,
-		dimDirection
-	}
-
-	protected static enum DimDirection {
-		DOWN,
-		UP
-	}
 
 	public static final int[] LIGHT_DIMMER_VALUES = { // percentages
 			12, //   1
@@ -42,6 +35,7 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 			100 // 100
 	};
 
+	private String beanName;
 	private int lightDimmerValuesIndex = -1;
 	private Boolean lightOn;
 
@@ -56,6 +50,22 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 	private TimerTask timerTask;
 	private int autoOffPeriod;
 	private final AutoOffSupport autoOffSupport = new AutoOffSupport(this);
+
+	private List<RemoteBeanRef> federatedLightControllers = new ArrayList<>();
+	private final Set<RemoteBeanRef> collectedFederatedLightControllers = new CopyOnWriteArraySet<>();
+//	private List<LightControllerRemote> lightControllerRemotes = new ArrayList<>();
+
+	private LightControllerState state;
+	private boolean ignoreUpdateState;
+
+	@Override
+	public String getBeanName() {
+		return beanName;
+	}
+	@Override
+	public void setBeanName(String beanName) {
+		this.beanName = beanName;
+	}
 
 	public List<KeyButtonSensor> getKeyButtons() {
 		return keyButtons;
@@ -77,6 +87,38 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 	public void setPowerSupplies(List<RelayActor> powerSupplies) {
 		this.powerSupplies = powerSupplies == null ? new ArrayList<>() : powerSupplies;
 	}
+
+	/**
+	 * Gets the references of all <i>declared remote</i> light-controllers federated with this local one.
+	 * @return references of all <i>declared remote</i> light-controllers federated with <code>this</code>.
+	 * Never <code>null</code>.
+	 * @see #getCollectedFederatedLightControllers()
+	 */
+	public List<RemoteBeanRef> getFederatedLightControllers() {
+		return federatedLightControllers;
+	}
+	public void setFederatedLightControllers(List<RemoteBeanRef> federatedLightControllers) {
+		assertEventThread();
+		collectedFederatedLightControllers.removeAll(this.federatedLightControllers);
+
+		this.federatedLightControllers = Collections.unmodifiableList(
+				federatedLightControllers == null ? new ArrayList<>() : federatedLightControllers);
+
+		collectedFederatedLightControllers.addAll(this.federatedLightControllers);
+	}
+
+	/**
+	 * Gets the references of all remote light-controllers federated with this one. This includes both
+	 * the ones declared in the Spring-XML and the ones collected via propagations.
+	 * @return the references of all remote light-controllers federated with this one.
+	 */
+	public Set<RemoteBeanRef> getCollectedFederatedLightControllers() {
+		return collectedFederatedLightControllers;
+	}
+
+//	public List<LightControllerRemote> getLightControllerRemotes() {
+//		return lightControllerRemotes;
+//	}
 
 	private final PropertyChangeListener keyButtonDownListener = new PropertyChangeListener() {
 		@Override
@@ -246,12 +288,15 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 	private void applyLightsDimmerValue() {
 		assertEventThread();
 		for (DimmerActor light : lights) {
-			light.setDimmerValue(isLightOn() ? LIGHT_DIMMER_VALUES[lightDimmerValuesIndex] : DimmerActorImpl.MIN_DIMMER_VALUE);
+			if (! (light instanceof Remote))
+				light.setDimmerValue(isLightOn() ? LIGHT_DIMMER_VALUES[lightDimmerValuesIndex] : DimmerActorImpl.MIN_DIMMER_VALUE);
 		}
 		if (isLightOn())
 			autoOffSupport.scheduleDeferredAutoOff();
 		else
 			autoOffSupport.cancelDeferredAutoOff();
+
+		updateState();
 	}
 
 	@Override
@@ -332,5 +377,61 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 
 	protected void _setDimmerValue(final int dimmerValue) {
 		setPropertyValue(DimmerActor.PropertyEnum.dimmerValue, dimmerValue);
+	}
+
+	public LightControllerState getState() {
+		if (state == null)
+			updateState();
+
+		return assertNotNull(state, "state");
+	}
+
+	public void setState(LightControllerState state) {
+		assertNotNull(state, "state");
+		LightControllerState oldState = getState();
+		if (oldState.equals(state)) {
+			return;
+		}
+		logger.debug("setState: oldState={}, state={}", oldState, state);
+		ignoreUpdateState = true;
+		try {
+			setAutoOffPeriod(Math.max(state.getAutoOffPeriod(), state.getAutoOffPeriod()));
+			setLightDimmerValuesIndex(state.getLightDimmerValuesIndex());
+
+			if (state.getLightOn() != null)
+				setLightOn(state.getLightOn());
+
+			setDimDirection(state.getDimDirection());
+
+			_setState(state);
+		} finally {
+			ignoreUpdateState = false;
+		}
+	}
+
+	protected void _setState(LightControllerState state) {
+		setPropertyValue(PropertyEnum.state, state);
+	}
+
+	protected void updateState() {
+		if (ignoreUpdateState)
+			return;
+
+		LightControllerState state = new LightControllerState();
+		state.setAutoOffPeriod(autoOffPeriod);
+		state.setDimDirection(dimDirection);
+		state.setDimmerValue(dimmerValue);
+		state.setLightDimmerValuesIndex(lightDimmerValuesIndex);
+		state.setLightOn(lightOn);
+		_setState(state);
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "beanName=" + beanName;
 	}
 }

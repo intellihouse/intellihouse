@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +40,7 @@ public class KeyButtonSensorEventNotifier {
 
 	private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-	private final IdentityHashMap<KeyButtonSensor, String> keyButtonSensor2BeanId = new IdentityHashMap<>();
+//	private final IdentityHashMap<KeyButtonSensor, String> keyButtonSensor2BeanId = new IdentityHashMap<>();
 
 	private final Map<String, Set<HostId>> beanId2listenerHostIds = new HashMap<>();
 
@@ -49,21 +48,22 @@ public class KeyButtonSensorEventNotifier {
 		@Override
 		public void propertyChange(PropertyChangeEvent event) {
 			assertEventThread();
-			if (keyButtonSensor2BeanId.isEmpty()) {
-				Map<String, KeyButtonSensor> beanId2KeyButtonSensor = applicationContext.getBeansOfType(KeyButtonSensor.class);
-				for (Map.Entry<String, KeyButtonSensor> me : beanId2KeyButtonSensor.entrySet())
-					keyButtonSensor2BeanId.put(me.getValue(), me.getKey());
-			}
+//			if (keyButtonSensor2BeanId.isEmpty()) {
+//				Map<String, KeyButtonSensor> beanId2KeyButtonSensor = applicationContext.getBeansOfType(KeyButtonSensor.class);
+//				for (Map.Entry<String, KeyButtonSensor> me : beanId2KeyButtonSensor.entrySet())
+//					keyButtonSensor2BeanId.put(me.getValue(), me.getKey());
+//			}
 			final KeyButtonSensor keyButtonSensor = (KeyButtonSensor) event.getSource();
 			final boolean down = keyButtonSensor.isDown();
-			final String beanId = keyButtonSensor2BeanId.get(keyButtonSensor);
+//			final String beanId = keyButtonSensor2BeanId.get(keyButtonSensor);
+			final String beanId = keyButtonSensor.getBeanName();
 			if (beanId == null) {
 				logger.error("downPropertyChangeListener.propertyChange: beanId not found for " + keyButtonSensor);
 				return;
 			}
-			logger.debug("downPropertyChangeListener.propertyChange: beanId={}, down={}", beanId, down);
 
 			Set<HostId> listenerHostIds = beanId2listenerHostIds.get(beanId);
+			logger.debug("downPropertyChangeListener.propertyChange: beanId={}, down={}, listenerHostIds={}", beanId, down, listenerHostIds);
 			if (listenerHostIds == null)
 				return;
 
@@ -86,7 +86,7 @@ public class KeyButtonSensorEventNotifier {
 		logger.debug("invokeKeyButtonSensorEventRequest: listenerHostId={}, beanId={}, down={}", listenerHostId, beanId, down);
 		KeyButtonSensorEventRequest request = new KeyButtonSensorEventRequest();
 		request.setServerHostId(listenerHostId);
-		request.setChannelId(beanId);
+		request.setChannelId(beanId); // SENDER id!
 		request.setDown(down);
 		try (RpcClient rpcClient = rpcContext.createRpcClient()) {
 			rpcClient.invoke(request);

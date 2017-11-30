@@ -37,6 +37,8 @@ public class KeyButtonSensorRemotePropagationService extends AbstractRpcService<
 	@Override
 	public VoidResponse process(KeyButtonSensorRemotePropagationRequest request) throws Exception {
 		final String channelId = assertNotNull(request.getChannelId(), "request.channelId");
+		logger.debug("process: clientHostId={}, channelId={}", request.getClientHostId(), channelId);
+
 		final Object bean = applicationContext.getBean(channelId);
 		if (bean == null)
 			throw new IllegalArgumentException("No bean found with beanId=channelId=" + channelId);

@@ -1,8 +1,6 @@
-package house.intelli.raspi;
+package house.intelli.core.rpc;
 
 import static house.intelli.core.util.Util.*;
-
-import house.intelli.core.rpc.HostId;
 
 public class RemoteBeanRef {
 

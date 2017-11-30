@@ -17,10 +17,20 @@ public class RelayActorImpl extends AbstractBean<RelayActor.Property> implements
 		pin
 	}
 
+	private String beanName;
 	private Pin pin;
 	private GpioPinDigitalOutput digitalOutput;
 
 	private boolean energized;
+
+	@Override
+	public String getBeanName() {
+		return beanName;
+	}
+	@Override
+	public void setBeanName(String beanName) {
+		this.beanName = beanName;
+	}
 
 	public Pin getPin() {
 		return pin;
@@ -88,5 +98,14 @@ public class RelayActorImpl extends AbstractBean<RelayActor.Property> implements
 				closeDigitalOutput();
 			}
 		});
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + '[' + toString_getProperties() + ']';
+	}
+
+	protected String toString_getProperties() {
+		return "beanName=" + beanName;
 	}
 }

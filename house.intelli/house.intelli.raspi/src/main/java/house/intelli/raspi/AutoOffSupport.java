@@ -10,7 +10,7 @@ public class AutoOffSupport {
 
 	public final AutoOff autoOff;
 
-	private static final Timer autoOffTimer = new Timer("RelayControllerImpl.autoOffTimer", true);
+	private static final Timer autoOffTimer = new Timer("AutoOffSupport.autoOffTimer", true);
 	private TimerTask autoOffTimerTask;
 
 	public AutoOffSupport(AutoOff autoOff) {

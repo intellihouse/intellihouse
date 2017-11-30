@@ -21,6 +21,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
+import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.StreamCipher;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -478,7 +479,7 @@ public class PgpTransportSupport {
 		assertNotNull(symmetricCryptoType, "symmetricCryptoType");
 		assertNotNull(key, "key");
 		StreamCipher cipher = CipherManager.getInstance().acquireCipher(symmetricCryptoType);
-		byte[] iv = new byte[128 / 8]; // block size is 128 bit-- we know this from the symmetricCryptoType: all currently supported ones are the same.
+		byte[] iv = new byte[getIvSize(cipher)];
 		random.nextBytes(iv);
 		KeyParameter kp = new KeyParameter(key);
 		ParametersWithIV params = new ParametersWithIV(kp, iv);
@@ -553,5 +554,13 @@ public class PgpTransportSupport {
 			throw new IOException("Data corruption: Declared hash does not match found hash!!!");
 
 		return plainData;
+	}
+
+	protected static int getIvSize(StreamCipher cipher) {
+		assertNotNull(cipher, "cipher");
+		if (cipher instanceof BlockCipher) // it's likely a StreamBlockCipher
+			return ((BlockCipher) cipher).getBlockSize();
+		else
+			throw new UnsupportedOperationException("cipher is not an instance of BlockCipher! Not yet supported: " + cipher.getClass().getName());
 	}
 }

@@ -1,17 +1,18 @@
 package house.intelli.raspi;
 
-import static house.intelli.core.util.AssertUtil.*;
-
 import house.intelli.core.bean.AbstractBean;
 import house.intelli.core.rpc.RemoteBeanRef;
 
-public class KeyButtonSensorRemote extends AbstractBean<KeyButtonSensor.Property> implements KeyButtonSensor, Remote {
+public class DimmerActorRemote extends AbstractBean<DimmerActor.Property> implements DimmerActor, Remote {
+
+	public DimmerActorRemote() {
+	}
 
 	private String beanName;
 	private RemoteBeanRef remoteBeanRef;
-	private boolean down;
+	private int dimmerValue;
 
-	public static enum PropertyEnum implements KeyButtonSensor.Property {
+	public static enum PropertyEnum implements DimmerActor.Property {
 		remoteBeanRef
 	}
 
@@ -21,7 +22,7 @@ public class KeyButtonSensorRemote extends AbstractBean<KeyButtonSensor.Property
 	}
 	@Override
 	public void setBeanName(String beanName) {
-		setPropertyValue(KeyButtonSensor.PropertyEnum.beanName, beanName);
+		this.beanName = beanName;
 	}
 
 	@Override
@@ -35,15 +36,13 @@ public class KeyButtonSensorRemote extends AbstractBean<KeyButtonSensor.Property
 	}
 
 	@Override
-	public boolean isDown() {
-		assertEventThread();
-		return down;
+	public int getDimmerValue() {
+		return dimmerValue;
 	}
 
 	@Override
-	public void setDown(boolean down) {
-		assertEventThread();
-		setPropertyValue(KeyButtonSensor.PropertyEnum.down, down);
+	public void setDimmerValue(int dimmerValue) {
+		setPropertyValue(DimmerActor.PropertyEnum.dimmerValue, dimmerValue);
 	}
 
 	@Override
