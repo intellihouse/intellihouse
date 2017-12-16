@@ -167,7 +167,7 @@
 							<goal>copy-dependencies</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${project.build.directory}/distributions/</outputDirectory>
+							<outputDirectory>${project.build.directory}/distributions/addons/</outputDirectory>
 						</configuration>
 					</execution>
 				</executions>
@@ -183,11 +183,11 @@
 								<delete verbose="true" failonerror="false">
 									<!-- There are duplicate files of all "*-SNAPSHOT.jar"-files: They exist once
 									with "-SNAPSHOT" and once with ".SNAPSHOT". We thus delete the ones with ".SNAPSHOT". -->
-									<fileset dir="${project.build.directory}/distributions/"
+									<fileset dir="${project.build.directory}/distributions/addons/"
 										includes="*.SNAPSHOT.jar" />
 									
 									<!-- Also delete all libraries that are already in the openHAB runtime. -->
-									<fileset dir="${project.build.directory}/distributions/">
+									<fileset dir="${project.build.directory}/distributions/addons/">
 										<include name="com.google.*" />
 										<include name="commons-*" />
 										<include name="javax.*" />
@@ -209,8 +209,13 @@
 								</delete>
 								<copy
 									file="${project.build.directory}/${project.artifactId}-${project.version}.jar"
-									todir="${project.build.directory}/distributions/"
+									todir="${project.build.directory}/distributions/addons/"
 								/>
+								<tar destfile="${project.build.directory}/distributions/${project.artifactId}-${project.version}.tar.gz" compression="gzip">
+									<tarfileset dir="${project.build.directory}/distributions/addons/" prefix="addons/" >
+										<include name="*" />
+									</tarfileset>
+								</tar>
 							</target>
 						</configuration>
 						<goals>
