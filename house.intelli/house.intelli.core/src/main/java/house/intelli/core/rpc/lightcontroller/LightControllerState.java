@@ -48,10 +48,11 @@ public class LightControllerState {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((dimDirection == null) ? 0 : dimDirection.hashCode());
-		result = prime * result + dimmerValue;
-		result = prime * result + lightDimmerValuesIndex;
-		result = prime * result + ((lightOn == null) ? 0 : lightOn.hashCode());
+		result = prime * result + getHashCode(dimDirection);
+		result = prime * result + getHashCode(dimmerValue);
+		result = prime * result + getHashCode(lightDimmerValuesIndex);
+		result = prime * result + getHashCode(lightOn);
+		result = prime * result + getHashCode(autoOffPeriod);
 		return result;
 	}
 
@@ -68,7 +69,8 @@ public class LightControllerState {
 		return equal(this.dimDirection, other.dimDirection)
 				&& equal(this.dimmerValue, other.dimmerValue)
 				&& equal(this.lightDimmerValuesIndex, other.lightDimmerValuesIndex)
-				&& equal(this.lightOn, other.lightOn);
+				&& equal(this.lightOn, other.lightOn)
+				&& equal(this.autoOffPeriod, other.autoOffPeriod);
 	}
 
 	@Override
@@ -79,6 +81,7 @@ public class LightControllerState {
 		return "lightDimmerValuesIndex=" + lightDimmerValuesIndex
 				+ ", dimmerValue=" + dimmerValue
 				+ ", lightOn=" + lightOn
-				+ ", dimDirection=" + dimDirection;
+				+ ", dimDirection=" + dimDirection
+				+ ", autoOffPeriod=" + autoOffPeriod;
 	}
 }

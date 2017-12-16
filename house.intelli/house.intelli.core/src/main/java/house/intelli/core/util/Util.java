@@ -76,6 +76,34 @@ public final class Util {
 		return Arrays.equals(one, two);
 	}
 
+	public static final int getHashCode(final Object o) {
+		return o == null ? 0 : o.hashCode();
+	}
+
+	public static final int getHashCode(final boolean val) {
+		return val ? 1231 : 1237;
+	}
+
+	public static final int getHashCode(final byte val) {
+		return val;
+	}
+
+	public static final int getHashCode(final short val) {
+		return val;
+	}
+
+	public static final int getHashCode(final char val) {
+		return val;
+	}
+
+	public static final int getHashCode(final int val) {
+		return val;
+	}
+
+	public static final int getHashCode(final long val) {
+		return (int) (val ^ (val >>> 32));
+	}
+
 	@SuppressWarnings("unchecked")
 	public static final <T> T cast(final Object o) {
 		return (T) o;
