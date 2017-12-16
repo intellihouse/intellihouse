@@ -200,6 +200,9 @@
 										<include name="org.slf4j.*" />
 										<include name="slf4j-*" />
 										
+										<include name="bc*-jdk15on-*" />
+										<include name="org.apache.felix.*" />
+										
 										<!-- openHAB contains commons-collections 3.x, but we need 4.x :-( -->
 										<exclude name="org.apache.commons.collections4-*" />
 									</fileset>>
