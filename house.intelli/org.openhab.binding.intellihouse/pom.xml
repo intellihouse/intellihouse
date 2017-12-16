@@ -212,7 +212,7 @@
 									todir="${project.build.directory}/distributions/addons/"
 								/>
 								<tar destfile="${project.build.directory}/distributions/${project.artifactId}-${project.version}.tar.gz" compression="gzip">
-									<tarfileset dir="${project.build.directory}/distributions/addons/" prefix="addons/" >
+									<tarfileset dir="${project.build.directory}/distributions/addons/" prefix="openhab/addons/" >
 										<include name="*" />
 									</tarfileset>
 								</tar>
