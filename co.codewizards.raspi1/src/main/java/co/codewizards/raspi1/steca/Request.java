@@ -55,17 +55,4 @@ public interface Request<R> {
 	 */
 	R execute() throws IOException;
 
-	/**
-	 * Indicates, if the result of the invocation can be <code>null</code>.
-	 * <p>
-	 * If the Steca <i>must</i> send a (complex, not-simple-ACK) response, i.e. the invocation must not return empty-handed, this
-	 * should be <code>false</code>. In case, the Steca still does not send a reply, it is considered an
-	 * error causing an exception.
-	 * <p>
-	 * Please note: If a request <i>never</i> returns a response (like a Java void method), it is recommended
-	 * that you sub-class {@link VoidRequest}.
-	 * @return <code>true</code> if <code>null</code> as response is allowed; <code>false</code> otherwise.
-	 */
-	boolean isResultNullable();
-
 }

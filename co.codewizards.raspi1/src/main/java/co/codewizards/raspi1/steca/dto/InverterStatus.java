@@ -1,5 +1,8 @@
 package co.codewizards.raspi1.steca.dto;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement
 public class InverterStatus {
 
 	private float acInVoltage;
