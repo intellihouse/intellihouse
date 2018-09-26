@@ -10,6 +10,15 @@ repositories {
     jcenter()
 }
 
+configurations {
+    provided {
+        dependencies.all { dep ->
+            configurations.default.exclude group: dep.group, module: dep.name
+        }
+    }
+    compile.extendsFrom provided
+}
+
 // In this section you declare the dependencies for your production and test code
 dependencies {
     // The production code uses the SLF4J logging API at compile time
@@ -17,6 +26,12 @@ dependencies {
 
 	compile 'com.pi4j:pi4j-core:1.1'
 //	compile 'com.pi4j:pi4j-gpio-extension:1.1'
+
+	compile 'org.usb4java:usb4java-javax:1.2.0'
+	compile 'org.usb4java:usb4java:1.2.0'
+
+	provided 'org.rxtx:rxtx:2.1.7' // 'apt-get install librxtx-java' on the raspi! because RXTX requires native libs anyway.
+//	compile 'org.rxtx:rxtx:2.1.7' // 'apt-get install librxtx-java' on the raspi! because RXTX requires native libs anyway.
 
     // Declare the dependency for your favourite test framework you want to use in your tests.
     // TestNG is also supported by the Gradle Test task. Just change the
