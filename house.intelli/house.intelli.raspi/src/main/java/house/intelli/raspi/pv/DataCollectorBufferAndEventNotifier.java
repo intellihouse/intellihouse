@@ -75,8 +75,7 @@ public class DataCollectorBufferAndEventNotifier {
 		public void onError(final DataCollectorEvent event) {
 			assertEventThread();
 			requireNonNull(event, "event");
-
-			// TODO Reset USB or reboot
+			// nothing to do
 		}
 	};
 

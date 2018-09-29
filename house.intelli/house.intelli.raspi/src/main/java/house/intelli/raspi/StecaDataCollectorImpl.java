@@ -5,13 +5,19 @@ import static house.intelli.core.util.AssertUtil.*;
 import static house.intelli.core.util.StringUtil.*;
 import static java.util.Objects.*;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import house.intelli.core.Uid;
 import house.intelli.core.bean.AbstractBean;
 import house.intelli.raspi.pv.DataCollectorEvent;
 import house.intelli.raspi.pv.DataCollectorListener;
@@ -38,6 +44,11 @@ public class StecaDataCollectorImpl extends AbstractBean<PvDataCollector.Propert
 	private TimerTask dataCollectorTimerTask;
 	private CopyOnWriteArrayList<DataCollectorListener> dataCollectorListeners = new CopyOnWriteArrayList<>();
 	private volatile int consecutiveErrorCount;
+	private int resetUsbAfterConsecutiveErrorCount;
+
+	private static final ReentrantReadWriteLock resetUsbLock = new ReentrantReadWriteLock(); // TODO clean-up this dirty hack!
+	private static volatile Uid resetUsbUid; // TODO clean-up this dirty hack!
+	private volatile Uid _resetUsbUid; // TODO clean-up this dirty hack!
 
 	public StecaDataCollectorImpl() {
 	}
@@ -70,7 +81,23 @@ public class StecaDataCollectorImpl extends AbstractBean<PvDataCollector.Propert
 			@Override
 			public void run() {
 				try {
-					onDataCollectorTimerTaskRun();
+					final ReadLock readLock = resetUsbLock.readLock();
+					try {
+						readLock.lock();
+						if (resetUsbUid != null && ! resetUsbUid.equals(_resetUsbUid)) {
+							stecaClient.close();
+							_resetUsbUid = resetUsbUid;
+						}
+						onDataCollectorTimerTaskRun();
+					} finally {
+						readLock.unlock();
+					}
+
+					final int resetUsbAfterConsecutiveErrorCount = getResetUsbAfterConsecutiveErrorCount();
+					if (resetUsbAfterConsecutiveErrorCount > 0 && consecutiveErrorCount >= resetUsbAfterConsecutiveErrorCount) {
+						consecutiveErrorCount = 0;
+						resetUsb();
+					}
 				} catch (Exception x) {
 					logger.error(getBeanInstanceName() + ".dataCollectorTimerTask.run: " + x, x);
 				}
@@ -125,11 +152,43 @@ public class StecaDataCollectorImpl extends AbstractBean<PvDataCollector.Propert
 			event = new DataCollectorEvent(this, inverterMode, inverterStatus);
 			consecutiveErrorCount = 0;
 		} catch (Exception x) {
-			logger.error(getBeanInstanceName() + ".onDataCollectorTimerTaskRun: " + x, x);
-			event = new DataCollectorEvent(this, x, ++consecutiveErrorCount);
+			++consecutiveErrorCount;
+			logger.error(getBeanInstanceName() + ".onDataCollectorTimerTaskRun: consecutiveErrorCount=" + consecutiveErrorCount + ": " + x, x);
+			event = new DataCollectorEvent(this, x, consecutiveErrorCount);
 		}
 		final DataCollectorEvent _event = event;
 		invokeLater(() -> fireDataCollectorEvent(_event));
+	}
+
+	protected void resetUsb() { // TODO clean-up this dirty hack!
+		logger.warn("{}.resetUsb: Obtaining write-lock...", getBeanInstanceName());
+		try {
+			final WriteLock writeLock = resetUsbLock.writeLock();
+			try {
+				writeLock.lock();
+
+				logger.warn("{}.resetUsb: Closing stecaClient...", getBeanInstanceName());
+				stecaClient.close();
+				resetUsbUid = new Uid();
+
+				final File usbAuthFile = new File("/sys/bus/usb/devices/1-1/authorized");
+				logger.warn("{}.resetUsb: Writing '0' to {}...", getBeanInstanceName(), usbAuthFile);
+				try (FileOutputStream fout = new FileOutputStream(usbAuthFile)) {
+					fout.write('0');
+				}
+				Thread.sleep(1000L);
+				logger.warn("{}.resetUsb: Writing '1' to {}...", getBeanInstanceName(), usbAuthFile);
+				try (FileOutputStream fout = new FileOutputStream(usbAuthFile)) {
+					fout.write('1');
+				}
+				Thread.sleep(5000L);
+				logger.warn("{}.resetUsb: Done.", getBeanInstanceName());
+			} finally {
+				writeLock.unlock();
+			}
+		} catch (Exception x) {
+			logger.error("resetUsb: " + x, x);
+		}
 	}
 
 	protected void fireDataCollectorEvent(final DataCollectorEvent event) {
@@ -200,4 +259,10 @@ public class StecaDataCollectorImpl extends AbstractBean<PvDataCollector.Propert
 		setPropertyValue(PvDataCollector.PropertyEnum.interfaceAddress, interfaceAddress);
 	}
 
+	public int getResetUsbAfterConsecutiveErrorCount() {
+		return resetUsbAfterConsecutiveErrorCount;
+	}
+	public void setResetUsbAfterConsecutiveErrorCount(int resetUsbAfterConsecutiveErrorCount) {
+		this.resetUsbAfterConsecutiveErrorCount = resetUsbAfterConsecutiveErrorCount;
+	}
 }

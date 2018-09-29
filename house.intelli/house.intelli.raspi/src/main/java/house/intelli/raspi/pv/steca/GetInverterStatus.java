@@ -1,32 +1,45 @@
 package house.intelli.raspi.pv.steca;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GetInverterStatus extends StecaRequest<InverterStatus> {
 
-	private static final byte[] COMMAND = new byte[] {
-			'Q', 'P', 'I', 'G', 'S',
-			(byte) 0xB7, (byte) 0xA9, // CRC
-			'\r'
-	};
+	private static final Logger logger = LoggerFactory.getLogger(GetInverterStatus.class);
+
+//	private static final byte[] COMMAND = new byte[] {
+//			'Q', 'P', 'I', 'G', 'S',
+//			(byte) 0xB7, (byte) 0xA9, // CRC
+//			'\r'
+//	};
 
 	public GetInverterStatus() {
 	}
 
 	@Override
 	public InverterStatus execute() throws IOException {
-		final OutputStream out = getStecaClientOrFail().getOutputStream();
-		out.write(COMMAND);
+		try {
+			return _execute();
+		} catch (MalformedResponseException | CrcException x) {
+			logger.warn("execute: Caught '{}' => Retrying.", x.toString());
+			return _execute(); // retry
+		} catch (IOException x) {
+			throw x;
+		}
+	}
 
-		final byte[] response = readResponse();
+	protected InverterStatus _execute() throws IOException {
+//		final OutputStream out = getStecaClientOrFail().getOutputStream();
+//		out.write(COMMAND);
+		writeRequest("QPIGS");
 
-		String s = new String(response, StandardCharsets.US_ASCII);
-		String[] fields = s.split(" ");
+		final String response = readResponseAsString();
+		String[] fields = response.split(" ");
 		if (fields.length != 21)
-			throw new IOException("Malformed response: " + s);
+			throw new IOException("Malformed response: " + response);
 
 //		System.out.println(s);
 //

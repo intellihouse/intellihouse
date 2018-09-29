@@ -1,36 +1,49 @@
 package house.intelli.raspi.pv.steca;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GetInverterMode extends StecaRequest<InverterMode> {
 
-	private static final byte[] COMMAND = new byte[] {
-			'Q', 'M', 'O', 'D',
-			(byte) 0x49, (byte) 0xC1, // CRC
-			'\r'
-	};
+	private static final Logger logger = LoggerFactory.getLogger(GetInverterMode.class);
+
+//	private static final byte[] COMMAND = new byte[] {
+//			'Q', 'M', 'O', 'D',
+//			(byte) 0x49, (byte) 0xC1, // CRC
+//			'\r'
+//	};
 
 	public GetInverterMode() {
 	}
 
 	@Override
 	public InverterMode execute() throws IOException {
-		final OutputStream out = getStecaClientOrFail().getOutputStream();
-		out.write(COMMAND);
+		try {
+			return _execute();
+		} catch (MalformedResponseException | CrcException x) {
+			logger.warn("execute: Caught '{}' => Retrying.", x.toString());
+			return _execute(); // retry
+		} catch (IOException x) {
+			throw x;
+		}
+	}
 
-		final byte[] response = readResponse();
+	protected InverterMode _execute() throws IOException {
+//		final OutputStream out = getStecaClientOrFail().getOutputStream();
+//		out.write(COMMAND);
+		writeRequest("QMOD");
 
-		String s = new String(response, StandardCharsets.US_ASCII);
-		if (s.length() != 1)
-			throw new IOException("Response has unexpected length (!= 1): " + s);
+		final String response = readResponseAsString();
+		if (response.length() != 1)
+			throw new IOException("Response has unexpected length (!= 1): " + response);
 
 		InverterMode result = new InverterMode();
 		result.setMeasured(new Date());
 
-		result.setMode(s.charAt(0));
+		result.setMode(response.charAt(0));
 
 		return result;
 	}
