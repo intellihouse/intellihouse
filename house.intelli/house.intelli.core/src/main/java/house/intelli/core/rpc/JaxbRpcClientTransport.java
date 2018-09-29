@@ -1,6 +1,6 @@
 package house.intelli.core.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +22,7 @@ public abstract class JaxbRpcClientTransport extends AbstractRpcClientTransport 
 
 	@Override
 	public void sendRequest(final Request<?> request) throws IOException {
-		assertNotNull(request, "request");
+		requireNonNull(request, "request");
 		JAXBContext jaxbContext = getJaxbContext();
 		try (OutputStream outputStream = createRequestOutputStream()) {
 			Marshaller marshaller = jaxbContext.createMarshaller();

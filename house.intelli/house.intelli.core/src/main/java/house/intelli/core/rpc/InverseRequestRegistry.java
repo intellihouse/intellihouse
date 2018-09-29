@@ -1,6 +1,6 @@
 package house.intelli.core.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,9 +38,9 @@ public class InverseRequestRegistry {
 		public final long timeoutElapsed;
 
 		public EvictDescriptor(Request<?> request) {
-			assertNotNull(request, "request");
-			serverHostId = assertNotNull(request.getServerHostId(), "request.serverHostId");
-			requestId = assertNotNull(request.getRequestId(), "request.requestId");
+			requireNonNull(request, "request");
+			serverHostId = requireNonNull(request.getServerHostId(), "request.serverHostId");
+			requestId = requireNonNull(request.getRequestId(), "request.requestId");
 			if (request.getTimeout() == Request.TIMEOUT_UNDEFINED)
 				timeout = RpcConst.DEFAULT_REQUEST_TIMEOUT;
 			else
@@ -55,7 +55,7 @@ public class InverseRequestRegistry {
 	}
 
 	protected InverseRequestRegistry(RpcContext rpcContext) {
-		this.rpcContext = assertNotNull(rpcContext, "rpcContext");
+		this.rpcContext = requireNonNull(rpcContext, "rpcContext");
 		evictTimer = new Timer(String.format("RpcServiceExecutor[%s].evictTimer", rpcContext.getLocalHostId()), true);
 		evictTimerTask = new TimerTask() {
 			@Override
@@ -71,9 +71,9 @@ public class InverseRequestRegistry {
 	}
 
 	public void putRequest(final Request<?> request) {
-		assertNotNull(request, "request");
-		final HostId serverHostId = assertNotNull(request.getServerHostId(), "request.serverHostId");
-		final Uid requestId = assertNotNull(request.getRequestId(), "request.requestId");
+		requireNonNull(request, "request");
+		final HostId serverHostId = requireNonNull(request.getServerHostId(), "request.serverHostId");
+		final Uid requestId = requireNonNull(request.getRequestId(), "request.requestId");
 		synchronized (mutex) {
 			Map<Uid, Request<?>> requestId2Request = serverHostId2RequestId2Request.get(serverHostId);
 			if (requestId2Request == null) {
@@ -91,7 +91,7 @@ public class InverseRequestRegistry {
 	}
 
 	public List<Request<?>> pollRequests(final HostId serverHostId, final long timeout) {
-		assertNotNull(serverHostId, "serverHostId");
+		requireNonNull(serverHostId, "serverHostId");
 		if (timeout < 0)
 			throw new IllegalArgumentException("timeout < 0");
 

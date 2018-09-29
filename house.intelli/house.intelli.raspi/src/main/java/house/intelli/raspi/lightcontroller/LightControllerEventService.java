@@ -1,6 +1,6 @@
 package house.intelli.raspi.lightcontroller;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -38,9 +38,9 @@ public class LightControllerEventService extends AbstractRpcService<LightControl
 	@Override
 	public VoidResponse process(final LightControllerEventRequest request) throws Exception {
 		final RemoteBeanRef remoteBeanRef = new RemoteBeanRef();
-		remoteBeanRef.setHostId(assertNotNull(request.getClientHostId(), "request.clientHostId"));
-		remoteBeanRef.setBeanId(assertNotNull(request.getChannelId(), "request.channelId"));
-		final LightControllerState state = assertNotNull(request.getLightControllerState(), "request.lightControllerState");
+		remoteBeanRef.setHostId(requireNonNull(request.getClientHostId(), "request.clientHostId"));
+		remoteBeanRef.setBeanId(requireNonNull(request.getChannelId(), "request.channelId"));
+		final LightControllerState state = requireNonNull(request.getLightControllerState(), "request.lightControllerState");
 		logger.debug("process: remoteBeanRef={}, state={}", remoteBeanRef, state);
 
 		final List<LightControllerImpl> lightControllers = new LinkedList<>();

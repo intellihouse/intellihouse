@@ -1,6 +1,6 @@
 package house.intelli.core.io;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -78,7 +78,7 @@ public class LockFileFactory {
 	 * @see LockFile#release()
 	 */
 	public LockFile acquire(File file, final long timeoutMillis) throws TimeoutException {
-		assertNotNull(file, "file");
+		requireNonNull(file, "file");
 		try {
 			file = file.getCanonicalFile();
 		} catch (final IOException e) {

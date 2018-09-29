@@ -2,6 +2,7 @@ package house.intelli.core.rpc;
 
 import static house.intelli.core.util.AssertUtil.*;
 import static house.intelli.core.util.StringUtil.*;
+import static java.util.Objects.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -189,7 +190,7 @@ public class HostId implements Comparable<HostId> {
 
 	@Override
 	public int compareTo(final HostId other) {
-		assertNotNull(other, "other");
+		requireNonNull(other, "other");
 		return this.id.compareTo(other.id); // guaranteed to be never null!
 	}
 }

@@ -21,6 +21,8 @@ import house.intelli.core.rpc.keybutton.KeyButtonSensorEventRequest;
 import house.intelli.core.rpc.keybutton.KeyButtonSensorRemotePropagationRequest;
 import house.intelli.core.rpc.lightcontroller.LightControllerEventRequest;
 import house.intelli.core.rpc.lightcontroller.LightControllerFederationPropagationRequest;
+import house.intelli.core.rpc.pv.PvStatusEventRequest;
+import house.intelli.core.rpc.pv.PvStatusList;
 import house.intelli.core.rpc.relay.RelayActorEventRequest;
 import house.intelli.core.rpc.relay.RelayActorReadRequest;
 import house.intelli.core.rpc.relay.RelayActorReadResponse;
@@ -68,6 +70,9 @@ public class IntelliHouseJaxbContextProviderImpl extends AbstractIntelliHouseJax
 
 		classes.add(LightControllerEventRequest.class);
 		classes.add(LightControllerFederationPropagationRequest.class);
+
+		classes.add(PvStatusEventRequest.class);
+		classes.add(PvStatusList.class);
 		// END RpcService-related DTOs for which there might be no RpcService registered
 
 		return classes.toArray(new Class<?>[classes.size()]);

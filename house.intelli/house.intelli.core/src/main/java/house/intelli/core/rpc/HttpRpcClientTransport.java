@@ -1,7 +1,7 @@
 package house.intelli.core.rpc;
 
 import static house.intelli.core.rpc.RpcConst.*;
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
@@ -62,7 +62,7 @@ public class HttpRpcClientTransport extends JaxbRpcClientTransport {
 	protected HttpURLConnection getConnection() throws IOException {
 		if (connection == null) {
 			requestSent = false;
-			connection = (HttpURLConnection) assertNotNull(getServerUrl(), "serverUrl").openConnection();
+			connection = (HttpURLConnection) requireNonNull(getServerUrl(), "serverUrl").openConnection();
 			connection.setConnectTimeout(TRANSPORT_CONNECT_TIMEOUT);
 			connection.setReadTimeout(TRANSPORT_READ_TIMEOUT);
 			connection.setRequestMethod("POST");

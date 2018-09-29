@@ -1,6 +1,6 @@
 package house.intelli.raspi.lightcontroller;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +37,8 @@ public class LightControllerFederationPropagationService extends AbstractRpcServ
 
 	@Override
 	public VoidResponse process(final LightControllerFederationPropagationRequest request) throws Exception {
-		final String channelId = assertNotNull(request.getChannelId(), "request.channelId");
-		final String sourceBeanId = assertNotNull(request.getSourceBeanId(), "request.sourceBeanId");
+		final String channelId = requireNonNull(request.getChannelId(), "request.channelId");
+		final String sourceBeanId = requireNonNull(request.getSourceBeanId(), "request.sourceBeanId");
 		logger.debug("process: clientHostId={}, sourceBeanId={}, channelId={}, federatedLightControllers={}",
 				request.getClientHostId(), sourceBeanId, channelId, request.getFederatedLightControllers());
 

@@ -1,6 +1,6 @@
 package house.intelli.core.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -39,8 +39,8 @@ public class RpcServiceExecutor {
 		public final long timeoutElapsed;
 
 		public EvictDescriptor(Request request) {
-			assertNotNull(request, "request");
-			requestId = assertNotNull(request.getRequestId(), "request.requestId");
+			requireNonNull(request, "request");
+			requestId = requireNonNull(request.getRequestId(), "request.requestId");
 			if (request.getTimeout() == Request.TIMEOUT_UNDEFINED)
 				timeout = RpcConst.DEFAULT_REQUEST_TIMEOUT;
 			else
@@ -51,7 +51,7 @@ public class RpcServiceExecutor {
 	}
 
 	protected RpcServiceExecutor(RpcContext rpcContext) {
-		this.rpcContext = assertNotNull(rpcContext, "rpcContext");
+		this.rpcContext = requireNonNull(rpcContext, "rpcContext");
 		evictTimer = new Timer(String.format("RpcServiceExecutor[%s].evictTimer", rpcContext.getLocalHostId()), true);
 		evictTimerTask = new TimerTask() {
 			@Override
@@ -67,8 +67,8 @@ public class RpcServiceExecutor {
 	}
 
 	public void putRequest(final Request request) {
-		assertNotNull(request, "request");
-		final Uid requestId = assertNotNull(request.getRequestId(), "request.requestId");
+		requireNonNull(request, "request");
+		final Uid requestId = requireNonNull(request.getRequestId(), "request.requestId");
 		synchronized (mutex) {
 			if (requestId2Response.containsKey(requestId))
 				throw new IllegalArgumentException("There is already a response with the same requestId! WTF?! requestId=" + requestId);
@@ -161,7 +161,7 @@ public class RpcServiceExecutor {
 	}
 
 	public Response pollResponse(final Uid requestId, final long timeout) {
-		assertNotNull(requestId, "requestId");
+		requireNonNull(requestId, "requestId");
 		if (timeout < 0)
 			throw new IllegalArgumentException("timeout < 0");
 
@@ -192,10 +192,10 @@ public class RpcServiceExecutor {
 	}
 
 	public void putResponse(final Response response) {
-		assertNotNull(response, "response");
-		final Uid requestId = assertNotNull(response.getRequestId(), "response.requestId");
-		assertNotNull(response.getClientHostId(), "response.clientHostId");
-		assertNotNull(response.getServerHostId(), "response.serverHostId");
+		requireNonNull(response, "response");
+		final Uid requestId = requireNonNull(response.getRequestId(), "response.requestId");
+		requireNonNull(response.getClientHostId(), "response.clientHostId");
+		requireNonNull(response.getServerHostId(), "response.serverHostId");
 
 		synchronized (mutex) {
 			final Request request = requestId2Request.remove(requestId);

@@ -1,6 +1,6 @@
 package house.intelli.raspi.service;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,8 +16,8 @@ public class SpringServiceRegistryDelegate<S> extends AbstractServiceRegistryDel
 	private final ApplicationContext applicationContext;
 
 	public SpringServiceRegistryDelegate(Class<S> serviceClass, final ApplicationContext applicationContext) {
-		this.serviceClass = assertNotNull(serviceClass, "serviceClass");
-		this.applicationContext = assertNotNull(applicationContext, "applicationContext");
+		this.serviceClass = requireNonNull(serviceClass, "serviceClass");
+		this.applicationContext = requireNonNull(applicationContext, "applicationContext");
 	}
 
 	public Class<S> getServiceClass() {

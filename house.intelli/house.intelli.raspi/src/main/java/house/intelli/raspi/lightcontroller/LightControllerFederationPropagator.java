@@ -1,6 +1,7 @@
 package house.intelli.raspi.lightcontroller;
 
 import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -97,7 +98,7 @@ public class LightControllerFederationPropagator implements ApplicationContextAw
 	}
 
 	protected void propagate(LightControllerImpl lightController) throws RpcException {
-		assertNotNull(lightController, "lightController");
+		requireNonNull(lightController, "lightController");
 		for (RemoteBeanRef remoteBeanRef : lightController.getCollectedFederatedLightControllers()) {
 			try {
 				propagate(lightController, remoteBeanRef);
@@ -111,8 +112,8 @@ public class LightControllerFederationPropagator implements ApplicationContextAw
 	}
 
 	protected void propagate(LightControllerImpl lightController, RemoteBeanRef remoteBeanRef) throws RpcException {
-		assertNotNull(lightController, "lightController");
-		assertNotNull(remoteBeanRef, "remoteBeanRef");
+		requireNonNull(lightController, "lightController");
+		requireNonNull(remoteBeanRef, "remoteBeanRef");
 
 		logger.debug("propagate: {} => {}", lightController.getBeanName(), remoteBeanRef);
 
@@ -124,7 +125,7 @@ public class LightControllerFederationPropagator implements ApplicationContextAw
 		LightControllerFederationPropagationRequest request = new LightControllerFederationPropagationRequest();
 		request.setServerHostId(remoteBeanRef.getHostId()); // TO host
 		request.setChannelId(remoteBeanRef.getBeanId()); // TO bean
-		request.setSourceBeanId(assertNotNull(lightController.getBeanName(), "lightController.beanName")); // FROM bean
+		request.setSourceBeanId(requireNonNull(lightController.getBeanName(), "lightController.beanName")); // FROM bean
 		request.setFederatedLightControllers(lightController.getCollectedFederatedLightControllers());
 		request.setLightControllerState(lightController.getState());
 		try (RpcClient rpcClient = rpcContext.createRpcClient()) {

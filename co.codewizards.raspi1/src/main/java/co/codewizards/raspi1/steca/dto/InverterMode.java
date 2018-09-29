@@ -1,8 +1,7 @@
 package co.codewizards.raspi1.steca.dto;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Date;
 
-@XmlRootElement
 public class InverterMode {
 
 	public static final char MODE_ON = 'P';
@@ -12,18 +11,25 @@ public class InverterMode {
 	public static final char MODE_ERROR = 'F';
 	public static final char MODE_POWER_SAVE = 'H';
 
+	private Date measured;
 	private char mode;
+
+	public Date getMeasured() {
+		return measured;
+	}
+	public void setMeasured(Date measured) {
+		this.measured = measured;
+	}
 
 	public char getMode() {
 		return mode;
 	}
-
 	public void setMode(char mode) {
 		this.mode = mode;
 	}
 
 	@Override
 	public String toString() {
-		return "InverterMode [mode=" + mode + "]";
+		return "InverterMode [measured=" + measured + ", mode=" + mode + "]";
 	}
 }

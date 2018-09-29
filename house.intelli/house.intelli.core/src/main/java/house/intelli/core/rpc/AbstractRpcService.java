@@ -1,6 +1,6 @@
 package house.intelli.core.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 import static house.intelli.core.util.ReflectionUtil.*;
 
 import java.lang.reflect.Type;
@@ -39,7 +39,7 @@ public abstract class AbstractRpcService<REQ extends Request<RES>, RES extends R
 	public Class<RES> getResponseType() {
 		if (responseType == null) {
 			getRequestType();
-			assertNotNull(responseType, "responseType");
+			requireNonNull(responseType, "responseType");
 		}
 		return responseType;
 	}

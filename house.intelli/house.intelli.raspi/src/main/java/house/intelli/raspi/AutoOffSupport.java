@@ -2,6 +2,7 @@ package house.intelli.raspi;
 
 import static house.intelli.core.event.EventQueue.*;
 import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -14,7 +15,7 @@ public class AutoOffSupport {
 	private TimerTask autoOffTimerTask;
 
 	public AutoOffSupport(AutoOff autoOff) {
-		this.autoOff = assertNotNull(autoOff, "autoOff");
+		this.autoOff = requireNonNull(autoOff, "autoOff");
 	}
 
 	public void scheduleDeferredAutoOff() {

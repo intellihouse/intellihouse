@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractBean<P extends PropertyBase> implements CloneableBean<P>, Cloneable {
 	private final Logger logger = LoggerFactory.getLogger(AbstractBean.class);
-	private BeanSupport<AbstractBean<P>, P> beanSupport = new BeanSupport<AbstractBean<P>, P>(this);
+	private BeanSupport<AbstractBean<P>, P> beanSupport = new BeanSupport<>(this);
 
 	protected boolean setPropertyValue(P property, Object value) {
 		return beanSupport.setPropertyValue(property, value);
@@ -51,7 +51,11 @@ public abstract class AbstractBean<P extends PropertyBase> implements CloneableB
 		} catch (CloneNotSupportedException e) {
 			throw new RuntimeException(e);
 		}
-		clone.beanSupport = new BeanSupport<AbstractBean<P>, P>(clone);
+		clone.beanSupport = new BeanSupport<>(clone);
 		return clone;
+	}
+
+	protected String getBeanInstanceName() {
+		return beanSupport.getBeanInstanceName();
 	}
 }

@@ -1,6 +1,7 @@
 package house.intelli.raspi.rpc.keybutton;
 
 import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -98,8 +99,8 @@ public class KeyButtonSensorEventNotifier {
 	}
 
 	public void addListener(final String beanId, final HostId listenerHostId) {
-		assertNotNull(beanId, "beanId");
-		assertNotNull(listenerHostId, "listenerHostId");
+		requireNonNull(beanId, "beanId");
+		requireNonNull(listenerHostId, "listenerHostId");
 		assertEventThread();
 		Set<HostId> listenerHostIds = beanId2listenerHostIds.get(beanId);
 		if (listenerHostIds == null) {
@@ -131,7 +132,7 @@ public class KeyButtonSensorEventNotifier {
 		return keyButtonSensors;
 	}
 
-	@Autowired
+	@Autowired(required = false)
 	public void setKeyButtonSensors(List<KeyButtonSensor> keyButtonSensors) {
 		assertEventThread();
 		logger.debug("setKeyButtonSensors: keyButtonSensors={}", keyButtonSensors);

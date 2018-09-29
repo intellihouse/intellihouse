@@ -1,6 +1,6 @@
 package house.intelli.pgp.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 import static house.intelli.core.util.Util.*;
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
 		pgpTransportSupport.setServerHostId(localHostId);
 
 		Request<?> req = super.receiveRequest();
-		setRawRequest(assertNotNull(req, "req"));
+		setRawRequest(requireNonNull(req, "req"));
 
 		HostId serverHostId = pgpTransportSupport.resolveRealServerHostId(req.getServerHostId());
 		HostId clientHostId = pgpTransportSupport.resolveRealServerHostId(req.getClientHostId());
@@ -70,7 +70,7 @@ public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
 
 	@Override
 	public void sendResponse(Response response) throws IOException {
-		assertNotNull(response, "response");
+		requireNonNull(response, "response");
 
 		final Request<?> rawRequest = getRawRequest();
 		if (rawRequest != null)
@@ -133,7 +133,7 @@ public class PgpHttpRpcServerTransport extends HttpRpcServerTransport {
 		if (this.rawRequest != null)
 			throw new IllegalStateException("this.request already assigned!");
 
-		this.rawRequest = assertNotNull(request, "rawRequest");
+		this.rawRequest = requireNonNull(request, "rawRequest");
 	}
 
 	protected Request<?> getRawRequest() {

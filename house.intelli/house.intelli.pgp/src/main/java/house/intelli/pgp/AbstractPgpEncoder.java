@@ -1,6 +1,6 @@
 package house.intelli.pgp;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -79,7 +79,7 @@ public abstract class AbstractPgpEncoder implements PgpEncoder {
 	}
 	@Override
 	public void setSymmetricEncryptionAlgorithm(final SymmetricEncryptionAlgorithm symmetricEncryptionAlgorithm) {
-		this.symmetricEncryptionAlgorithm = assertNotNull(symmetricEncryptionAlgorithm, "symmetricEncryptionAlgorithm");
+		this.symmetricEncryptionAlgorithm = requireNonNull(symmetricEncryptionAlgorithm, "symmetricEncryptionAlgorithm");
 	}
 
 	@Override
@@ -88,7 +88,7 @@ public abstract class AbstractPgpEncoder implements PgpEncoder {
 	}
 	@Override
 	public void setCompressionAlgorithm(final CompressionAlgorithm compressionAlgorithm) {
-		this.compressionAlgorithm = assertNotNull(compressionAlgorithm, "compressionAlgorithm");
+		this.compressionAlgorithm = requireNonNull(compressionAlgorithm, "compressionAlgorithm");
 	}
 
 	@Override
@@ -97,7 +97,7 @@ public abstract class AbstractPgpEncoder implements PgpEncoder {
 	}
 	@Override
 	public void setHashAlgorithm(final HashAlgorithm hashAlgorithm) {
-		this.hashAlgorithm = assertNotNull(hashAlgorithm, "hashAlgorithm");
+		this.hashAlgorithm = requireNonNull(hashAlgorithm, "hashAlgorithm");
 	}
 
 	@Override
@@ -121,7 +121,7 @@ public abstract class AbstractPgpEncoder implements PgpEncoder {
 		return fileName;
 	}
 	public void setFileName(final String fileName) {
-		this.fileName = assertNotNull(fileName, "fileName");
+		this.fileName = requireNonNull(fileName, "fileName");
 	}
 
 	protected PgpAuthenticationCallback getPgpAuthenticationCallback() {

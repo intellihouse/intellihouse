@@ -3,6 +3,7 @@ package co.codewizards.raspi1.steca;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 
 import co.codewizards.raspi1.steca.dto.InverterMode;
 
@@ -29,6 +30,7 @@ public class GetInverterMode extends StecaRequest<InverterMode> {
 			throw new IOException("Response has unexpected length (!= 1): " + s);
 
 		InverterMode result = new InverterMode();
+		result.setMeasured(new Date());
 
 		result.setMode(s.charAt(0));
 

@@ -1,6 +1,6 @@
 package house.intelli.pgp;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Set;
 
@@ -14,7 +14,7 @@ public class MissingSigningPgpKeyException extends SignatureException {
 
 	public MissingSigningPgpKeyException(Set<PgpKeyId> missingPgpKeyIds, String message) {
 		super(message);
-		this.missingPgpKeyIds = assertNotNull(missingPgpKeyIds, "missingPgpKeyIds");
+		this.missingPgpKeyIds = requireNonNull(missingPgpKeyIds, "missingPgpKeyIds");
 	}
 
 	public Set<PgpKeyId> getMissingPgpKeyIds() {

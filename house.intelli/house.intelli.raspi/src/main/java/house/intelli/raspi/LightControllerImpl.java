@@ -2,6 +2,7 @@ package house.intelli.raspi;
 
 import static house.intelli.core.event.EventQueue.*;
 import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -151,7 +152,7 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 		return dimDirection;
 	}
 	protected void setDimDirection(DimDirection dimDirection) {
-		assertNotNull(dimDirection, "dimDirection");
+		requireNonNull(dimDirection, "dimDirection");
 		setPropertyValue(PropertyEnum.dimDirection, dimDirection);
 	}
 
@@ -383,11 +384,11 @@ public class LightControllerImpl extends AbstractBean<DimmerActor.Property> impl
 		if (state == null)
 			updateState();
 
-		return assertNotNull(state, "state");
+		return requireNonNull(state, "state");
 	}
 
 	public void setState(LightControllerState state) {
-		assertNotNull(state, "state");
+		requireNonNull(state, "state");
 		LightControllerState oldState = getState();
 		if (oldState.equals(state)) {
 			return;

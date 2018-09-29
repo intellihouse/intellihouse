@@ -1,10 +1,10 @@
 package co.codewizards.raspi1.steca.dto;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Date;
 
-@XmlRootElement
 public class InverterStatus {
 
+	private Date measured;
 	private float acInVoltage;
 	private float acInFrequency;
 	private float acOutVoltage;
@@ -67,15 +67,21 @@ public class InverterStatus {
 	/**
 	 * PV Ladeleistung
 	 */
-	private float pvChargePower;
+	private float pvPower;
 
 	public InverterStatus() {
+	}
+
+	public Date getMeasured() {
+		return measured;
+	}
+	public void setMeasured(Date measured) {
+		this.measured = measured;
 	}
 
 	public float getAcInVoltage() {
 		return acInVoltage;
 	}
-
 	public void setAcInVoltage(float acInVoltage) {
 		this.acInVoltage = acInVoltage;
 	}
@@ -83,7 +89,6 @@ public class InverterStatus {
 	public float getAcInFrequency() {
 		return acInFrequency;
 	}
-
 	public void setAcInFrequency(float acInFrequency) {
 		this.acInFrequency = acInFrequency;
 	}
@@ -91,7 +96,6 @@ public class InverterStatus {
 	public float getAcOutVoltage() {
 		return acOutVoltage;
 	}
-
 	public void setAcOutVoltage(float acOutVoltage) {
 		this.acOutVoltage = acOutVoltage;
 	}
@@ -99,7 +103,6 @@ public class InverterStatus {
 	public float getAcOutFrequency() {
 		return acOutFrequency;
 	}
-
 	public void setAcOutFrequency(float acOutFrequency) {
 		this.acOutFrequency = acOutFrequency;
 	}
@@ -107,7 +110,6 @@ public class InverterStatus {
 	public float getAcOutApparentPower() {
 		return acOutApparentPower;
 	}
-
 	public void setAcOutApparentPower(float acOutApparentPower) {
 		this.acOutApparentPower = acOutApparentPower;
 	}
@@ -115,7 +117,6 @@ public class InverterStatus {
 	public float getAcOutActivePower() {
 		return acOutActivePower;
 	}
-
 	public void setAcOutActivePower(float acOutActivePower) {
 		this.acOutActivePower = acOutActivePower;
 	}
@@ -123,7 +124,6 @@ public class InverterStatus {
 	public float getAcOutLoadPercentage() {
 		return acOutLoadPercentage;
 	}
-
 	public void setAcOutLoadPercentage(float acOutLoadPercentage) {
 		this.acOutLoadPercentage = acOutLoadPercentage;
 	}
@@ -131,11 +131,9 @@ public class InverterStatus {
 	public float getInternalBusVoltage() {
 		return internalBusVoltage;
 	}
-
 	public void setInternalBusVoltage(float internalBusVoltage) {
 		this.internalBusVoltage = internalBusVoltage;
 	}
-
 	public float getBatteryVoltageAtInverter() {
 		return batteryVoltageAtInverter;
 	}
@@ -143,11 +141,9 @@ public class InverterStatus {
 	public void setBatteryVoltageAtInverter(float batteryVoltageAtInverter) {
 		this.batteryVoltageAtInverter = batteryVoltageAtInverter;
 	}
-
 	public float getBatteryChargeCurrent() {
 		return batteryChargeCurrent;
 	}
-
 	public void setBatteryChargeCurrent(float batteryChargeCurrent) {
 		this.batteryChargeCurrent = batteryChargeCurrent;
 	}
@@ -155,7 +151,6 @@ public class InverterStatus {
 	public float getBatteryCapacityPercentage() {
 		return batteryCapacityPercentage;
 	}
-
 	public void setBatteryCapacityPercentage(float batteryCapacityPercentage) {
 		this.batteryCapacityPercentage = batteryCapacityPercentage;
 	}
@@ -163,7 +158,6 @@ public class InverterStatus {
 	public float getHeatSinkTemperature() {
 		return heatSinkTemperature;
 	}
-
 	public void setHeatSinkTemperature(float heatSinkTemperature) {
 		this.heatSinkTemperature = heatSinkTemperature;
 	}
@@ -171,7 +165,6 @@ public class InverterStatus {
 	public float getPvToBatteryCurrent() {
 		return pvToBatteryCurrent;
 	}
-
 	public void setPvToBatteryCurrent(float pvToBatteryCurrent) {
 		this.pvToBatteryCurrent = pvToBatteryCurrent;
 	}
@@ -179,7 +172,6 @@ public class InverterStatus {
 	public float getPvVoltage() {
 		return pvVoltage;
 	}
-
 	public void setPvVoltage(float pvVoltage) {
 		this.pvVoltage = pvVoltage;
 	}
@@ -187,7 +179,6 @@ public class InverterStatus {
 	public float getBatteryVoltageAtCharger() {
 		return batteryVoltageAtCharger;
 	}
-
 	public void setBatteryVoltageAtCharger(float batteryVoltageAtCharger) {
 		this.batteryVoltageAtCharger = batteryVoltageAtCharger;
 	}
@@ -195,7 +186,6 @@ public class InverterStatus {
 	public float getBatteryDischargeCurrent() {
 		return batteryDischargeCurrent;
 	}
-
 	public void setBatteryDischargeCurrent(float batteryDischargeCurrent) {
 		this.batteryDischargeCurrent = batteryDischargeCurrent;
 	}
@@ -203,7 +193,6 @@ public class InverterStatus {
 	public int getStatusBitmask() {
 		return statusBitmask;
 	}
-
 	public void setStatusBitmask(int statusBitmask) {
 		this.statusBitmask = statusBitmask;
 	}
@@ -211,30 +200,28 @@ public class InverterStatus {
 	public int getEepromVersion() {
 		return eepromVersion;
 	}
-
 	public void setEepromVersion(int eepromVersion) {
 		this.eepromVersion = eepromVersion;
 	}
 
-	public float getPvChargePower() {
-		return pvChargePower;
+	public float getPvPower() {
+		return pvPower;
 	}
-
-	public void setPvChargePower(float pvChargePower) {
-		this.pvChargePower = pvChargePower;
+	public void setPvPower(float pvChargePower) {
+		this.pvPower = pvChargePower;
 	}
 
 	@Override
 	public String toString() {
-		return "InverterStatus [acInVoltage=" + acInVoltage + ", acInFrequency=" + acInFrequency + ", acOutVoltage="
-				+ acOutVoltage + ", acOutFrequency=" + acOutFrequency + ", acOutApparentPower=" + acOutApparentPower
+		return "InverterStatus [measured=" + measured + ", acInVoltage=" + acInVoltage + ", acInFrequency=" + acInFrequency
+				+ ", acOutVoltage=" + acOutVoltage + ", acOutFrequency=" + acOutFrequency + ", acOutApparentPower=" + acOutApparentPower
 				+ ", acOutActivePower=" + acOutActivePower + ", acOutLoadPercentage=" + acOutLoadPercentage
 				+ ", internalBusVoltage=" + internalBusVoltage + ", batteryVoltageAtInverter=" + batteryVoltageAtInverter
 				+ ", batteryChargeCurrent=" + batteryChargeCurrent + ", batteryCapacityPercentage=" + batteryCapacityPercentage
 				+ ", heatSinkTemperature=" + heatSinkTemperature + ", pvToBatteryCurrent=" + pvToBatteryCurrent + ", pvVoltage="
 				+ pvVoltage + ", batteryVoltageAtCharger=" + batteryVoltageAtCharger + ", batteryDischargeCurrent="
 				+ batteryDischargeCurrent + ", statusBitmask=" + statusBitmask + ", eepromVersion=" + eepromVersion
-				+ ", pvChargePower=" + pvChargePower + "]";
+				+ ", pvPower=" + pvPower + "]";
 	}
 
 

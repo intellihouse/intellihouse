@@ -1,6 +1,7 @@
 package house.intelli.raspi.rpc.keybutton;
 
 import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -88,10 +89,10 @@ public class KeyButtonSensorRemotePropagator {
 	}
 
 	protected void propagate(KeyButtonSensorRemote keyButtonSensorRemote) throws RpcException {
-		assertNotNull(keyButtonSensorRemote, "keyButtonSensorRemote");
+		requireNonNull(keyButtonSensorRemote, "keyButtonSensorRemote");
 
 		RemoteBeanRef remoteBeanRef = keyButtonSensorRemote.getRemoteBeanRef();
-		assertNotNull(remoteBeanRef, "keyButtonSensorRemote.remoteBeanRef");
+		requireNonNull(remoteBeanRef, "keyButtonSensorRemote.remoteBeanRef");
 
 		logger.debug("propagate: {}", remoteBeanRef);
 

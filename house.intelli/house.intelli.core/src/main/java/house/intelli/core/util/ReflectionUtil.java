@@ -1,6 +1,6 @@
 package house.intelli.core.util;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -32,7 +32,7 @@ public class ReflectionUtil {
 	private ReflectionUtil() { }
 
 	public static <T> T invokeConstructor(final Class<T> clazz, final Object ... args) {
-		assertNotNull(clazz, "clazz");
+		requireNonNull(clazz, "clazz");
 
 		final Class<?>[] argTypes = getArgumentTypes(args);
 
@@ -64,8 +64,8 @@ public class ReflectionUtil {
 	}
 
 	public static <T> T invokeStatic(final Class<?> clazz, final String methodName, final Object ... args) {
-		assertNotNull(clazz, "clazz");
-		assertNotNull(methodName, "methodName");
+		requireNonNull(clazz, "clazz");
+		requireNonNull(methodName, "methodName");
 		return invoke(clazz, (Object)null, methodName, args);
 	}
 
@@ -75,15 +75,15 @@ public class ReflectionUtil {
 	}
 
 	public static <T> T invoke(final Object object, final String methodName, final Object ... args) {
-		assertNotNull(object, "object");
-		assertNotNull(methodName, "methodName");
+		requireNonNull(object, "object");
+		requireNonNull(methodName, "methodName");
 		return invoke(object.getClass(), object, methodName, args);
 	}
 
 	private static <T> T invoke(final Class<?> clazz, final Object object, final String methodName, final Object ... args) {
-		assertNotNull(clazz, "clazz");
+		requireNonNull(clazz, "clazz");
 		// object may be null
-		assertNotNull(methodName, "methodName");
+		requireNonNull(methodName, "methodName");
 		// args may be null
 
 		final Class<?>[] argTypes = getArgumentTypes(args);
@@ -120,8 +120,8 @@ public class ReflectionUtil {
 	}
 
 	public static <T> T invoke(final Object object, final String methodName, Class<?>[] parameterTypes, final Object ... args) {
-		assertNotNull(object, "object");
-		assertNotNull(methodName, "methodName");
+		requireNonNull(object, "object");
+		requireNonNull(methodName, "methodName");
 
 		if (parameterTypes == null)
 			return invoke(object, methodName, args);
@@ -303,7 +303,7 @@ public class ReflectionUtil {
 	 * empty.
 	 */
 	public static List<Field> getAllDeclaredFields(final Class<?> clazz) {
-		assertNotNull(clazz, "clazz");
+		requireNonNull(clazz, "clazz");
 		synchronized(clazz) {
 			final Reference<List<Field>> resultRef = class2AllDeclaredFields.get(clazz);
 			List<Field> result = resultRef == null ? null : resultRef.get();
@@ -325,7 +325,7 @@ public class ReflectionUtil {
 	}
 
 	public static Map<Field, Object> getAllDeclaredFieldValues(final Object object) {
-		assertNotNull(object, "object");
+		requireNonNull(object, "object");
 
 		final List<Field> allDeclaredFields = getAllDeclaredFields(object.getClass());
 		final Map<Field, Object> result = new HashMap<>(allDeclaredFields.size());
@@ -342,8 +342,8 @@ public class ReflectionUtil {
 	}
 
 	public static <V> V getFieldValue(final Object object, final String fieldName) {
-		assertNotNull(object, "object");
-		assertNotNull(fieldName, "fieldName");
+		requireNonNull(object, "object");
+		requireNonNull(fieldName, "fieldName");
 
 		// TODO pretty inefficient implementation - make better!
 
@@ -388,8 +388,8 @@ public class ReflectionUtil {
 	 * @param value the value to be assigned. May be <code>null</code>.
 	 */
 	public static void setFieldValue(final Object object, final String fieldName, final Object value) {
-		assertNotNull(object, "object");
-		assertNotNull(fieldName, "fieldName");
+		requireNonNull(object, "object");
+		requireNonNull(fieldName, "fieldName");
 
 		// TODO pretty inefficient implementation - make better!
 
@@ -423,7 +423,7 @@ public class ReflectionUtil {
 	}
 
 	public static Set<Class<?>> getAllInterfaces(final Class<?> clazz) {
-		assertNotNull(clazz, "clazz");
+		requireNonNull(clazz, "clazz");
 
 		final Set<Class<?>> interfaces = new LinkedHashSet<>();
 
@@ -453,8 +453,8 @@ public class ReflectionUtil {
 	 * @return the resolved type arguments. Never <code>null</code> (empty array for a non-generic base-class).
 	 */
 	public static final <T> Type[] resolveActualTypeArguments(final Class<T> baseClass, final T concreteObject) {
-		assertNotNull(baseClass, "baseClass");
-		assertNotNull(concreteObject, "concreteObject");
+		requireNonNull(baseClass, "baseClass");
+		requireNonNull(concreteObject, "concreteObject");
 		@SuppressWarnings("unchecked")
 		final Class<? extends T> concreteClass = (Class<? extends T>) concreteObject.getClass();
 		return resolveActualTypeArguments(baseClass, concreteClass);
@@ -502,9 +502,9 @@ public class ReflectionUtil {
 	}
 
 	private static final <T> Type[] _resolveActualTypeArgs(final Class<T> baseClass, final Class<? extends T> concreteClass, final Type... actualArgs) {
-		assertNotNull(baseClass, "baseClass");
-		assertNotNull(concreteClass, "concreteClass");
-		assertNotNull(actualArgs, "actualArgs");
+		requireNonNull(baseClass, "baseClass");
+		requireNonNull(concreteClass, "concreteClass");
+		requireNonNull(actualArgs, "actualArgs");
 
 	    if (actualArgs.length != 0 && actualArgs.length != concreteClass.getTypeParameters().length)
 	    	throw new IllegalArgumentException("actualArgs.length != 0 && actualArgs.length != concreteClass.typeParameters.length");

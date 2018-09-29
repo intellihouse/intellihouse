@@ -1,6 +1,6 @@
 package house.intelli.core.service;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -12,7 +12,7 @@ public class ServiceLoaderServiceRegistryDelegate<S> extends AbstractServiceRegi
 	private final Class<S> serviceClass;
 
 	public ServiceLoaderServiceRegistryDelegate(Class<S> serviceClass) {
-		this.serviceClass = assertNotNull(serviceClass, "serviceClass");
+		this.serviceClass = requireNonNull(serviceClass, "serviceClass");
 	}
 
 	public Class<S> getServiceClass() {

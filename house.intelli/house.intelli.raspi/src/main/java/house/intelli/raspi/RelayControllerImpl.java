@@ -40,6 +40,7 @@ public class RelayControllerImpl extends AbstractBean<RelayActor.Property> imple
 	public RelayControllerImpl() {
 	}
 
+	@Override
 	public String getBeanName() {
 		return beanName;
 	}

@@ -1,6 +1,6 @@
 package house.intelli.pgp.gnupg;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,8 +29,8 @@ public class TrustDbFactory {
 	private DeferredCloseTimerTask deferredCloseTimerTask;
 
 	public TrustDbFactory(final File trustDbFile, final PgpKeyRegistry pgpKeyRegistry) {
-		this.trustDbFile = assertNotNull(trustDbFile, "trustDbFile");
-		this.pgpKeyRegistry = assertNotNull(pgpKeyRegistry, "pgpKeyRegistry");
+		this.trustDbFile = requireNonNull(trustDbFile, "trustDbFile");
+		this.pgpKeyRegistry = requireNonNull(pgpKeyRegistry, "pgpKeyRegistry");
 	}
 
 	public synchronized TrustDb createTrustDb() {
@@ -71,7 +71,7 @@ public class TrustDbFactory {
 	}
 
 	protected void _close(final TrustDb trustDbProxy) {
-		assertNotNull(trustDbProxy, "trustDbProxy");
+		requireNonNull(trustDbProxy, "trustDbProxy");
 		if (_isOpen(trustDbProxy)) {
 			proxies.remove(trustDbProxy);
 			logger.trace("_close: Delisted proxy. openProxyCount={}", proxies.size());
@@ -87,13 +87,13 @@ public class TrustDbFactory {
 	}
 
 	protected void _assertIsOpen(final TrustDb trustDbProxy) {
-		assertNotNull(trustDbProxy, "trustDbProxy");
+		requireNonNull(trustDbProxy, "trustDbProxy");
 		if (! _isOpen(trustDbProxy))
 			throw new IllegalStateException("trustDbProxy is already closed!");
 	}
 
 	protected boolean _isOpen(final TrustDb trustDbProxy) {
-		assertNotNull(trustDbProxy, "trustDbProxy");
+		requireNonNull(trustDbProxy, "trustDbProxy");
 		return proxies.containsKey(trustDbProxy);
 	}
 

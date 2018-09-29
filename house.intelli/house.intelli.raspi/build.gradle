@@ -16,6 +16,8 @@ dependencies {
 
 	compile "org.springframework:spring-context:$springVersion"
 
+	compileOnly 'org.rxtx:rxtx:2.1.7' // 'apt-get install librxtx-java' on the raspi! because RXTX requires native libs and this is the easiest way to install them.
+
     // Declare the dependency for your favourite test framework you want to use in your tests.
     // TestNG is also supported by the Gradle Test task. Just change the
     // testCompile dependency to testCompile 'org.testng:testng:6.8.1' and add
@@ -31,11 +33,13 @@ repositories {
 }
 
 jar {
-	manifest {
-		attributes(
-			'Main-Class': 'house.intelli.raspi.IntelliHouseRaspi',
-			'Class-Path': configurations.runtime.collect { it.getName() }.join(' '))
-	}
+//	manifest {
+//		attributes(
+//			'Main-Class': 'house.intelli.raspi.IntelliHouseRaspi',
+//			'Class-Path': configurations.runtime.collect { it.getName() }.join(' '))
+//	}
+// Class-path is now added via program argument -cp, because we need the native RXTX and cannot combine
+// the MANIFEST.MF entry with the -cp argument. So we don't need this entire thingy, anymore.
 }
 
 task copyDependencies(type: Copy) {

@@ -79,8 +79,8 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
         linkRegistry.addRegistryChangeListener(new RegistryChangeListener<ItemChannelLink>() {
             @Override
             public void added(final ItemChannelLink link) {
-                final ChannelUID channelUID = getLinkedUID(assertNotNull(link, "link"));
-                assertNotNull(channelUID, "link.uid");
+                final ChannelUID channelUID = getLinkedUID(requireNonNull(link, "link"));
+                requireNonNull(channelUID, "link.uid");
                 if (thingUID.equals(channelUID.getThingUID())) {
                     if (initializedChannelUIDs.add(channelUID)) {
                         startInitializeChannelThread(channelUID);
@@ -117,7 +117,7 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
         // // echoRequest.setServerHostId(serverHostId);
         // // echoRequest.setPayload("initialize");
         // // EchoResponse echoResponse = rpcClient.invoke(echoRequest);
-        // // assertNotNull(echoResponse, "echoResponse");
+        // // requireNonNull(echoResponse, "echoResponse");
         // // logger.info("initialize: thingUid={}: Successfully initialized.", getThing().getUID());
         // // }
         // updateStatus(ThingStatus.ONLINE);
@@ -142,7 +142,7 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
     }
 
     protected void startInitializeChannelThread(final ChannelUID channelUID) {
-        assertNotNull(channelUID, "channelUID");
+        requireNonNull(channelUID, "channelUID");
 
         new Thread("InitializeChannelThread[" + channelUID + ']') {
             @Override
@@ -184,7 +184,7 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
     }
 
     protected <S> S getServiceOrFail(final Class<S> serviceClass) {
-        assertNotNull(serviceClass, "serviceClass");
+        requireNonNull(serviceClass, "serviceClass");
         ServiceReference<S> serviceReference = bundleContext.getServiceReference(serviceClass);
         if (serviceReference == null) {
             throw new IllegalStateException("No ServiceReference found for: " + serviceClass.getName());
@@ -232,7 +232,7 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
     // "getUID()" doing sth. else! FUCK!!!
     // TODO remove this method when we use OpenHAB 2.2.x.
     protected static ChannelUID getLinkedUID(ItemChannelLink itemChannelLink) {
-        assertNotNull(itemChannelLink, "itemChannelLink");
+        requireNonNull(itemChannelLink, "itemChannelLink");
 
         Method method;
         try {

@@ -1,6 +1,6 @@
 package house.intelli.pgp.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import house.intelli.core.rpc.HttpRpcServerTransportProvider;
 import house.intelli.core.rpc.RpcServerTransport;
@@ -12,7 +12,7 @@ public class PgpHttpRpcServerTransportProvider extends HttpRpcServerTransportPro
 	@Override
 	protected RpcServerTransport _createRpcServerTransport() {
 		if (! lateInitDone) {
-			PgpRequestService.setServerHostId(assertNotNull(getRpcContext().getLocalHostId(), "rpcContext.localHostId"));
+			PgpRequestService.setServerHostId(requireNonNull(getRpcContext().getLocalHostId(), "rpcContext.localHostId"));
 			lateInitDone = true;
 		}
 		return new PgpHttpRpcServerTransport();

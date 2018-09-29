@@ -1,6 +1,6 @@
 package house.intelli.core.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -64,7 +64,7 @@ public abstract class RpcMessage {
 	}
 
 	public void copyRequestCoordinates(RpcMessage message) {
-		assertNotNull(message, "message");
+		requireNonNull(message, "message");
 		this.setRequestId(message.getRequestId());
 		this.setClientHostId(message.getClientHostId());
 		this.setServerHostId(message.getServerHostId());

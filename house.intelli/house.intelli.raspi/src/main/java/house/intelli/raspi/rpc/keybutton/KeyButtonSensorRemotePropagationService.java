@@ -1,6 +1,6 @@
 package house.intelli.raspi.rpc.keybutton;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +36,7 @@ public class KeyButtonSensorRemotePropagationService extends AbstractRpcService<
 
 	@Override
 	public VoidResponse process(KeyButtonSensorRemotePropagationRequest request) throws Exception {
-		final String channelId = assertNotNull(request.getChannelId(), "request.channelId");
+		final String channelId = requireNonNull(request.getChannelId(), "request.channelId");
 		logger.debug("process: clientHostId={}, channelId={}", request.getClientHostId(), channelId);
 
 		final Object bean = applicationContext.getBean(channelId);

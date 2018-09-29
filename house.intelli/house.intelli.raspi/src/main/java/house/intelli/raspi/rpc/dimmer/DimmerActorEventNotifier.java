@@ -108,7 +108,7 @@ public class DimmerActorEventNotifier {
 		return dimmerActors;
 	}
 
-	@Autowired
+	@Autowired(required = false)
 	public void setDimmerActors(List<DimmerActor> dimmerActors) {
 		assertEventThread();
 		logger.debug("setDimmerActors: dimmerActors={}", dimmerActors);

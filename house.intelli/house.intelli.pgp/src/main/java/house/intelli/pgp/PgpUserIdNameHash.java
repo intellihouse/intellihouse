@@ -1,6 +1,6 @@
 package house.intelli.pgp;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 import static house.intelli.core.util.HashUtil.*;
 import static java.util.Arrays.*;
 
@@ -23,12 +23,12 @@ public class PgpUserIdNameHash implements Comparable<PgpUserIdNameHash>, Seriali
 	private transient WeakReference<String> toHumanString;
 
 	protected PgpUserIdNameHash(final byte[] namehash) {
-		assertNotNull(namehash, "namehash");
+		requireNonNull(namehash, "namehash");
 		this.namehash = namehash;
 	}
 
 	public PgpUserIdNameHash(final String namehash) {
-		assertNotNull(namehash, "namehash");
+		requireNonNull(namehash, "namehash");
 		this.namehash = decodeHexStr(namehash);
 	}
 
@@ -113,7 +113,7 @@ public class PgpUserIdNameHash implements Comparable<PgpUserIdNameHash>, Seriali
 	}
 
 	public static PgpUserIdNameHash createFromUserId(final String userId) {
-		assertNotNull(userId, "userId");
+		requireNonNull(userId, "userId");
 
 		final RIPEMD160Digest digest = new RIPEMD160Digest();
 		byte[] userIdBytes = userId.getBytes(StandardCharsets.UTF_8); // TODO is this correct?! really UTF-8?! check with my own name! ;-)
@@ -125,15 +125,15 @@ public class PgpUserIdNameHash implements Comparable<PgpUserIdNameHash>, Seriali
 	}
 
 	public static PgpUserIdNameHash createFromUserAttribute(final PGPUserAttributeSubpacketVector userAttribute) {
-		assertNotNull(userAttribute, "userAttribute");
+		requireNonNull(userAttribute, "userAttribute");
 
 		final RIPEMD160Digest digest = new RIPEMD160Digest();
 
 		// TODO this needs to be extended, if there is ever any other attribute possible, too!
 		// Currently, image seems to be the only supported attribute. Alternatively, we could get the data via reflection...
 		final UserAttributeSubpacket subpacket = userAttribute.getSubpacket(UserAttributeSubpacketTags.IMAGE_ATTRIBUTE);
-		assertNotNull(subpacket, "subpacket");
-		final byte[] data = assertNotNull(subpacket.getData(), "subpacket.data");
+		requireNonNull(subpacket, "subpacket");
+		final byte[] data = requireNonNull(subpacket.getData(), "subpacket.data");
 		digest.update(data, 0, data.length);
 
 		final byte[] out = new byte[digest.getDigestSize()];

@@ -1,6 +1,6 @@
 package house.intelli.pgp.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.net.URL;
 
@@ -25,7 +25,7 @@ public class PgpHttpRpcClientTransportProvider extends HttpRpcClientTransportPro
 	@Override
 	protected RpcClientTransport _createRpcClientTransport() {
 		resolveServerHostIdIfNeeded();
-		URL serverUrl = assertNotNull(getActualServerUrl(), "serverUrl");
+		URL serverUrl = requireNonNull(getActualServerUrl(), "serverUrl");
 		PgpHttpRpcClientTransport result = new PgpHttpRpcClientTransport();
 		result.setServerUrl(serverUrl);
 		result.setServerHostId(getServerHostId());
@@ -34,7 +34,7 @@ public class PgpHttpRpcClientTransportProvider extends HttpRpcClientTransportPro
 
 	private void resolveServerHostIdIfNeeded() {
 		if (getServerHostId() == null) {
-			String host = assertNotNull(getServerUrl(), "serverUrl").getHost();
+			String host = requireNonNull(getServerUrl(), "serverUrl").getHost();
 			setServerHostId(new HostId(host));
 		}
 	}

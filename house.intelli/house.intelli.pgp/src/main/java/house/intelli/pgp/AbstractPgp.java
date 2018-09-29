@@ -52,9 +52,9 @@ public abstract class AbstractPgp implements Pgp {
 
 //	@Override
 //	public void exportPublicKeysWithSecretKeys(final Set<PgpKey> pgpKeys, final File file) {
-//		assertNotNull("pgpKeys", pgpKeys);
+//		requireNonNull("pgpKeys", pgpKeys);
 //		try {
-//			try (OutputStream out = assertNotNull("file", file).createOutputStream();) {
+//			try (OutputStream out = requireNonNull("file", file).createOutputStream();) {
 //				exportPublicKeysWithSecretKeys(pgpKeys, out);
 //			}
 //		} catch (IOException e) {
@@ -64,9 +64,9 @@ public abstract class AbstractPgp implements Pgp {
 //
 //	@Override
 //	public void exportPublicKeys(final Set<PgpKey> pgpKeys, final File file) {
-//		assertNotNull("pgpKeys", pgpKeys);
+//		requireNonNull("pgpKeys", pgpKeys);
 //		try {
-//			try (OutputStream out = assertNotNull("file", file).createOutputStream();) {
+//			try (OutputStream out = requireNonNull("file", file).createOutputStream();) {
 //				exportPublicKeys(pgpKeys, out);
 //			}
 //		} catch (IOException e) {
@@ -84,7 +84,7 @@ public abstract class AbstractPgp implements Pgp {
 //	@Override
 //	public ImportKeysResult importKeys(final File file) {
 //		try {
-//			try (InputStream in = assertNotNull("file", file).createInputStream();) {
+//			try (InputStream in = requireNonNull("file", file).createInputStream();) {
 //				return importKeys(in);
 //			}
 //		} catch (IOException e) {
@@ -94,14 +94,14 @@ public abstract class AbstractPgp implements Pgp {
 //
 //	@Override
 //	public ImportKeysResult importKeys(byte[] data) {
-//		assertNotNull("data", data);
+//		requireNonNull("data", data);
 //		return importKeys(new ByteArrayInputStream(data));
 //	}
 //
 //	@Override
 //	public TempImportKeysResult importKeysTemporarily(File file) {
 //		try {
-//			try (InputStream in = assertNotNull("file", file).createInputStream();) {
+//			try (InputStream in = requireNonNull("file", file).createInputStream();) {
 //				return importKeysTemporarily(in);
 //			}
 //		} catch (IOException e) {
@@ -111,7 +111,7 @@ public abstract class AbstractPgp implements Pgp {
 //
 //	@Override
 //	public TempImportKeysResult importKeysTemporarily(byte[] data) {
-//		assertNotNull("data", data);
+//		requireNonNull("data", data);
 //		return importKeysTemporarily(new ByteArrayInputStream(data));
 //	}
 }

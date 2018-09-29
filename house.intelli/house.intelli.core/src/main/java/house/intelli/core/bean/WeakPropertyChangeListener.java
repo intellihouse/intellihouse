@@ -1,6 +1,6 @@
 package house.intelli.core.bean;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 import static house.intelli.core.util.ReflectionUtil.*;
 
 import java.beans.PropertyChangeEvent;
@@ -29,7 +29,7 @@ public class WeakPropertyChangeListener implements PropertyChangeListener {
 	public WeakPropertyChangeListener(final Object bean, final Object property, final PropertyChangeListener listener) {
 		expunge();
 
-		this.bean = assertNotNull(bean, "bean");
+		this.bean = requireNonNull(bean, "bean");
 		this.property = property;
 
 		listenerRef = new WeakReference<PropertyChangeListener>(listener, listenerRefQueue);

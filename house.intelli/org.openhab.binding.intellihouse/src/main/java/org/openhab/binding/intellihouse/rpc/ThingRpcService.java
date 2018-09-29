@@ -51,12 +51,12 @@ public abstract class ThingRpcService<REQ extends Request<RES>, RES extends Resp
     }
 
     protected Set<Thing> getThings(final ThingTypeUID thingTypeUID, final REQ request) {
-        assertNotNull(request, "request");
-        return getThings(thingTypeUID, assertNotNull(request.getClientHostId(), "request.clientHostId"));
+        requireNonNull(request, "request");
+        return getThings(thingTypeUID, requireNonNull(request.getClientHostId(), "request.clientHostId"));
     }
 
     protected Set<Thing> getThings(final ThingTypeUID thingTypeUID, final HostId hostId) {
-        assertNotNull(hostId, "hostId");
+        requireNonNull(hostId, "hostId");
         final ThingRegistry thingRegistry = getThingRegistry();
         final Set<Thing> result = new LinkedHashSet<>();
         final String hostIdStr = hostId.toString();
@@ -77,8 +77,8 @@ public abstract class ThingRpcService<REQ extends Request<RES>, RES extends Resp
     }
 
     protected <S> S getServiceOrFail(final Class<S> serviceClass) {
-        assertNotNull(serviceClass, "serviceClass");
-        final BundleContext bundleContext = assertNotNull(getBundleContext(), "bundleContext");
+        requireNonNull(serviceClass, "serviceClass");
+        final BundleContext bundleContext = requireNonNull(getBundleContext(), "bundleContext");
         ServiceReference<S> serviceReference = bundleContext.getServiceReference(serviceClass);
         if (serviceReference == null) {
             throw new IllegalStateException("No ServiceReference found for: " + serviceClass.getName());

@@ -1,6 +1,6 @@
 package house.intelli.core.io;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 import static house.intelli.core.util.Util.*;
 
 import java.io.File;
@@ -38,8 +38,8 @@ class LockFileImpl implements LockFile {
 	private final Object mutex = this;
 
 	protected LockFileImpl(final LockFileFactory lockFileFactory, final File file) {
-		this.lockFileFactory = assertNotNull(lockFileFactory, "lockFileFactory");
-		this.file = assertNotNull(file, "file");
+		this.lockFileFactory = requireNonNull(lockFileFactory, "lockFileFactory");
+		this.file = requireNonNull(file, "file");
 //		this.mutex = lockFileFactory.mutex;
 		logger.debug("[{}]<init>: file='{}'", thisID, file);
 	}

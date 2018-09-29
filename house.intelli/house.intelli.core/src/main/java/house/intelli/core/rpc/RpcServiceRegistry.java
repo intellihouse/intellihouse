@@ -1,6 +1,6 @@
 package house.intelli.core.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,7 +46,7 @@ public class RpcServiceRegistry {
 	}
 
 	public <REQ extends Request<?>, RES extends Response> RpcService<REQ, RES> getRpcService(final Class<? extends REQ> requestType) {
-		Class<?> rt = assertNotNull(requestType, "requestType");
+		Class<?> rt = requireNonNull(requestType, "requestType");
 		synchronized (mutex) {
 			if (requestType2RpcServices.isEmpty())
 				load();

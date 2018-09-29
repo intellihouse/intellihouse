@@ -1,6 +1,6 @@
 package house.intelli.pgp;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 import static house.intelli.core.util.HashUtil.*;
 import static java.util.Arrays.*;
 
@@ -25,14 +25,14 @@ public class PgpKeyFingerprint implements Comparable<PgpKeyFingerprint>, Seriali
 
     public PgpKeyFingerprint(final byte[] fingerprint)
     {
-        assertNotNull(fingerprint, "fingerprint");
+        requireNonNull(fingerprint, "fingerprint");
         // In order to guarantee that this instance is immutable, we must copy the input.
         this.fingerprint = copyOf(fingerprint, fingerprint.length);
     }
 
     public PgpKeyFingerprint(final String fingerprint)
     {
-        assertNotNull(fingerprint, "fingerprint");
+        requireNonNull(fingerprint, "fingerprint");
         this.fingerprint = decodeHexStr(fingerprint);
     }
 

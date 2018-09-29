@@ -2,6 +2,7 @@ package house.intelli.raspi;
 
 import static house.intelli.core.event.EventQueue.*;
 import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +47,7 @@ public class DimmerActorImpl extends AbstractBean<DimmerActor.Property> implemen
 
 	public void init() {
 		assertEventThread();
-		assertNotNull(pin, "pin");
+		requireNonNull(pin, "pin");
 		applyDimmerValue();
 	}
 
@@ -123,7 +124,7 @@ public class DimmerActorImpl extends AbstractBean<DimmerActor.Property> implemen
 		if (pwmOutput != null)
 			return;
 
-		assertNotNull(pin, "pin");
+		requireNonNull(pin, "pin");
 
 		final boolean hardPwm = pin.getSupportedPinModes().contains(PinMode.PWM_OUTPUT);
 		logger.debug("openPwmOutput: hardPwm={}", hardPwm);
@@ -159,7 +160,7 @@ public class DimmerActorImpl extends AbstractBean<DimmerActor.Property> implemen
 		if (digitalOutput != null)
 			return;
 
-		assertNotNull(pin, "pin");
+		requireNonNull(pin, "pin");
 
 		logger.debug("openDigitalOutput");
 

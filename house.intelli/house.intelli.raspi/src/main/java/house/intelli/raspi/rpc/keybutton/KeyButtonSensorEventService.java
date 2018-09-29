@@ -1,6 +1,6 @@
 package house.intelli.raspi.rpc.keybutton;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,8 +41,8 @@ public class KeyButtonSensorEventService extends AbstractRpcService<KeyButtonSen
 	@Override
 	public VoidResponse process(final KeyButtonSensorEventRequest request) throws Exception {
 		final RemoteBeanRef remoteBeanRef = new RemoteBeanRef();
-		remoteBeanRef.setHostId(assertNotNull(request.getClientHostId(), "request.clientHostId"));
-		remoteBeanRef.setBeanId(assertNotNull(request.getChannelId(), "request.channelId")); // SENDER id!
+		remoteBeanRef.setHostId(requireNonNull(request.getClientHostId(), "request.clientHostId"));
+		remoteBeanRef.setBeanId(requireNonNull(request.getChannelId(), "request.channelId")); // SENDER id!
 		logger.debug("process: remoteBeanRef={}", remoteBeanRef);
 
 		final List<KeyButtonSensorRemote> list = getRemoteBeanRef2KeyButtonSensorRemote().get(remoteBeanRef);

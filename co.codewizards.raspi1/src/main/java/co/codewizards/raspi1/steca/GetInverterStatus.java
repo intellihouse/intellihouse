@@ -3,6 +3,7 @@ package co.codewizards.raspi1.steca;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,7 @@ public class GetInverterStatus extends StecaRequest<InverterStatus> {
 //		}
 
 		InverterStatus result = new InverterStatus();
+		result.setMeasured(new Date());
 
 		int idx = -1;
 		result.setAcInVoltage(parseFloat(fields[++idx]));                    //  0
@@ -62,7 +64,7 @@ public class GetInverterStatus extends StecaRequest<InverterStatus> {
 		result.setStatusBitmask(parseIntBinary(fields[++idx]));              // 16
 		++idx; // reserved field                                             // 17
 		result.setEepromVersion(parseInt(fields[++idx]));                    // 18
-		result.setPvChargePower(parseFloat(fields[++idx]));                  // 19
+		result.setPvPower(parseFloat(fields[++idx]));                  // 19
 
 		int statusBits2 = parseIntBinary(fields[++idx]);                     // 20
 		statusBits2 = statusBits2 << 8;

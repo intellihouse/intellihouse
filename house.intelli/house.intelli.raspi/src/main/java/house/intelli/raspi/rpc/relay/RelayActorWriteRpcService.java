@@ -1,6 +1,6 @@
 package house.intelli.raspi.rpc.relay;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +36,7 @@ public class RelayActorWriteRpcService extends AbstractRpcService<RelayActorWrit
 
 	@Override
 	public RelayActorWriteResponse process(RelayActorWriteRequest request) throws Exception {
-		final String channelId = assertNotNull(request.getChannelId(), "request.channelId");
+		final String channelId = requireNonNull(request.getChannelId(), "request.channelId");
 		final Object bean = applicationContext.getBean(channelId);
 		if (bean == null)
 			throw new IllegalArgumentException("No bean found with beanId=channelId=" + channelId);

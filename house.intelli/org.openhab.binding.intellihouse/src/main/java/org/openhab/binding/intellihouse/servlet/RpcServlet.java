@@ -315,8 +315,8 @@ public class RpcServlet extends BaseServlet {
 
     protected RpcServerTransport createRpcServerTransport(final ServletInputStream inputStream,
             final ServletOutputStream outputStream) {
-        assertNotNull(inputStream, "inputStream");
-        assertNotNull(outputStream, "outputStream");
+        requireNonNull(inputStream, "inputStream");
+        requireNonNull(outputStream, "outputStream");
 
         Object tpcn = configProps.get(CONFIG_KEY_TRANSPORT);
         String transportProviderClassName = trim(tpcn == null ? null : tpcn.toString());
@@ -399,19 +399,19 @@ public class RpcServlet extends BaseServlet {
     }
 
     protected boolean isThingStatusOffline(final Thing thing) {
-        assertNotNull(thing, "thing");
-        ThingStatusInfo statusInfo = assertNotNull(thing.getStatusInfo(), "thing.statusInfo");
+        requireNonNull(thing, "thing");
+        ThingStatusInfo statusInfo = requireNonNull(thing.getStatusInfo(), "thing.statusInfo");
         return ThingStatus.OFFLINE.equals(statusInfo.getStatus());
     }
 
     protected boolean isThingStatusConfigurationError(final Thing thing) {
-        assertNotNull(thing, "thing");
-        ThingStatusInfo statusInfo = assertNotNull(thing.getStatusInfo(), "thing.statusInfo");
+        requireNonNull(thing, "thing");
+        ThingStatusInfo statusInfo = requireNonNull(thing.getStatusInfo(), "thing.statusInfo");
         return ThingStatusDetail.CONFIGURATION_ERROR.equals(statusInfo.getStatusDetail());
     }
 
     protected List<Thing> getThings(final HostId hostId) {
-        assertNotNull(hostId, "hostId");
+        requireNonNull(hostId, "hostId");
         List<Thing> result = new ArrayList<>();
         final String hostIdStr = hostId.toString();
         for (final Thing thing : thingRegistry.getAll()) {
@@ -424,8 +424,8 @@ public class RpcServlet extends BaseServlet {
     }
 
     protected void setThingStatus(Thing thing, ThingStatusInfo thingStatusInfo) {
-        assertNotNull(thing, "thing");
-        assertNotNull(thingStatusInfo, "thingStatusInfo");
+        requireNonNull(thing, "thing");
+        requireNonNull(thingStatusInfo, "thingStatusInfo");
         // if (!isThingStatusWritable(thing)) {
         // logger.warn(
         // "setThingStatus: thingUid={}: NOT setting status, because isThingStatusWritable(...) returned false!",

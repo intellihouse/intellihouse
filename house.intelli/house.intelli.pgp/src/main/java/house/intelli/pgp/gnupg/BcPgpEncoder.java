@@ -1,6 +1,6 @@
 package house.intelli.pgp.gnupg;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +35,7 @@ public class BcPgpEncoder extends AbstractPgpEncoder {
 	private final BcWithLocalGnuPgPgp pgp;
 
 	public BcPgpEncoder(final BcWithLocalGnuPgPgp pgp) {
-		this.pgp = assertNotNull(pgp, "pgp");
+		this.pgp = requireNonNull(pgp, "pgp");
 	}
 
 	@Override
@@ -124,7 +124,7 @@ public class BcPgpEncoder extends AbstractPgpEncoder {
 	}
 
 	private PGPSignatureGenerator createSignatureGenerator() throws PGPException {
-		final PgpKey signPgpKey = assertNotNull(getSignPgpKey(), "signPgpKey");
+		final PgpKey signPgpKey = requireNonNull(getSignPgpKey(), "signPgpKey");
 		final PgpKey actualSignPgpKey = signPgpKey.getPgpKeyForSignatureOrFail();
 
 		final PGPSecretKey signSecretKey = getPgpSecretKeyOrFail(actualSignPgpKey);
@@ -168,7 +168,7 @@ public class BcPgpEncoder extends AbstractPgpEncoder {
 	}
 
 	private PGPSecretKey getPgpSecretKeyOrFail(final PgpKey pgpKey) {
-		assertNotNull(pgpKey, "pgpKey");
+		requireNonNull(pgpKey, "pgpKey");
 		final PGPSecretKey secretKey = pgp.getBcPgpKeyOrFail(pgpKey).getSecretKey();
 		if (secretKey == null)
 			throw new IllegalStateException(String.format(

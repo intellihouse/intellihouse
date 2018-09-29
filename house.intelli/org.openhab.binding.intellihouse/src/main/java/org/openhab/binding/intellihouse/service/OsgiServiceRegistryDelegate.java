@@ -1,6 +1,6 @@
 package org.openhab.binding.intellihouse.service;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,8 +22,8 @@ public class OsgiServiceRegistryDelegate<S> extends AbstractServiceRegistryDeleg
     private ServiceListener serviceListener;
 
     public OsgiServiceRegistryDelegate(Class<S> serviceClass, BundleContext bundleContext) {
-        this.serviceClass = assertNotNull(serviceClass, "serviceClass");
-        this.bundleContext = assertNotNull(bundleContext, "bundleContext");
+        this.serviceClass = requireNonNull(serviceClass, "serviceClass");
+        this.bundleContext = requireNonNull(bundleContext, "bundleContext");
     }
 
     @Override

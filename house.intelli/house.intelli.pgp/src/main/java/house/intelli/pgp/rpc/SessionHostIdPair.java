@@ -1,6 +1,6 @@
 package house.intelli.pgp.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -23,11 +23,11 @@ public class SessionHostIdPair {
 	}
 
 	public SessionHostIdPair(final HostId ... hostIds) {
-		if (assertNotNull(hostIds, "hostIds").length != 2)
+		if (requireNonNull(hostIds, "hostIds").length != 2)
 			throw new IllegalArgumentException("hostIdslength != 2");
 
-		assertNotNull(hostIds[0], "hostIds[0]");
-		assertNotNull(hostIds[1], "hostIds[1]");
+		requireNonNull(hostIds[0], "hostIds[0]");
+		requireNonNull(hostIds[1], "hostIds[1]");
 
 		if (hostIds[0].compareTo(hostIds[1]) < 0) {
 			this.hostId0 = hostIds[0];

@@ -1,6 +1,6 @@
 package house.intelli.pgp;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -90,7 +90,7 @@ public class CreatePgpKeyParam extends AbstractBean<CreatePgpKeyParam.Property> 
 		return algorithm;
 	}
 	public void setAlgorithm(final Algorithm algorithm) {
-		setPropertyValue(PropertyEnum.algorithm, assertNotNull(algorithm, "algorithm"));
+		setPropertyValue(PropertyEnum.algorithm, requireNonNull(algorithm, "algorithm"));
 		if (!algorithm.isSupportedStrength(strength))
 			setStrength(max(algorithm.getSupportedStrengths()));
 	}
@@ -113,7 +113,7 @@ public class CreatePgpKeyParam extends AbstractBean<CreatePgpKeyParam.Property> 
 
 		private Algorithm(final int ... supportedStrengths) {
 			final List<Integer> l = new ArrayList<Integer>(supportedStrengths.length);
-			for (final int supportedStrength : assertNotNull(supportedStrengths, "supportedStrengths"))
+			for (final int supportedStrength : requireNonNull(supportedStrengths, "supportedStrengths"))
 				l.add(supportedStrength);
 
 			this.supportedStrengths = Collections.unmodifiableList(l);

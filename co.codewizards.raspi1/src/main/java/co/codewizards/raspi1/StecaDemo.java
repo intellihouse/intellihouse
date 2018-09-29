@@ -42,6 +42,16 @@ public class StecaDemo implements Runnable {
 					Thread.sleep(1000);
 				} catch (Exception x) {
 					x.printStackTrace();
+
+					System.out.println("Closing stecaClient0...");
+					stecaClient0.close();
+					System.out.println("Closed stecaClient0.");
+
+					System.out.println("Closing stecaClient1...");
+					stecaClient1.close();
+					System.out.println("Closed stecaClient1.");
+
+					Thread.sleep(5000);
 				}
 			}
 

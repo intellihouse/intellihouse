@@ -1,6 +1,6 @@
 package house.intelli.pgp;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 import static house.intelli.core.util.HashUtil.*;
 import static house.intelli.core.util.IOUtil.*;
 
@@ -24,7 +24,7 @@ public class PgpKeyId implements Comparable<PgpKeyId>, Serializable {
 	}
 
 	public PgpKeyId(final String pgpKeyIdString) {
-		this(bytesToLong(decodeHexStr(assertNotNull(pgpKeyIdString, "pgpKeyIdString"))));
+		this(bytesToLong(decodeHexStr(requireNonNull(pgpKeyIdString, "pgpKeyIdString"))));
 	}
 
 	@Override
@@ -59,7 +59,7 @@ public class PgpKeyId implements Comparable<PgpKeyId>, Serializable {
 
 	@Override
 	public int compareTo(PgpKeyId other) {
-		assertNotNull(other, "other");
+		requireNonNull(other, "other");
 		// Same semantics as for normal numbers.
 		return (this.pgpKeyId < other.pgpKeyId ? -1 :
 				(this.pgpKeyId > other.pgpKeyId ? 1 : 0));

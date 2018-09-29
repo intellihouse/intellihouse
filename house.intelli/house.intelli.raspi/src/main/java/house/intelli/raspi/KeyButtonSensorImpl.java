@@ -2,6 +2,7 @@ package house.intelli.raspi;
 
 import static house.intelli.core.event.EventQueue.*;
 import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -47,7 +48,7 @@ public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> 
 	};
 
 	private void setDebounceCandidatePinState(final PinState state) {
-		assertNotNull(state, "state");
+		requireNonNull(state, "state");
 		assertEventThread();
 		if (debounceCandidatePinState == state)
 			return;
@@ -101,7 +102,7 @@ public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> 
 
 	public void init() {
 		assertEventThread();
-		assertNotNull(pin, "pin");
+		requireNonNull(pin, "pin");
 		openDigitalInput();
 	}
 
@@ -150,7 +151,7 @@ public class KeyButtonSensorImpl extends AbstractBean<KeyButtonSensor.Property> 
 			return;
 
 		assertEventThread();
-		assertNotNull(pin, "pin");
+		requireNonNull(pin, "pin");
 
 		GpioController gpioController = GpioFactory.getInstance();
 		digitalInput = gpioController.provisionDigitalInputPin(pin);

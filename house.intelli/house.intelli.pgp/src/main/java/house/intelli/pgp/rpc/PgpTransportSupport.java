@@ -1,6 +1,6 @@
 package house.intelli.pgp.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -83,7 +83,7 @@ public class PgpTransportSupport {
 		if (hostId == null)
 			return null;
 
-		final HostId serverHostId = assertNotNull(getServerHostId(), "serverHostId");
+		final HostId serverHostId = requireNonNull(getServerHostId(), "serverHostId");
 		if (HostId.SERVER.equals(hostId))
 			return serverHostId;
 		else
@@ -94,7 +94,7 @@ public class PgpTransportSupport {
 		if (hostId == null)
 			return null;
 
-		final HostId serverHostId = assertNotNull(getServerHostId(), "serverHostId");
+		final HostId serverHostId = requireNonNull(getServerHostId(), "serverHostId");
 		if (serverHostId.equals(hostId))
 			return HostId.SERVER;
 		else
@@ -102,7 +102,7 @@ public class PgpTransportSupport {
 	}
 
 	public PgpKey getMasterKeyOrFail(final HostId hostId) {
-		assertNotNull(hostId, "hostId");
+		requireNonNull(hostId, "hostId");
 		PgpKey masterKey = getMasterKey(hostId);
 		if (masterKey == null)
 			throw new IllegalArgumentException(String.format("No PGP key found for hostId='%s'!", hostId));
@@ -111,7 +111,7 @@ public class PgpTransportSupport {
 	}
 
 	public PgpKey getMasterKey(final HostId hostId) {
-		assertNotNull(hostId, "hostId");
+		requireNonNull(hostId, "hostId");
 		final Date now = new Date();
 		if (hostIdStr2PgpKey.isEmpty()) {
 			for (PgpKey pgpKey : pgp.getMasterKeys()) {
@@ -130,7 +130,7 @@ public class PgpTransportSupport {
 	}
 
 	public byte[] serializeRpcMessage(RpcMessage rpcMessage) throws IOException {
-		assertNotNull(rpcMessage, "rpcMessage");
+		requireNonNull(rpcMessage, "rpcMessage");
 		try {
 			ByteArrayOutputStream bout = new ByteArrayOutputStream();
 			try (GZIPOutputStream gzOut = new GZIPOutputStream(bout)) {
@@ -144,7 +144,7 @@ public class PgpTransportSupport {
 	}
 
 	public RpcMessage deserializeRpcMessage(byte[] serialized) throws IOException {
-		assertNotNull(serialized, "serialized");
+		requireNonNull(serialized, "serialized");
 		try {
 			try (GZIPInputStream gzIn = new GZIPInputStream(new ByteArrayInputStream(serialized))) {
 				Unmarshaller unmarshaller = getJaxbContext().createUnmarshaller();
@@ -157,9 +157,9 @@ public class PgpTransportSupport {
 	}
 
 	public byte[] encryptAndSign(final byte[] plainData, final HostId senderHostId, final HostId recipientHostId) throws IOException {
-		assertNotNull(plainData, "plainData");
-		assertNotNull(senderHostId, "senderHostId");
-		assertNotNull(recipientHostId, "recipientHostId");
+		requireNonNull(plainData, "plainData");
+		requireNonNull(senderHostId, "senderHostId");
+		requireNonNull(recipientHostId, "recipientHostId");
 		final long startTimestampTotal = System.currentTimeMillis();
 
 		final SessionHostIdPair sessionHostIdPair = new SessionHostIdPair(senderHostId, recipientHostId);
@@ -243,9 +243,9 @@ public class PgpTransportSupport {
 	}
 
 	public byte[] decryptAndVerifySignature(final byte[] encryptedData, final HostId senderHostId, final HostId recipientHostId) throws IOException {
-		assertNotNull(encryptedData, "encryptedData");
-		assertNotNull(senderHostId, "senderHostId");
-		assertNotNull(recipientHostId, "recipientHostId");
+		requireNonNull(encryptedData, "encryptedData");
+		requireNonNull(senderHostId, "senderHostId");
+		requireNonNull(recipientHostId, "recipientHostId");
 		final long startTimestampTotal = System.currentTimeMillis();
 
 		final SessionManager sessionManager = SessionManager.getInstance();
@@ -408,7 +408,7 @@ public class PgpTransportSupport {
 	}
 
 	private byte[] serializeSessionRequest(final Session session) throws IOException {
-		assertNotNull(session, "session");
+		requireNonNull(session, "session");
 		try {
 			ByteArrayOutputStream sessionRequestOut = new ByteArrayOutputStream();
 			getJaxbContext().createMarshaller().marshal(new SessionRequest(session), sessionRequestOut);
@@ -419,7 +419,7 @@ public class PgpTransportSupport {
 	}
 
 	private SessionRequest deserializeSessionRequest(final byte[] sessionRequestBytes) throws IOException {
-		assertNotNull(sessionRequestBytes, "sessionRequestBytes");
+		requireNonNull(sessionRequestBytes, "sessionRequestBytes");
 		try {
 			Object deserialized = getJaxbContext().createUnmarshaller().unmarshal(new ByteArrayInputStream(sessionRequestBytes));
 			return (SessionRequest) deserialized;
@@ -429,22 +429,22 @@ public class PgpTransportSupport {
 	}
 
 	private static void writeLongByteArray(DataOutputStream dout, byte[] byteArray) throws IOException {
-		assertNotNull(dout, "dout");
-		assertNotNull(byteArray, "byteArray");
+		requireNonNull(dout, "dout");
+		requireNonNull(byteArray, "byteArray");
 		dout.writeInt(byteArray.length);
 		dout.write(byteArray);
 	}
 
 	private static void writeLongByteArray(DataOutputStream dout, byte[] byteArray, int offset, int length) throws IOException {
-		assertNotNull(dout, "dout");
-		assertNotNull(byteArray, "byteArray");
+		requireNonNull(dout, "dout");
+		requireNonNull(byteArray, "byteArray");
 		dout.writeInt(length);
 		dout.write(byteArray, offset, length);
 	}
 
 	private static void writeShortByteArray(DataOutputStream dout, byte[] byteArray) throws IOException {
-		assertNotNull(dout, "dout");
-		assertNotNull(byteArray, "byteArray");
+		requireNonNull(dout, "dout");
+		requireNonNull(byteArray, "byteArray");
 		if (byteArray.length > 255)
 			throw new IllegalStateException("byteArray.length > 255");
 
@@ -453,7 +453,7 @@ public class PgpTransportSupport {
 	}
 
 	private static byte[] readLongByteArray(DataInputStream din) throws IOException {
-		assertNotNull(din, "din");
+		requireNonNull(din, "din");
 		int byteArrayLength = din.readInt();
 		byte[] byteArray = new byte[byteArrayLength];
 		din.readFully(byteArray);
@@ -461,7 +461,7 @@ public class PgpTransportSupport {
 	}
 
 	private static byte[] readShortByteArray(DataInputStream din) throws IOException {
-		assertNotNull(din, "din");
+		requireNonNull(din, "din");
 		int byteArrayLength = din.readByte() & 0xFF;
 		byte[] byteArray = new byte[byteArrayLength];
 		din.readFully(byteArray);
@@ -476,8 +476,8 @@ public class PgpTransportSupport {
 	}
 
 	private static CipherWithIv acquireInitializedCipherForEncryption(SymmetricCryptoType symmetricCryptoType, byte[] key) {
-		assertNotNull(symmetricCryptoType, "symmetricCryptoType");
-		assertNotNull(key, "key");
+		requireNonNull(symmetricCryptoType, "symmetricCryptoType");
+		requireNonNull(key, "key");
 		StreamCipher cipher = CipherManager.getInstance().acquireCipher(symmetricCryptoType);
 		byte[] iv = new byte[getIvSize(cipher)];
 		random.nextBytes(iv);
@@ -488,9 +488,9 @@ public class PgpTransportSupport {
 	}
 
 	private static StreamCipher acquireInitializedCipherForDecryption(SymmetricCryptoType symmetricCryptoType, byte[] key, byte[] iv) {
-		assertNotNull(symmetricCryptoType, "symmetricCryptoType");
-		assertNotNull(key, "key");
-		assertNotNull(iv, "iv");
+		requireNonNull(symmetricCryptoType, "symmetricCryptoType");
+		requireNonNull(key, "key");
+		requireNonNull(iv, "iv");
 		StreamCipher cipher = CipherManager.getInstance().acquireCipher(symmetricCryptoType);
 		KeyParameter kp = new KeyParameter(key);
 		ParametersWithIV params = new ParametersWithIV(kp, iv);
@@ -499,17 +499,17 @@ public class PgpTransportSupport {
 	}
 
 	private static void releaseCipher(final CipherWithIv cipherWithIv) {
-		assertNotNull(cipherWithIv, "cipherWithIv");
+		requireNonNull(cipherWithIv, "cipherWithIv");
 		releaseCipher(cipherWithIv.cipher);
 	}
 
 	private static void releaseCipher(final StreamCipher cipher) {
-		assertNotNull(cipher, "cipher");
+		requireNonNull(cipher, "cipher");
 		CipherManager.getInstance().releaseCipher(cipher);
 	}
 
 	protected static byte[] sha256(final byte[] in) {
-		assertNotNull(in, "in");
+		requireNonNull(in, "in");
 		final SHA256Digest digest = new SHA256Digest();
 		final byte[] out = new byte[digest.getDigestSize()];
 		digest.update(in, 0, in.length);
@@ -518,7 +518,7 @@ public class PgpTransportSupport {
 	}
 
 	protected static byte[] combinePlainDataWithHash(final byte[] plainData) throws IOException {
-		assertNotNull(plainData, "in");
+		requireNonNull(plainData, "in");
 		ByteArrayOutputStream bout = new ByteArrayOutputStream(plainData.length + 128);
 		DataOutputStream dout = new DataOutputStream(bout);
 		dout.writeInt(hashType.ordinal());
@@ -528,7 +528,7 @@ public class PgpTransportSupport {
 	}
 
 	protected static byte[] splitPlainDataFromHashWithVerification(final byte[] in) throws IOException {
-		assertNotNull(in, "in");
+		requireNonNull(in, "in");
 		DataInputStream din = new DataInputStream(new ByteArrayInputStream(in));
 		int hashTypeOrdinal = din.readInt();
 		if (hashTypeOrdinal < 0)
@@ -557,7 +557,7 @@ public class PgpTransportSupport {
 	}
 
 	protected static int getIvSize(StreamCipher cipher) {
-		assertNotNull(cipher, "cipher");
+		requireNonNull(cipher, "cipher");
 		if (cipher instanceof BlockCipher) // it's likely a StreamBlockCipher
 			return ((BlockCipher) cipher).getBlockSize();
 		else

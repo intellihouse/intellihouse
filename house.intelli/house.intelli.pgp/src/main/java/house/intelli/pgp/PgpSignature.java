@@ -1,6 +1,6 @@
 package house.intelli.pgp;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -18,7 +18,7 @@ public class PgpSignature implements Serializable {
 		return pgpKeyId;
 	}
 	public void setPgpKeyId(final PgpKeyId pgpKeyId) {
-		this.pgpKeyId = assertNotNull(pgpKeyId, "pgpKeyId");
+		this.pgpKeyId = requireNonNull(pgpKeyId, "pgpKeyId");
 	}
 
 	public Date getCreated() {

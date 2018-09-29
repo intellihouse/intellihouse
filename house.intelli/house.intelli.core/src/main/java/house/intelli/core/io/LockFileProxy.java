@@ -1,6 +1,6 @@
 package house.intelli.core.io;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +19,7 @@ class LockFileProxy implements LockFile {
 	private final AtomicBoolean released = new AtomicBoolean(false);
 
 	public LockFileProxy(final LockFileImpl lockFileImpl) {
-		this.lockFileImpl = assertNotNull(lockFileImpl, "lockFileImpl");
+		this.lockFileImpl = requireNonNull(lockFileImpl, "lockFileImpl");
 	}
 
 	@Override

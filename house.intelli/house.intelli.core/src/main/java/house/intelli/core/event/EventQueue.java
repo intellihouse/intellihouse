@@ -23,11 +23,18 @@ public final class EventQueue {
 	 * event dispatching thread.  This call blocks until
 	 * all pending events have been processed and (then)
 	 * <code>doRun.run()</code> returns.
+	 * <p>
+	 * If invoked on the dispatch-thread, <code>doRun.run(...)</code> is invoked
+	 * directly.
 	 *
 	 * @throws RuntimeException if <code>doRun.run(...)</code> threw an exception.
 	 * @see #invokeLater(Runnable)
 	 */
 	public static void invokeAndWait(final Runnable doRun) throws RuntimeException {
+		if (isDispatchThread()) {
+			doRun.run();
+			return;
+		}
 		try {
 			java.awt.EventQueue.invokeAndWait(doRun);
 		} catch (InvocationTargetException e) {

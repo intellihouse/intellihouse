@@ -1,6 +1,7 @@
 package house.intelli.raspi;
 
 import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -24,9 +25,9 @@ public abstract class RelayActorGroup extends AbstractBean<RelayActor.Property> 
 			Boolean oldEnergized = (Boolean) event.getOldValue();
 			Boolean newEnergized = (Boolean) event.getNewValue();
 			onInputEnergizedChanged(
-					assertNotNull(inputRelayActor, "inputRelayActor"),
-					assertNotNull(oldEnergized, "oldEnergized"),
-					assertNotNull(newEnergized, "newEnergized"));
+					requireNonNull(inputRelayActor, "inputRelayActor"),
+					requireNonNull(oldEnergized, "oldEnergized"),
+					requireNonNull(newEnergized, "newEnergized"));
 		}
 	};
 

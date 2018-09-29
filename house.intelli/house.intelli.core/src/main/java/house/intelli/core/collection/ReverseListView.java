@@ -1,6 +1,6 @@
 package house.intelli.core.collection;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 import static house.intelli.core.util.Util.*;
 
 import java.lang.reflect.Array;
@@ -26,7 +26,7 @@ public final class ReverseListView<E> implements List<E> {
 	private final List<E> list;
 
 	public ReverseListView(final List<E> list) {
-		this.list = assertNotNull(list, "list");
+		this.list = requireNonNull(list, "list");
 	}
 
 	@Override

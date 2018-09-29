@@ -1,6 +1,6 @@
 package house.intelli.core.rpc.mocktransport;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 
@@ -15,20 +15,20 @@ public class MockRpcServerTransport extends AbstractRpcServerTransport {
 	private Response response;
 
 	public void putRequest(Request request) throws IOException {
-		this.request = assertNotNull(request, "request");
+		this.request = requireNonNull(request, "request");
 		RpcServer rpcServer = getRpcContext().createRpcServer();
 		rpcServer.receiveAndProcessRequest(this);
 	}
 
 	public Response fetchResponse() throws IOException {
-		Response r = assertNotNull(response, "response");
+		Response r = requireNonNull(response, "response");
 		response = null;
 		return r;
 	}
 
 	@Override
 	public Request receiveRequest() throws IOException {
-		Request r = assertNotNull(request, "request");
+		Request r = requireNonNull(request, "request");
 		request = null;
 		return r;
 	}

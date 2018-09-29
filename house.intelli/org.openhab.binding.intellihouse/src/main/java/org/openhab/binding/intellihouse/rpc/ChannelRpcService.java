@@ -42,8 +42,8 @@ public abstract class ChannelRpcService<REQ extends ChannelRequest<RES>, RES ext
     }
 
     protected Set<ChannelUID> getChannelUIDs(final ThingTypeUID thingTypeUID, final REQ request) {
-        assertNotNull(thingTypeUID, "thingTypeUID");
-        assertNotNull(request, "request");
+        requireNonNull(thingTypeUID, "thingTypeUID");
+        requireNonNull(request, "request");
         Set<ChannelUID> channelUids = new LinkedHashSet<>();
         Set<Thing> things = getThings(thingTypeUID, request);
         for (Thing thing : things) {
@@ -54,8 +54,8 @@ public abstract class ChannelRpcService<REQ extends ChannelRequest<RES>, RES ext
     }
 
     protected void stateUpdated(ChannelUID channelUID, State state) {
-        assertNotNull(channelUID, "channelUID");
-        assertNotNull(state, "state");
+        requireNonNull(channelUID, "channelUID");
+        requireNonNull(state, "state");
         Set<Item> items = getItemChannelLinkRegistry().getLinkedItems(channelUID);
         for (Item item : items) {
             State acceptedState = ItemUtil.convertToAcceptedState(state, item);

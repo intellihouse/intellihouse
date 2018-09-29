@@ -1,6 +1,6 @@
 package house.intelli.core.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 import static house.intelli.core.util.Util.*;
 
 import java.util.Date;
@@ -24,15 +24,15 @@ public class RpcClient implements AutoCloseable {
 	private RpcClientTransport rpcClientTransport;
 
 	protected RpcClient(final RpcContext rpcContext) {
-		this.rpcContext = assertNotNull(rpcContext, "rpcContext");
+		this.rpcContext = requireNonNull(rpcContext, "rpcContext");
 		if (RpcContextMode.CLIENT == rpcContext.getMode())
-			this.rpcClientTransportProvider = assertNotNull(this.rpcContext.getRpcClientTransportProvider(), "rpcContext.rpcClientTransportProvider");
+			this.rpcClientTransportProvider = requireNonNull(this.rpcContext.getRpcClientTransportProvider(), "rpcContext.rpcClientTransportProvider");
 		else
 			this.rpcClientTransportProvider = null;
 	}
 
 	public <REQ extends Request<RES>, RES extends Response> RES invoke(final REQ request) throws RpcException {
-		assertNotNull(request, "request");
+		requireNonNull(request, "request");
 		prepareRequest(request);
 
 		final long timeoutTimestamp = request.getCreated().getTime() + request.getTimeout();
@@ -81,7 +81,7 @@ public class RpcClient implements AutoCloseable {
 	}
 
 	protected <REQ extends Request<RES>, RES extends Response> RES _invoke(final REQ request) throws RpcException {
-		assertNotNull(request, "request");
+		requireNonNull(request, "request");
 
 		final long timeoutTimestamp = request.getCreated().getTime() + request.getTimeout();
 		DeferredResponseRequest deferredResponseRequest = null;
@@ -119,7 +119,7 @@ public class RpcClient implements AutoCloseable {
 
 				if (response instanceof ErrorResponse) {
 					ErrorResponse errorResponse = (ErrorResponse) response;
-					Error error = assertNotNull(errorResponse.getError(), "errorResponse.error");
+					Error error = requireNonNull(errorResponse.getError(), "errorResponse.error");
 					RemoteExceptionUtil.throwOriginalExceptionIfPossible(error);
 					throw new RemoteException(error);
 				}
@@ -142,8 +142,8 @@ public class RpcClient implements AutoCloseable {
 	}
 
 	protected void prepareRequest(Request<?> request) {
-		assertNotNull(request, "request");
-		assertNotNull(request.getServerHostId(), "request.serverHostId");
+		requireNonNull(request, "request");
+		requireNonNull(request.getServerHostId(), "request.serverHostId");
 
 		if (request.getClientHostId() == null)
 			request.setClientHostId(rpcContext.getLocalHostId());
@@ -160,7 +160,7 @@ public class RpcClient implements AutoCloseable {
 
 	public RpcClientTransport getRpcClientTransport() {
 		if (rpcClientTransport == null)
-			rpcClientTransport = assertNotNull(rpcClientTransportProvider, "rpcClientTransportProvider").createRpcClientTransport();
+			rpcClientTransport = requireNonNull(rpcClientTransportProvider, "rpcClientTransportProvider").createRpcClientTransport();
 
 		return rpcClientTransport;
 	}

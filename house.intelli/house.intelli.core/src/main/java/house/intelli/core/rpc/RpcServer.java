@@ -1,7 +1,7 @@
 package house.intelli.core.rpc;
 
 import static house.intelli.core.rpc.RpcConst.*;
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.List;
 
@@ -25,11 +25,11 @@ public class RpcServer implements AutoCloseable {
 	private Response response;
 
 	protected RpcServer(final RpcContext rpcContext) {
-		this.rpcContext = assertNotNull(rpcContext, "rpcContext");
+		this.rpcContext = requireNonNull(rpcContext, "rpcContext");
 	}
 
 	public void receiveAndProcessRequest(final RpcServerTransport rpcServerTransport) throws RpcException {
-		assertNotNull(rpcServerTransport, "rpcServerTransport");
+		requireNonNull(rpcServerTransport, "rpcServerTransport");
 		if (rpcServerTransport.getRpcContext() != this.rpcContext)
 			throw new IllegalArgumentException("rpcServerTransport.rpcContext != this.rpcContext");
 
@@ -47,7 +47,7 @@ public class RpcServer implements AutoCloseable {
 				if (request != null)
 					response.copyRequestCoordinates(request);
 			}
-			assertNotNull(response, "response");
+			requireNonNull(response, "response");
 
 			rpcServerTransport.sendResponse(response);
 		} catch (RpcException x) {
@@ -60,11 +60,11 @@ public class RpcServer implements AutoCloseable {
 	}
 
 	protected Response process(final Request<?> request) {
-		assertNotNull(request, "request");
+		requireNonNull(request, "request");
 		if (request.getTimeout() == Request.TIMEOUT_UNDEFINED || request.getTimeout() < 0)
 			request.setTimeout(RpcConst.DEFAULT_REQUEST_TIMEOUT);
 
-		final Uid requestId = assertNotNull(request.getRequestId(), "request.requestId");
+		final Uid requestId = requireNonNull(request.getRequestId(), "request.requestId");
 		final long timeout = Math.min(LOW_LEVEL_TIMEOUT, request.getTimeout());
 		final RpcServiceExecutor rpcServiceExecutor = rpcContext.getRpcServiceExecutor();
 
@@ -80,7 +80,7 @@ public class RpcServer implements AutoCloseable {
 		if (request instanceof PutInverseResponseRequest) {
 			assertServerLocal(request);
 			PutInverseResponseRequest pirRequest = (PutInverseResponseRequest) request;
-			Response inverseResponse = assertNotNull(pirRequest.getInverseResponse(), "putInverseResponseRequest.inverseResponse");
+			Response inverseResponse = requireNonNull(pirRequest.getInverseResponse(), "putInverseResponseRequest.inverseResponse");
 			rpcServiceExecutor.putResponse(inverseResponse);
 			Response response = new NullResponse();
 			response.copyRequestCoordinates(request);
@@ -121,7 +121,7 @@ public class RpcServer implements AutoCloseable {
 	}
 
 	protected void assertServerLocal(final Request request) {
-		assertNotNull(request, "request");
+		requireNonNull(request, "request");
 		if (! rpcContext.isServerLocal(request))
 			throw new UnsupportedOperationException("This request's type is only supported for local processing, but its serverHostId references another host!" + request);
 	}

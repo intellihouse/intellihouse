@@ -1,6 +1,6 @@
 package house.intelli.core.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 import static house.intelli.core.util.UrlUtil.*;
 
 import java.net.URL;
@@ -25,7 +25,7 @@ public class HttpRpcClientTransportProvider extends AbstractRpcClientTransportPr
 
 	@Override
 	protected RpcClientTransport _createRpcClientTransport() {
-		URL serverUrl = assertNotNull(getActualServerUrl(), "serverUrl");
+		URL serverUrl = requireNonNull(getActualServerUrl(), "serverUrl");
 		HttpRpcClientTransport result = new HttpRpcClientTransport();
 		result.setServerUrl(serverUrl);
 		return result;

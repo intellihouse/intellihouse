@@ -1,6 +1,6 @@
 package house.intelli.pgp.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.security.SecureRandom;
 import java.util.Collections;
@@ -40,13 +40,13 @@ public class Session {
 	}
 
 	public Session(final Uid sessionId, final SessionHostIdPair sessionHostIdPair, final byte[] sessionKey, Date created) {
-		this.sessionHostIdPair = assertNotNull(sessionHostIdPair, "sessionHostIdPair");
-		this.sessionId = assertNotNull(sessionId, "sessionId");
-		this.sessionKey = assertNotNull(sessionKey, "sessionKey");
+		this.sessionHostIdPair = requireNonNull(sessionHostIdPair, "sessionHostIdPair");
+		this.sessionId = requireNonNull(sessionId, "sessionId");
+		this.sessionKey = requireNonNull(sessionKey, "sessionKey");
 		if (sessionKey.length < 128 / 8)
 			throw new IllegalArgumentException("sessionKey too short!");
 
-		this.created = assertNotNull(created, "created");
+		this.created = requireNonNull(created, "created");
 //		expired = new Date(created.getTime() + SESSION_MAX_AGE);
 	}
 
@@ -55,7 +55,7 @@ public class Session {
 	}
 
 	public void confirmByHostId(final HostId hostId) {
-		assertNotNull(hostId, "hostId");
+		requireNonNull(hostId, "hostId");
 		if (confirmedByHostIds.contains(hostId))
 			return;
 

@@ -2,6 +2,7 @@ package house.intelli.raspi;
 
 import static house.intelli.core.event.EventQueue.*;
 import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
@@ -43,7 +44,7 @@ public class RelayActorImpl extends AbstractBean<RelayActor.Property> implements
 	}
 
 	public void init() {
-		assertNotNull(pin, "pin");
+		requireNonNull(pin, "pin");
 		applyEnergized();
 	}
 
@@ -74,7 +75,7 @@ public class RelayActorImpl extends AbstractBean<RelayActor.Property> implements
 		if (digitalOutput != null)
 			return;
 
-		assertNotNull(pin, "pin");
+		requireNonNull(pin, "pin");
 
 		GpioController gpioController = GpioFactory.getInstance();
 		digitalOutput = gpioController.provisionDigitalOutputPin(pin);
@@ -92,12 +93,7 @@ public class RelayActorImpl extends AbstractBean<RelayActor.Property> implements
 
 	@Override
 	public void close() {
-		invokeAndWait(new Runnable() {
-			@Override
-			public void run() {
-				closeDigitalOutput();
-			}
-		});
+		invokeAndWait(() -> closeDigitalOutput());
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package house.intelli.raspi.lightcontroller;
 
 import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -106,8 +107,8 @@ public class LightControllerEventNotifier {
 	}
 
 	public void addListener(final String beanId, final HostId listenerHostId) {
-		assertNotNull(beanId, "beanId");
-		assertNotNull(listenerHostId, "listenerHostId");
+		requireNonNull(beanId, "beanId");
+		requireNonNull(listenerHostId, "listenerHostId");
 		assertEventThread();
 		Set<HostId> listenerHostIds = beanId2listenerHostIds.get(beanId);
 		if (listenerHostIds == null) {
@@ -139,7 +140,7 @@ public class LightControllerEventNotifier {
 		return lightControllers;
 	}
 
-	@Autowired
+	@Autowired(required = false)
 	public void setLightControllers(List<LightControllerImpl> lightControllers) {
 		assertEventThread();
 		logger.debug("setLightControllers: lightControllers={}", lightControllers);

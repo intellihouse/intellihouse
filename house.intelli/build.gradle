@@ -63,7 +63,7 @@ allprojects {
 
 	project.ext.intellihouseVersion = version
 
-	project.ext.bouncycastleVersion = '1.56'
+	project.ext.bouncycastleVersion = '1.60'
 	project.ext.bouncycastleWotVersion = bouncycastleVersion + '.0';
 
 	project.ext.slf4jVersion = '1.7.21'

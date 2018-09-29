@@ -1,6 +1,6 @@
 package house.intelli.core.service;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,12 +23,12 @@ public class ServiceRegistry<S> {
 	private final CopyOnWriteArrayList<ServiceRegistryListener<S>> listeners = new CopyOnWriteArrayList<>();
 
 	protected ServiceRegistry(final Class<S> serviceClass) {
-		this.serviceClass = assertNotNull(serviceClass, "serviceClass");
+		this.serviceClass = requireNonNull(serviceClass, "serviceClass");
 		addDelegate(new ServiceLoaderServiceRegistryDelegate<>(serviceClass));
 	}
 
 	public static synchronized <S> ServiceRegistry<S> getInstance(final Class<S> serviceClass) {
-		assertNotNull(serviceClass, "serviceClass");
+		requireNonNull(serviceClass, "serviceClass");
 
 		@SuppressWarnings("unchecked")
 		ServiceRegistry<S> serviceProvider = (ServiceRegistry<S>) serviceClass2ServiceProvider.get(serviceClass);
@@ -44,7 +44,7 @@ public class ServiceRegistry<S> {
 	}
 
 	public void addDelegate(final ServiceRegistryDelegate<S> delegate) {
-		assertNotNull(delegate, "delegate");
+		requireNonNull(delegate, "delegate");
 		logger.info("addDelegate: serviceClass={}, delegate={}", serviceClass.getName(), delegate);
 		delegate.setServiceRegistry(this);
 		delegates.add(delegate);
@@ -52,7 +52,7 @@ public class ServiceRegistry<S> {
 	}
 
 	public void removeDelegate(final ServiceRegistryDelegate<S> delegate) {
-		assertNotNull(delegate, "delegate");
+		requireNonNull(delegate, "delegate");
 		logger.info("removeDelegate: serviceClass={}, delegate={}", serviceClass.getName(), delegate);
 		delegates.remove(delegate);
 		fireServiceRegistryChanged();
@@ -60,17 +60,17 @@ public class ServiceRegistry<S> {
 	}
 
 	public void addListener(final ServiceRegistryListener<S> listener) {
-		assertNotNull(listener, "listener");
+		requireNonNull(listener, "listener");
 		listeners.add(listener);
 	}
 
 	public void removeListener(final ServiceRegistryListener<S> listener) {
-		assertNotNull(listener, "listener");
+		requireNonNull(listener, "listener");
 		listeners.remove(listener);
 	}
 
 	protected void fireServiceRegistryEvent(ServiceRegistryEvent<S> event) {
-		assertNotNull(event, "event");
+		requireNonNull(event, "event");
 		for (ServiceRegistryListener<S> listener : listeners)
 			listener.onServiceRegistryChanged(event);
 	}

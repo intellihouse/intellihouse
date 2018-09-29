@@ -3,4 +3,7 @@
 BIN_DIR=`dirname $0`
 INSTALLATION_DIR="$BIN_DIR/.."
 
-java -jar "$INSTALLATION_DIR/lib/@project.artifactId@-@project.version@.jar" "$@"
+#java -jar "$INSTALLATION_DIR/lib/@project.artifactId@-@project.version@.jar" "$@"
+
+cd "$INSTALLATION_DIR"
+java -Djava.library.path=/usr/lib/jni -cp 'lib/*:/usr/share/java/RXTXcomm.jar' house.intelli.raspi.IntelliHouseRaspi "$@"

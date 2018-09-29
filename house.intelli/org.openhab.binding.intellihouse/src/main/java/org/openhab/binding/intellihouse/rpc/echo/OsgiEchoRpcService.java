@@ -36,7 +36,7 @@ public class OsgiEchoRpcService extends EchoRpcService {
     @Override
     public EchoResponse process(EchoRequest request) throws Exception {
         logger.info("process");
-        assertNotNull(itemRegistry, "itemRegistry");
+        requireNonNull(itemRegistry, "itemRegistry");
         EchoResponse response = super.process(request);
         response.setPayload("OSGi: " + request.getPayload());
         return response;

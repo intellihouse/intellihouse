@@ -1,6 +1,6 @@
 package house.intelli.core.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,7 +22,7 @@ public class PollInverseRequestsThread extends Thread {
 	private volatile boolean interrupted;
 
 	public PollInverseRequestsThread(final RpcContext rpcContext) {
-		this.rpcContext = assertNotNull(rpcContext, "rpcContext");
+		this.rpcContext = requireNonNull(rpcContext, "rpcContext");
 		this.setName(getClass().getSimpleName() + '-' + rpcContext.getLocalHostId());
 	}
 
@@ -73,7 +73,7 @@ public class PollInverseRequestsThread extends Thread {
 	}
 
 	protected void putInverseRequest(final Request<?> inverseRequest) {
-		assertNotNull(inverseRequest, "inverseRequest");
+		requireNonNull(inverseRequest, "inverseRequest");
 
 		executorService.submit(new Runnable() {
 			@Override
@@ -97,12 +97,12 @@ public class PollInverseRequestsThread extends Thread {
 	}
 
 	protected Response processLocally(final Request<?> inverseRequest) throws Exception {
-		assertNotNull(inverseRequest, "inverseRequest");
+		requireNonNull(inverseRequest, "inverseRequest");
 		return rpcContext.getRpcServiceExecutor().processLocally(inverseRequest);
 	}
 
 	protected void putInverseResponse(final Response inverseResponse) {
-		assertNotNull(inverseResponse, "inverseResponse");
+		requireNonNull(inverseResponse, "inverseResponse");
 		try (RpcClient rpcClient = rpcContext.createRpcClient()) {
 			PutInverseResponseRequest request = new PutInverseResponseRequest();
 			request.setServerHostId(HostId.SERVER);

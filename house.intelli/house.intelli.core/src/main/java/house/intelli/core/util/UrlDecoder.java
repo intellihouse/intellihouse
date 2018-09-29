@@ -1,6 +1,6 @@
 package house.intelli.core.util;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
@@ -72,8 +72,8 @@ public final class UrlDecoder {
      */
     @Deprecated
 	public static String decode(String s, String enc) throws UnsupportedEncodingException {
-    	assertNotNull(s, "s");
-    	assertNotNull(enc, "enc");
+    	requireNonNull(s, "s");
+    	requireNonNull(enc, "enc");
 
     	Charset charset;
     	try {
@@ -110,8 +110,8 @@ public final class UrlDecoder {
      */
     @Deprecated
 	public static String decode(String s, Charset charset) {
-    	assertNotNull(s, "s");
-    	assertNotNull(charset, "charset");
+    	requireNonNull(s, "s");
+    	requireNonNull(charset, "charset");
 
         boolean needToChange = false;
         int numChars = s.length();

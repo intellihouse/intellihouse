@@ -1,6 +1,6 @@
 package house.intelli.pgp.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 import static house.intelli.core.util.Util.*;
 
 import java.io.IOException;
@@ -33,7 +33,7 @@ public class PgpHttpRpcClientTransport extends HttpRpcClientTransport {
 
 	@Override
 	public void sendRequest(final Request<?> request) throws IOException {
-		assertNotNull(request, "request");
+		requireNonNull(request, "request");
 		final PgpRequest pgpRequest;
 		if (request instanceof PgpRequest) { // forward unchanged
 			logger.debug("sendRequest: Relaying request: {}", request);
@@ -65,7 +65,7 @@ public class PgpHttpRpcClientTransport extends HttpRpcClientTransport {
 	@Override
 	public Response receiveResponse() throws IOException {
 		final Response res = super.receiveResponse();
-		assertNotNull(res, "res");
+		requireNonNull(res, "res");
 		pgpTransportSupport.handleSessionNotFoundException(res);
 
 		HostId serverHostId = pgpTransportSupport.resolveRealServerHostId(res.getServerHostId());

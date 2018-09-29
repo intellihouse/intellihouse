@@ -1,6 +1,6 @@
 package house.intelli.core.rpc.mocktransport;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 
@@ -27,7 +27,7 @@ public class MockRpcClientTransport extends AbstractRpcClientTransport {
 
 	public MockRpcServerTransport getRpcServerTransport() {
 		if (rpcServerTransport == null) {
-			RpcContext src = assertNotNull(serverRpcContext, "serverRpcContext");
+			RpcContext src = requireNonNull(serverRpcContext, "serverRpcContext");
 			rpcServerTransport = new MockRpcServerTransport();
 			rpcServerTransport.setRpcContext(src);
 		}

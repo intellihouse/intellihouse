@@ -1,6 +1,6 @@
 package house.intelli.pgp.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import org.bouncycastle.crypto.StreamCipher;
 
@@ -10,8 +10,8 @@ public class CipherWithIv {
 	public final byte[] iv;
 
 	public CipherWithIv(StreamCipher cipher, byte[] iv) {
-		this.cipher = assertNotNull(cipher, "cipher");
-		this.iv = assertNotNull(iv, "iv");
+		this.cipher = requireNonNull(cipher, "cipher");
+		this.iv = requireNonNull(iv, "iv");
 	}
 
 }

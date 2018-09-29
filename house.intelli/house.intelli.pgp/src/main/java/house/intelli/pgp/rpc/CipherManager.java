@@ -1,6 +1,6 @@
 package house.intelli.pgp.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -28,7 +28,7 @@ public class CipherManager {
 	}
 
 	public synchronized StreamCipher acquireCipher(final SymmetricCryptoType symmetricCryptoType) {
-		assertNotNull(symmetricCryptoType, "symmetricCryptoType");
+		requireNonNull(symmetricCryptoType, "symmetricCryptoType");
 		LinkedList<StreamCipher> ciphers = symmetricCryptoType2Ciphers.get(symmetricCryptoType);
 		if (ciphers == null) {
 			ciphers = new LinkedList<>();
@@ -43,13 +43,13 @@ public class CipherManager {
 	}
 
 	public synchronized void releaseCipher(final StreamCipher cipher) {
-		assertNotNull(cipher, "cipher");
+		requireNonNull(cipher, "cipher");
 		SymmetricCryptoType symmetricCryptoType = cipher2SymmetricCryptoType.get(cipher);
 		if (symmetricCryptoType == null)
 			throw new IllegalArgumentException("cipher unknown! Instance was not obtained from this manager via acquireCipher(...), before!");
 
 		LinkedList<StreamCipher> ciphers = symmetricCryptoType2Ciphers.get(symmetricCryptoType);
-		assertNotNull(ciphers, "ciphers");
+		requireNonNull(ciphers, "ciphers");
 		ciphers.add(cipher);
 	}
 

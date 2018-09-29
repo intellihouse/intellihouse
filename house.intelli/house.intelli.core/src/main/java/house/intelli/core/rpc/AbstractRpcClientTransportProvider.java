@@ -1,6 +1,6 @@
 package house.intelli.core.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 public abstract class AbstractRpcClientTransportProvider implements RpcClientTransportProvider {
 
@@ -21,7 +21,7 @@ public abstract class AbstractRpcClientTransportProvider implements RpcClientTra
 
 	@Override
 	public final RpcClientTransport createRpcClientTransport() {
-		final RpcContext rpcContext = assertNotNull(getRpcContext(), "rpcContext");
+		final RpcContext rpcContext = requireNonNull(getRpcContext(), "rpcContext");
 		RpcClientTransport rpcClientTransport = _createRpcClientTransport();
 		rpcClientTransport.setRpcContext(rpcContext);
 		return rpcClientTransport;

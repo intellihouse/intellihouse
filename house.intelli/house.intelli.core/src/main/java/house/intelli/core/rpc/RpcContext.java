@@ -1,6 +1,6 @@
 package house.intelli.core.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 public class RpcContext implements AutoCloseable {
 	private final RpcContextMode mode;
@@ -16,8 +16,8 @@ public class RpcContext implements AutoCloseable {
 	private final PollInverseRequestsThread pollInverseRequestsThread;
 
 	public RpcContext(final RpcContextMode mode, HostId localHostId) {
-		this.mode = assertNotNull(mode, "mode");
-		this.localHostId = assertNotNull(localHostId, "localHostId");
+		this.mode = requireNonNull(mode, "mode");
+		this.localHostId = requireNonNull(localHostId, "localHostId");
 
 		if (RpcContextMode.CLIENT == mode) {
 			pollInverseRequestsThread = new PollInverseRequestsThread(this);
@@ -86,9 +86,9 @@ public class RpcContext implements AutoCloseable {
 	}
 
 	public boolean isServerLocal(final Request<?> request) {
-		assertNotNull(request, "request");
+		requireNonNull(request, "request");
 		assertNotClosed();
-		final HostId serverHostId = assertNotNull(request.getServerHostId(), "request.serverHostId");
+		final HostId serverHostId = requireNonNull(request.getServerHostId(), "request.serverHostId");
 		if (localHostId.equals(serverHostId))
 			return true;
 

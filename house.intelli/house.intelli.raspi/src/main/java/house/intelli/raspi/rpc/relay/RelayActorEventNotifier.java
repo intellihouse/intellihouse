@@ -108,7 +108,7 @@ public class RelayActorEventNotifier {
 		return relayActors;
 	}
 
-	@Autowired
+	@Autowired(required = false)
 	public void setRelayActors(List<RelayActor> relayActors) {
 		assertEventThread();
 		logger.debug("setRelayActors: relayActors={}", relayActors);

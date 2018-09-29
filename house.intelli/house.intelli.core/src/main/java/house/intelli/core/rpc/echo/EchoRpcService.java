@@ -1,6 +1,6 @@
 package house.intelli.core.rpc.echo;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 import static house.intelli.core.util.StringUtil.*;
 
 import org.slf4j.Logger;
@@ -15,7 +15,7 @@ public class EchoRpcService extends AbstractRpcService<EchoRequest, EchoResponse
 
 	@Override
 	public EchoResponse process(EchoRequest request) throws Exception {
-		assertNotNull(request, "request");
+		requireNonNull(request, "request");
 
 		logger.info("process: {}" , request);
 

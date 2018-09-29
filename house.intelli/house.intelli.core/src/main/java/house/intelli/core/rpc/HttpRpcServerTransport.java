@@ -1,6 +1,6 @@
 package house.intelli.core.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,12 +34,12 @@ public class HttpRpcServerTransport extends JaxbRpcServerTransport implements Se
 	@Override
 	protected InputStream createRequestInputStream() throws IOException {
 		// Must *not* be closable, because the InputStream is not opened by this method.
-		return new NoCloseInputStream(assertNotNull(getInputStream(), "inputStream"));
+		return new NoCloseInputStream(requireNonNull(getInputStream(), "inputStream"));
 	}
 
 	@Override
 	protected OutputStream createResponseOutputStream() throws IOException {
 		// Must *not* be closable, because the OutputStream is not opened by this method.
-		return new NoCloseOutputStream(assertNotNull(getOutputStream(), "outputStream"));
+		return new NoCloseOutputStream(requireNonNull(getOutputStream(), "outputStream"));
 	}
 }

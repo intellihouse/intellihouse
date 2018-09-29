@@ -1,6 +1,6 @@
 package house.intelli.pgp.rpc;
 
-import static house.intelli.core.util.AssertUtil.*;
+import static java.util.Objects.*;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -49,7 +49,7 @@ public class SessionManager {
 	}
 
 	public synchronized Session getSession(final Uid sessionId) {
-		assertNotNull(sessionId, "sessionId");
+		requireNonNull(sessionId, "sessionId");
 		return sessionId2Session.get(sessionId);
 	}
 
@@ -67,19 +67,19 @@ public class SessionManager {
 	}
 
 	public synchronized Session getSession(final SessionHostIdPair sessionHostIdPair) {
-		assertNotNull(sessionHostIdPair, "sessionHostIdPair");
+		requireNonNull(sessionHostIdPair, "sessionHostIdPair");
 		return sessionHostIdPair2Session.get(sessionHostIdPair);
 	}
 
 	public synchronized void putSession(final Session session) {
-		assertNotNull(session, "session");
+		requireNonNull(session, "session");
 		sessionId2Session.put(session.getSessionId(), session);
 		sessionHostIdPair2Session.put(session.getSessionHostIdPair(), session);
 		logger.debug("putSession: {}", session);
 	}
 
 	public synchronized boolean removeSession(final Uid sessionId) {
-		assertNotNull(sessionId, "sessionId");
+		requireNonNull(sessionId, "sessionId");
 		final Session session = sessionId2Session.remove(sessionId);
 		if (session != null) {
 			sessionHostIdPair2Session.remove(session.getSessionHostIdPair());
@@ -91,7 +91,7 @@ public class SessionManager {
 	private static final String SESSION_NOT_FOUND_EXCEPTION_MESSAGE_PREFIX = "There is no session with sessionId=";
 
 	public Session getSessionOrFail(final Uid sessionId) throws SessionNotFoundException {
-		assertNotNull(sessionId, "sessionId");
+		requireNonNull(sessionId, "sessionId");
 		final Session session = getSession(sessionId);
 		if (session == null)
 			throw new SessionNotFoundException(SESSION_NOT_FOUND_EXCEPTION_MESSAGE_PREFIX + sessionId);
@@ -100,7 +100,7 @@ public class SessionManager {
 	}
 
 	public static Uid getSessionIdFromSessionNotFoundExceptionMessage(final String message) {
-		assertNotNull(message, "message");
+		requireNonNull(message, "message");
 		if (! message.startsWith(SESSION_NOT_FOUND_EXCEPTION_MESSAGE_PREFIX))
 			throw new IllegalArgumentException(String.format("message does not start with prefix '%s'!", SESSION_NOT_FOUND_EXCEPTION_MESSAGE_PREFIX));
 
