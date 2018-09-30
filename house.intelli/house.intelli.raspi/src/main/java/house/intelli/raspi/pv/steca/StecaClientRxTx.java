@@ -47,6 +47,7 @@ public class StecaClientRxTx extends StecaClient {
 		if (isOpen())
 			return;
 
+		logger.info("open: Opening port '{}'...", portName);
 		boolean failed = true;
 		try {
 			try {
@@ -97,6 +98,7 @@ public class StecaClientRxTx extends StecaClient {
 			inputStream = serialPort.getInputStream();
 			outputStream = serialPort.getOutputStream();
 
+			logger.info("open: Opened port '{}'.", portName);
 			failed = false;
 		} finally {
 			if (failed)
@@ -143,20 +145,33 @@ public class StecaClientRxTx extends StecaClient {
 	}
 
 	@Override
-	public synchronized void close() throws IOException {
+	public synchronized void close() {
 		if (outputStream != null) {
-			outputStream.close();
+			try {
+				outputStream.close();
+			} catch (Exception x) {
+				logger.warn("Closing outputStream failed: " + x, x);
+			}
 			outputStream = null;
 		}
 		if (inputStream != null) {
-			inputStream.close();
+			try {
+				inputStream.close();
+			} catch (Exception x) {
+				logger.warn("Closing inputStream failed: " + x, x);
+			}
 			inputStream = null;
 		}
+
 		serialPort = null; // same as commPort -- closed below.
 
 		if (commPort != null) {
 			logger.info("close: Closing port '{}'...", portName);
-			commPort.close();
+			try {
+				commPort.close();
+			} catch (Exception x) {
+				logger.warn("Closing commPort failed: " + x, x);
+			}
 			commPort = null;
 			logger.info("close: Closed port '{}'.", portName);
 		}
