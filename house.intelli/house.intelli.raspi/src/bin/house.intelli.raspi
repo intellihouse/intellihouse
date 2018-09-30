@@ -2,8 +2,23 @@
 
 BIN_DIR=`dirname $0`
 INSTALLATION_DIR="$BIN_DIR/.."
+CONFIG_DIR="$HOME/.intellihouse"
 
 #java -jar "$INSTALLATION_DIR/lib/@project.artifactId@-@project.version@.jar" "$@"
 
-cd "$INSTALLATION_DIR"
-java -Djava.library.path=/usr/lib/jni -cp 'lib/*:/usr/share/java/RXTXcomm.jar' house.intelli.raspi.IntelliHouseRaspi "$@"
+while :
+do
+	cd "$INSTALLATION_DIR"
+	java -Djava.library.path=/usr/lib/jni -cp 'lib/*:/usr/share/java/RXTXcomm.jar' house.intelli.raspi.IntelliHouseRaspi "$@"
+	
+	if [ -f "$CONFIG_DIR/resetusb" ] ; then
+		rm "$CONFIG_DIR/resetusb"
+		
+		echo 0 > /sys/bus/usb/devices/1-1/authorized
+		sleep 1
+		echo 1 > /sys/bus/usb/devices/1-1/authorized
+		sleep 1
+	else
+		break;
+	fi
+done

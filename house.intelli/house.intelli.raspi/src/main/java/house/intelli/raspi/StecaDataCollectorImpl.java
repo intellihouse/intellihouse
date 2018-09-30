@@ -6,18 +6,16 @@ import static house.intelli.core.util.StringUtil.*;
 import static java.util.Objects.*;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import house.intelli.core.bean.AbstractBean;
+import house.intelli.core.config.ConfigDir;
 import house.intelli.raspi.pv.DataCollectorEvent;
 import house.intelli.raspi.pv.DataCollectorListener;
 import house.intelli.raspi.pv.steca.GetInverterMode;
@@ -45,9 +43,6 @@ public class StecaDataCollectorImpl extends AbstractBean<PvDataCollector.Propert
 	private volatile int consecutiveErrorCount;
 	private int resetUsbAfterConsecutiveErrorCount;
 
-	private static final ReentrantReadWriteLock resetUsbLock = new ReentrantReadWriteLock(); // TODO clean-up this dirty hack!
-	private static CopyOnWriteArrayList<StecaClient> stecaClients = new CopyOnWriteArrayList<>(); // TODO clean-up this dirty hack!
-
 	public StecaDataCollectorImpl() {
 	}
 
@@ -73,25 +68,18 @@ public class StecaDataCollectorImpl extends AbstractBean<PvDataCollector.Propert
 		close(); // in case, this method is called multiple times
 
 		stecaClient = createStecaClient();
-		stecaClients.add(stecaClient);
 
 		dataCollectorTimer = new Timer(String.format("dataCollectorTimer[%s]", getBeanName()));
 		dataCollectorTimerTask = new TimerTask() {
 			@Override
 			public void run() {
 				try {
-					final ReadLock readLock = resetUsbLock.readLock();
-					try {
-						readLock.lock();
-						onDataCollectorTimerTaskRun();
-					} finally {
-						readLock.unlock();
-					}
+					onDataCollectorTimerTaskRun();
 
 					final int resetUsbAfterConsecutiveErrorCount = getResetUsbAfterConsecutiveErrorCount();
 					if (resetUsbAfterConsecutiveErrorCount > 0 && consecutiveErrorCount >= resetUsbAfterConsecutiveErrorCount) {
 						consecutiveErrorCount = 0;
-						resetUsb();
+						requestResetUsbAndExit();
 					}
 				} catch (Throwable x) {
 					logger.error(getBeanInstanceName() + ".dataCollectorTimerTask.run: " + x, x);
@@ -117,7 +105,6 @@ public class StecaDataCollectorImpl extends AbstractBean<PvDataCollector.Propert
 		invokeAndWait(() -> {
 			final StecaClient stecaClient = this.stecaClient;
 			if (stecaClient != null) {
-				stecaClients.remove(stecaClient);
 				this.stecaClient = null;
 				try {
 					stecaClient.close();
@@ -156,34 +143,17 @@ public class StecaDataCollectorImpl extends AbstractBean<PvDataCollector.Propert
 		invokeLater(() -> fireDataCollectorEvent(_event));
 	}
 
-	protected void resetUsb() { // TODO clean-up this dirty hack!
-		logger.warn("{}.resetUsb: Obtaining write-lock...", getBeanInstanceName());
+	protected void requestResetUsbAndExit() {
+		logger.warn("{}.requestResetUsbAndExit: Entered.", getBeanInstanceName());
 		try {
-			final WriteLock writeLock = resetUsbLock.writeLock();
-			try {
-				writeLock.lock();
+			File resetusbFile = new File(ConfigDir.getInstance().getFile(), "resetusb");
+			resetusbFile.createNewFile();
+			if (! resetusbFile.exists())
+				throw new IOException("Could not create file: " + resetusbFile.getAbsolutePath());
 
-				logger.warn("{}.resetUsb: Closing stecaClients...", getBeanInstanceName());
-				for (StecaClient stecaClient : stecaClients)
-					stecaClient.close();
-
-				final File usbAuthFile = new File("/sys/bus/usb/devices/1-1/authorized");
-				logger.warn("{}.resetUsb: Writing '0' to {}...", getBeanInstanceName(), usbAuthFile);
-				try (FileOutputStream fout = new FileOutputStream(usbAuthFile)) {
-					fout.write('0');
-				}
-				Thread.sleep(1000L);
-				logger.warn("{}.resetUsb: Writing '1' to {}...", getBeanInstanceName(), usbAuthFile);
-				try (FileOutputStream fout = new FileOutputStream(usbAuthFile)) {
-					fout.write('1');
-				}
-				Thread.sleep(3000L);
-				logger.warn("{}.resetUsb: Done.", getBeanInstanceName());
-			} finally {
-				writeLock.unlock();
-			}
+			System.exit(99);
 		} catch (Exception x) {
-			logger.error("resetUsb: " + x, x);
+			logger.error(getBeanInstanceName() + ".requestResetUsbAndExit: " + x, x);
 		}
 	}
 
