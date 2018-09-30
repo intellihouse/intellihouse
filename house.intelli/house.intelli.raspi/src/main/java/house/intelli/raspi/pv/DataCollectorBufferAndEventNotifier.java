@@ -60,6 +60,7 @@ public class DataCollectorBufferAndEventNotifier {
 	private static final String FILE_NAME_PREFIX = "pvStatusList.";
 	private static final String FILE_NAME_SUFFIX = ".xml.gz";
 	private static final String TMP_SUFFIX = ".tmp";
+	private Thread shutdownHook;
 
 	private final DataCollectorListener dataCollectorListener = new DataCollectorListener() {
 
@@ -105,6 +106,26 @@ public class DataCollectorBufferAndEventNotifier {
 		};
 
 		notifyTimer.schedule(notifyTimerTask, notifyPeriod, notifyPeriod);
+
+		if (shutdownHook == null) {
+			shutdownHook = new Thread() {
+				@Override
+				public void run() {
+					try {
+						onShutdown();
+					} catch (Throwable x) {
+						logger.error("shutdownHook.run: " + x, x);
+					}
+				}
+			};
+			Runtime.getRuntime().addShutdownHook(shutdownHook);
+		}
+	}
+
+	protected void onShutdown() throws Exception {
+		logger.info("onShutdown: Invoking notifyPvStatusList...");
+		notifyPvStatusList();
+		logger.info("onShutdown: Invoked notifyPvStatusList.");
 	}
 
 	protected PvStatusList rollPvStatusList() {
