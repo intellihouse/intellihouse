@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: IntelliHouse Binding
 Bundle-SymbolicName: org.openhab.binding.intellihouse;singleton:=true
 Bundle-Vendor: openHAB
-Bundle-Version: 2.0.0.qualifier
+Bundle-Version: 2.5.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ClassPath: .
 Import-Package: 
@@ -21,6 +21,7 @@ Import-Package:
  house.intelli.pgp.rpc,
  javax.servlet,
  javax.servlet.http,
+ org.eclipse.jdt.annotation;resolution:=optional,
  org.eclipse.emf.common.util,
  org.eclipse.smarthome.config.core,
  org.eclipse.smarthome.core.common.registry,
@@ -35,7 +36,6 @@ Import-Package:
  org.eclipse.smarthome.core.thing.link,
  org.eclipse.smarthome.core.thing.type,
  org.eclipse.smarthome.core.types,
- org.eclipse.smarthome.model.sitemap,
  org.openhab.binding.intellihouse,
  org.openhab.binding.intellihouse.handler,
  org.osgi.framework,

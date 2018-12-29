@@ -1,7 +1,7 @@
 package org.openhab.binding.intellihouse.rpc;
 
-import static house.intelli.core.util.AssertUtil.assertNotNull;
-import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.THING_CONFIG_KEY_HOST_ID;
+import static java.util.Objects.*;
+import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.*;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

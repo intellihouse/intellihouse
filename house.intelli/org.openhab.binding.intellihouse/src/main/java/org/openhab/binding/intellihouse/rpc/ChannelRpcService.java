@@ -1,6 +1,6 @@
 package org.openhab.binding.intellihouse.rpc;
 
-import static house.intelli.core.util.AssertUtil.assertNotNull;
+import static java.util.Objects.*;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
