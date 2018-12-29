@@ -33,6 +33,21 @@
 
 	<build>
 		<plugins>
+<!-- BEGIN disable plugins (by changing their phase) -->
+			<plugin>
+				<groupId>com.itemis.maven.plugins</groupId>
+				<artifactId>artifact-spy-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>spy</id>
+						<phase>deploy</phase>
+						<goals>
+							<goal>spy</goal>
+						</goals>
+						<inherited>false</inherited>
+					</execution>
+				</executions>
+			</plugin>		    
 			<plugin>
 				<groupId>org.openhab.tools.sat</groupId>
 				<artifactId>sat-plugin</artifactId>
@@ -47,6 +62,7 @@
 					</execution>
 				</executions>
 			</plugin>
+<!-- END disable plugins (by changing their phase) -->
 			<plugin>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<version>3.0.0</version>
