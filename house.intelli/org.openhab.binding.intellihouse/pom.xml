@@ -99,17 +99,20 @@
 										<include name="commons-*" />
 										<include name="javax.*" />
 										<include name="org.antlr.*" />
-										<!-- openHAB contains commons-collections 3.x, but we need 4.x :-(
-										-->
+
+										<!-- openHAB contains commons-collections 3.x, but we need 4.x :-( -->
 										<include name="org.apache.commons.*" />
 										<include name="org.eclipse.*" />
 										<include name="org.objectweb.*" />
 										<include name="org.slf4j.*" />
 										<include name="slf4j-*" />
-										
+
 										<include name="bc*-jdk15on-*" />
 										<include name="org.apache.felix.*" />
-										
+
+										<include name="osgi.enterprise-*" />
+										<include name="tec.uom.*" />
+
 										<!-- openHAB contains commons-collections 3.x, but we need 4.x :-( -->
 										<exclude name="org.apache.commons.collections4-*" />
 									</fileset>>
