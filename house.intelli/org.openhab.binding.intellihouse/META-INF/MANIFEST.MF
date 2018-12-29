@@ -4,7 +4,7 @@ Bundle-Name: IntelliHouse Binding
 Bundle-SymbolicName: org.openhab.binding.intellihouse;singleton:=true
 Bundle-Vendor: openHAB
 Bundle-Version: 2.4.0.qualifier
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: .
 Import-Package: 
  house.intelli.core,
