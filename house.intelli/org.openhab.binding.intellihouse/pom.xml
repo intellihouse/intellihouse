@@ -128,8 +128,9 @@
 
 										<include name="osgi.enterprise-*" />
 										<include name="tec.uom.*" />
-										
+
 										<include name="transaction-api-*" />
+										<include name="org.datanucleus-*" />
 									</fileset>>
 								</delete>
 							</target>
