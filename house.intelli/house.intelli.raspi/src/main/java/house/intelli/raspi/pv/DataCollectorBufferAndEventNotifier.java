@@ -26,8 +26,11 @@ import org.springframework.stereotype.Component;
 
 import house.intelli.core.config.ConfigDir;
 import house.intelli.core.jaxb.IntelliHouseJaxbContext;
+import house.intelli.core.rpc.HostId;
+import house.intelli.core.rpc.RpcClient;
 import house.intelli.core.rpc.RpcContext;
 import house.intelli.core.rpc.pv.PvStatus;
+import house.intelli.core.rpc.pv.PvStatusEventRequest;
 import house.intelli.core.rpc.pv.PvStatusList;
 import house.intelli.raspi.PvDataCollector;
 import house.intelli.raspi.pv.steca.InverterMode;
@@ -149,9 +152,7 @@ public class DataCollectorBufferAndEventNotifier {
 			try {
 				sendPvStatusListToServer(pvStatusList);
 			} catch (Exception x) {
-				if (! (x instanceof UnsupportedOperationException)) // TODO remove this line! Always log.
-					logger.error("notifyPvStatusList: " + x, x);
-
+				logger.error("notifyPvStatusList: " + x, x);
 				storePvStatusListLocally(pvStatusList);
 				return;
 			}
@@ -162,7 +163,12 @@ public class DataCollectorBufferAndEventNotifier {
 	protected void sendPvStatusListToServer(final PvStatusList pvStatusList) throws Exception {
 		requireNonNull(pvStatusList, "pvStatusList");
 
-		throw new UnsupportedOperationException("NYI");
+		final PvStatusEventRequest request = new PvStatusEventRequest();
+		request.setServerHostId(HostId.SERVER);
+		request.setPvStatuses(pvStatusList.getPvStatuses());
+		try (RpcClient rpcClient = rpcContext.createRpcClient()) {
+			rpcClient.invoke(request);
+		}
 	}
 
 	protected void storePvStatusListLocally(final PvStatusList pvStatusList) throws Exception {

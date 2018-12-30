@@ -6,11 +6,11 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import house.intelli.core.rpc.Request;
 import house.intelli.core.rpc.VoidResponse;
-import house.intelli.core.rpc.channel.ChannelRequest;
 
 @XmlRootElement
-public class PvStatusEventRequest extends ChannelRequest<VoidResponse> {
+public class PvStatusEventRequest extends Request<VoidResponse> {
 
 	private List<PvStatus> pvStatuses;
 

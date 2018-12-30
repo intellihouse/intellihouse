@@ -1,0 +1,30 @@
+dependencies {
+	compile project(':house.intelli.core')
+	compile group: 'org.datanucleus', name: 'javax.jdo' , version: '3.2.0-m10'
+	compile group: 'org.datanucleus', name: 'datanucleus-core' , version: '5.2.0-m2'
+	compile group: 'org.datanucleus', name: 'datanucleus-api-jdo' , version: '5.2.0-m2'
+	compile group: 'org.datanucleus', name: 'datanucleus-rdbms' , version: '5.2.0-m2'
+//	compile group: 'org.postgresql', name: 'postgresql' , version: '42.2.5.jre7'
+}
+
+compileJava.doLast {
+	ant.echo("***********************************************");
+	ant.echo("******************* ENHANCE *******************");
+	ant.echo("***********************************************");
+	ant.echo("Note: You must run gradle with the '-i' option to see output from the enhancer!");
+
+	ant.taskdef(
+		name: 'datanucleusenhancer',
+		classname: 'org.datanucleus.enhancer.EnhancerTask',
+		classpath: sourceSets.main.compileClasspath.asPath)
+
+	ant.datanucleusenhancer(
+		classpath: sourceSets.main.runtimeClasspath.asPath,
+		filesuffixes: 'class,jdo',
+		api: 'JDO',
+		verbose: 'true')
+	
+	ant.echo("***********************************************");
+	ant.echo("***********************************************");
+	ant.echo("***********************************************");
+}
