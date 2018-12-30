@@ -11,11 +11,14 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import house.intelli.core.service.AbstractServiceRegistryDelegate;
 import house.intelli.core.service.ServiceRegistry;
 
 public class OsgiServiceRegistryDelegate<S> extends AbstractServiceRegistryDelegate<S> {
+    private final Logger logger = LoggerFactory.getLogger(OsgiServiceRegistryDelegate.class);
 
     private final Class<S> serviceClass;
     private final BundleContext bundleContext;
@@ -35,21 +38,23 @@ public class OsgiServiceRegistryDelegate<S> extends AbstractServiceRegistryDeleg
     @Override
     public List<S> getServices() {
         try {
-            List<S> rpcServices = new ArrayList<>();
+            List<S> services = new ArrayList<>();
             Collection<ServiceReference<S>> serviceReferences = bundleContext.getServiceReferences(serviceClass, null);
             for (ServiceReference<S> serviceReference : serviceReferences) {
                 S service = bundleContext.getService(serviceReference);
                 if (service != null) {
-                    rpcServices.add(service);
+                    services.add(service);
                 }
             }
-            return rpcServices;
+            logger.info("getServices: serviceClass='{}' services={}", serviceClass.getName(), services);
+            return services;
         } catch (InvalidSyntaxException e) {
             throw new RuntimeException(e);
         }
     }
 
     protected void serviceChanged(ServiceEvent event) {
+        logger.info("serviceChanged: serviceClass='{}'", serviceClass.getName());
         // sub-classes may override to get notified about this.
         // but they MUST call the super-method!
         final ServiceRegistry<S> serviceRegistry = getServiceRegistry();

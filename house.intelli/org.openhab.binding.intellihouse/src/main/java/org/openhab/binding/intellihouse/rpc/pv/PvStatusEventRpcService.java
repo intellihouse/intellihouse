@@ -18,27 +18,70 @@ public class PvStatusEventRpcService extends ThingRpcService<PvStatusEventReques
 
     private final Logger logger = LoggerFactory.getLogger(PvStatusEventRpcService.class);
 
+//    private BundleContext bundleContext;
     private JdoPersistenceService jdoPersistenceService;
 
+//    @SuppressWarnings("rawtypes")
+//    private ServiceTracker jdoPersistenceServiceTracker;
+
     public PvStatusEventRpcService() {
-        logger.debug("<init>");
+        logger.info("<init>");
     }
+
+//    @SuppressWarnings({ "unchecked", "rawtypes" })
+//    protected void activate(Map<String, Object> configProps) {
+//        bundleContext = IntelliHouseActivator.getInstance().getBundleContext();
+//
+//        jdoPersistenceServiceTracker = new ServiceTracker(bundleContext, JdoPersistenceService.class.getName(), null) {
+//            @Override
+//            public Object addingService(final @Nullable ServiceReference reference) {
+//                jdoPersistenceService = (JdoPersistenceService) bundleContext.getService(reference);
+//                return jdoPersistenceService;
+//            }
+//
+//            @Override
+//            public void removedService(final @Nullable ServiceReference reference, final @Nullable Object service) {
+//                jdoPersistenceService = null;
+//            }
+//        };
+//        jdoPersistenceServiceTracker.open();
+//    }
+//
+//    protected void deactivate() {
+//        @SuppressWarnings("rawtypes")
+//        ServiceTracker st = jdoPersistenceServiceTracker;
+//        if (st != null) {
+//            st.close();
+//        }
+//        jdoPersistenceServiceTracker = null;
+//    }
 
     @Override
     public VoidResponse process(PvStatusEventRequest request) throws Exception {
         logger.debug("process: request={}", request);
         final JdoPersistenceService jps = requireNonNull(jdoPersistenceService, "jdoPersistenceService");
         try (final IntelliHouseTransaction tx = jps.beginTransaction()) {
+            logger.debug("process: Started transaction.");
             final PvStatusDao pvStatusDao = tx.getDao(PvStatusDao.class);
+            int count = 0;
             for (final PvStatus pvStatus : request.getPvStatuses()) {
+                ++count;
                 PvStatusEntity entity = pvStatusDao.getPvStatusEntity(pvStatus.getDeviceName(), pvStatus.getMeasured());
+                logger.debug("process: Read entity: {}", entity);
                 if (entity == null) {
                     entity = new PvStatusEntity();
                 }
                 updatePvStatusEntity(entity, pvStatus);
                 pvStatusDao.makePersistent(entity);
+                if (count % 100 == 0) {
+                    logger.debug("process: Persisted {} PvStatusEntity objects. Flushing...", count);
+                    tx.flush();
+                    logger.debug("process: Persisted {} PvStatusEntity objects. Flushed.", count);
+                }
             }
+            logger.debug("process: Committing transaction...");
             tx.commit();
+            logger.debug("process: Committed transaction.");
         }
         return null;
     }
