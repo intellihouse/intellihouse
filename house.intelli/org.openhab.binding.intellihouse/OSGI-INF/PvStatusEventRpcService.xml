@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="org.openhab.binding.intellihouse.rpc.pv.PvStatusEventRpcService">
+   <implementation class="org.openhab.binding.intellihouse.rpc.pv.PvStatusEventRpcService"/>
+   <service>
+     <provide interface="house.intelli.core.rpc.RpcService"/>
+   </service>
+   <reference bind="setJdoPersistenceService" cardinality="1..1" interface="org.openhab.binding.intellihouse.jdo.JdoPersistenceService" policy="dynamic" unbind="unsetJdoPersistenceService"/>
+</scr:component>

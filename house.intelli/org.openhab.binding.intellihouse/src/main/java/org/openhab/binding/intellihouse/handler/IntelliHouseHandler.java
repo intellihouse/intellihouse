@@ -66,7 +66,7 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    public void setBundleContext(BundleContext bundleContext) {
+    public void setBundleContext(final BundleContext bundleContext) {
         this.bundleContext = bundleContext;
         super.setBundleContext(bundleContext);
         linkRegistryServiceTracker = new ServiceTracker(this.bundleContext, ItemChannelLinkRegistry.class.getName(),
@@ -111,7 +111,7 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
         updateStatus(ThingStatus.UNKNOWN); // Status is "INITIALIZING" and since version 2.4 we *must* set it to UNKNOWN.
 
         // We do *not* attempt to talk with the device here. Whether the device is online or offline is
-        // determined by the RpcServlet. Hence, we leave the current state "INITIALIZING" -- the RpcServlet
+        // determined by the RpcServlet. Hence, we leave the current state as it is -- the RpcServlet
         // should update it soon to either ONLINE or OFFLINE.
 
         // Additionally, we try to query a status once the linkRegistry notifies us about a channel.
@@ -121,10 +121,8 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
                 final ChannelUID channelUID = requireNonNull(link, "link").getLinkedUID();
                 requireNonNull(channelUID, "link.uid");
                 if (thingUID.equals(channelUID.getThingUID())) {
-                    if (initializedChannelUIDs.add(channelUID)) {
-                        registerChannelIfNeeded(channelUID);
-                        startInitializeChannelThread(channelUID);
-                    }
+                    registerChannelIfNeeded(channelUID);
+                    startInitializeChannelThreadIfNeeded(channelUID);
                 }
             }
 
@@ -137,17 +135,18 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
             }
         });
 
-        // Maybe some channels are already registered (unlikely, but hey) => initilise them now
+        // Maybe some channels are already registered (unlikely, but hey) => initialise them now
         for (ChannelUID channelUID : getChannelUIDs()) {
-            if (initializedChannelUIDs.add(channelUID)) {
-                registerChannelIfNeeded(channelUID);
-                startInitializeChannelThread(channelUID);
-            }
+            registerChannelIfNeeded(channelUID);
+            startInitializeChannelThreadIfNeeded(channelUID);
         }
     }
 
-    protected void startInitializeChannelThread(final ChannelUID channelUID) {
+    protected void startInitializeChannelThreadIfNeeded(final ChannelUID channelUID) {
         requireNonNull(channelUID, "channelUID");
+        if (! initializedChannelUIDs.add(channelUID)) {
+            return;
+        }
 
         new Thread("InitializeChannelThread[" + channelUID + ']') {
             @Override
@@ -167,21 +166,25 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
         }.start();
     }
 
-    protected void registerChannelIfNeeded(ChannelUID channelUID) {
-        List<Channel> channels = new ArrayList<>(getThing().getChannels());
-        for (Channel channel : channels) {
-            if (channelUID.equals(channel.getUID())) {
-                logger.info("registerChannelIfNeeded: thingUid={}: Channel already existing (skip): {}", getThing().getUID(), channelUID);
-                return;
+    protected void registerChannelIfNeeded(final ChannelUID channelUID) {
+        requireNonNull(channelUID, "channelUID");
+        final Thing thing = getThing();
+        synchronized (thing) {
+            List<Channel> channels = new ArrayList<>(thing.getChannels());
+            for (Channel channel : channels) {
+                if (channelUID.equals(channel.getUID())) {
+                    logger.info("registerChannelIfNeeded: thingUid={}: Channel already existing (skip): {}", thing.getUID(), channelUID);
+                    return;
+                }
             }
+            logger.info("registerChannelIfNeeded: thingUid={}: Registering channel: {}", thing.getUID(), channelUID);
+            ThingBuilder thingBuilder = editThing();
+            ChannelBuilder channelBuilder = ChannelBuilder.create(channelUID, getAcceptedItemType());
+            channels.add(channelBuilder.build());
+            thingBuilder.withChannels(channels);
+            updateThing(thingBuilder.build());
+            logger.info("registerChannelIfNeeded: thingUid={}: Channels: {}", thing.getUID(), toChannelUidStringList(thing.getChannels()));
         }
-        logger.info("registerChannelIfNeeded: thingUid={}: Registering channel: {}", getThing().getUID(), channelUID);
-        ThingBuilder thingBuilder = editThing();
-        ChannelBuilder channelBuilder = ChannelBuilder.create(channelUID, getAcceptedItemType());
-        channels.add(channelBuilder.build());
-        thingBuilder.withChannels(channels);
-        updateThing(thingBuilder.build());
-        logger.info("registerChannelIfNeeded: thingUid={}: Channels: {}", getThing().getUID(), toChannelUidStringList(getThing().getChannels()));
     }
 
     protected String toChannelUidStringList(List<Channel> channels) {
