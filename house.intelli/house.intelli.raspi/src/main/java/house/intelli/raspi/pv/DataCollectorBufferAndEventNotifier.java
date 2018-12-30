@@ -222,17 +222,24 @@ public class DataCollectorBufferAndEventNotifier {
 	}
 
 	protected void sendOldPvStatusListsToServer() throws Exception {
-		sendOldPvStatusListsToServer(getBufferDir());
+		sendOldPvStatusListsToServer(System.currentTimeMillis(), getBufferDir());
 	}
 
-	protected void sendOldPvStatusListsToServer(final File dirOrFile) throws Exception {
+	protected boolean sendOldPvStatusListsToServer(long sendOldPvStatusListsToServerStartTimestamp, final File dirOrFile) throws Exception {
 		requireNonNull(dirOrFile);
+		final long duration = System.currentTimeMillis() - sendOldPvStatusListsToServerStartTimestamp;
+		if (duration > notifyPeriod) {
+			logger.info("sendOldPvStatusListsToServer: duration={} exceeds max={} => Aborting and postponing.", duration, notifyPeriod);
+			return false;
+		}
 		if (dirOrFile.isDirectory()) {
 			final File[] children = dirOrFile.listFiles();
 			if (children != null) {
 				Arrays.sort(children, fileNameComparator);
-				for (File child : children)
-					sendOldPvStatusListsToServer(child);
+				for (File child : children) {
+					if (! sendOldPvStatusListsToServer(sendOldPvStatusListsToServerStartTimestamp, child))
+						return false;
+				}
 			}
 
 			File[] children2 = dirOrFile.listFiles(); // list again -- it should now be empty.
@@ -254,6 +261,7 @@ public class DataCollectorBufferAndEventNotifier {
 			// no exception => successfully stored => delete file.
 			dirOrFile.delete();
 		}
+		return true;
 	}
 
 	private final Comparator<File> fileNameComparator = new Comparator<File>() {
