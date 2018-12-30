@@ -7,11 +7,9 @@
  */
 package org.openhab.binding.intellihouse.handler;
 
-import static house.intelli.core.util.AssertUtil.assertNotNull;
-import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.THING_CONFIG_KEY_HOST_ID;
+import static java.util.Objects.*;
+import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.*;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -21,17 +19,23 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.core.common.registry.RegistryChangeListener;
+import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
+import org.eclipse.smarthome.core.thing.binding.builder.ChannelBuilder;
+import org.eclipse.smarthome.core.thing.binding.builder.ThingBuilder;
 import org.eclipse.smarthome.core.thing.link.ItemChannelLink;
-import org.eclipse.smarthome.model.sitemap.SitemapProvider;
-import org.osgi.framework.InvalidSyntaxException;
+import org.eclipse.smarthome.core.thing.link.ItemChannelLinkRegistry;
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
+import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +52,46 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
 
     private Logger logger = LoggerFactory.getLogger(IntelliHouseHandler.class);
 
+    protected BundleContext bundleContext;
+    protected ItemChannelLinkRegistry linkRegistry;
     private HostId serverHostId;
-    private final Set<ChannelUID> initializedChannelUIDs = Collections.synchronizedSet(new HashSet<>());
+    private final Set<ChannelUID> initializedChannelUIDs = Collections.synchronizedSet(new HashSet<ChannelUID>());
+
+    @SuppressWarnings("rawtypes")
+    private ServiceTracker linkRegistryServiceTracker;
 
     public IntelliHouseHandler(Thing thing) {
         super(thing);
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @Override
+    public void setBundleContext(BundleContext bundleContext) {
+        this.bundleContext = bundleContext;
+        super.setBundleContext(bundleContext);
+        linkRegistryServiceTracker = new ServiceTracker(this.bundleContext, ItemChannelLinkRegistry.class.getName(),
+                null) {
+            @Override
+            public Object addingService(final @Nullable ServiceReference reference) {
+                linkRegistry = (ItemChannelLinkRegistry) bundleContext.getService(reference);
+                return linkRegistry;
+            }
+
+            @Override
+            public void removedService(final @Nullable ServiceReference reference, final @Nullable Object service) {
+                synchronized (IntelliHouseHandler.this) {
+                    linkRegistry = null;
+                }
+            }
+        };
+        linkRegistryServiceTracker.open();
+    }
+
+    @Override
+    public void unsetBundleContext(@NonNull BundleContext bundleContext) {
+        linkRegistryServiceTracker.close();
+        super.unsetBundleContext(bundleContext);
+        this.bundleContext = null;
     }
 
     @Override
@@ -69,7 +108,7 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
 
         final ThingUID thingUID = getThing().getUID();
 
-        // updateStatus(ThingStatus.UNKNOWN); // Status is "INITIALIZING" and we must *not* set it, now!!!
+        updateStatus(ThingStatus.UNKNOWN); // Status is "INITIALIZING" and since version 2.4 we *must* set it to UNKNOWN.
 
         // We do *not* attempt to talk with the device here. Whether the device is online or offline is
         // determined by the RpcServlet. Hence, we leave the current state "INITIALIZING" -- the RpcServlet
@@ -79,10 +118,11 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
         linkRegistry.addRegistryChangeListener(new RegistryChangeListener<ItemChannelLink>() {
             @Override
             public void added(final ItemChannelLink link) {
-                final ChannelUID channelUID = getLinkedUID(requireNonNull(link, "link"));
+                final ChannelUID channelUID = requireNonNull(link, "link").getLinkedUID();
                 requireNonNull(channelUID, "link.uid");
                 if (thingUID.equals(channelUID.getThingUID())) {
                     if (initializedChannelUIDs.add(channelUID)) {
+                        registerChannelIfNeeded(channelUID);
                         startInitializeChannelThread(channelUID);
                     }
                 }
@@ -100,45 +140,10 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
         // Maybe some channels are already registered (unlikely, but hey) => initilise them now
         for (ChannelUID channelUID : getChannelUIDs()) {
             if (initializedChannelUIDs.add(channelUID)) {
+                registerChannelIfNeeded(channelUID);
                 startInitializeChannelThread(channelUID);
             }
         }
-
-        // new Thread("InitializeThread[" + getThing().getUID() + ']') {
-        // @Override
-        // public void run() {
-        // try {
-        // Thread.sleep(20000L); // wait for the linkRegistry to be populated. unfortunately I have no idea how
-        // // to do this in a better way, now :-(
-        //
-        // initializeAsync();
-        // // try (RpcClient rpcClient = rpcContext.createRpcClient()) {
-        // // EchoRequest echoRequest = new EchoRequest();
-        // // echoRequest.setServerHostId(serverHostId);
-        // // echoRequest.setPayload("initialize");
-        // // EchoResponse echoResponse = rpcClient.invoke(echoRequest);
-        // // requireNonNull(echoResponse, "echoResponse");
-        // // logger.info("initialize: thingUid={}: Successfully initialized.", getThing().getUID());
-        // // }
-        // updateStatus(ThingStatus.ONLINE);
-        // } catch (Exception x) {
-        // logger.error("initialize.run: " + x, x);
-        // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.HANDLER_INITIALIZING_ERROR,
-        // String.format("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS %1$tZ: %2$s", new Date(), x));
-        // }
-        // }
-        // }.start();
-
-        // // TODO: Initialize the thing. If done set status to ONLINE to indicate proper working.
-        // // Long running initialization should be done asynchronously in background.
-        // updateStatus(ThingStatus.ONLINE);
-        //
-        // // Note: When initialization can NOT be done set the status with more details for further
-        // // analysis. See also class ThingStatusDetail for all available status details.
-        // // Add a description to give user information to understand why thing does not work
-        // // as expected. E.g.
-        // // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-        // // "Can not access device as username and/or password are invalid");
     }
 
     protected void startInitializeChannelThread(final ChannelUID channelUID) {
@@ -150,7 +155,7 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
                 try {
                     initializeChannel(channelUID);
 
-                    if (ThingStatus.INITIALIZING.equals(thing.getStatus())) {
+                    if (ThingStatus.UNKNOWN.equals(thing.getStatus())) {
                         updateStatus(ThingStatus.ONLINE);
                     }
                 } catch (Exception x) {
@@ -162,26 +167,55 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
         }.start();
     }
 
-    protected void initializeChannel(ChannelUID channelUID) throws Exception {
-
-    }
-
-    protected List<SitemapProvider> getSitemapProviders() {
-        try {
-            Collection<ServiceReference<SitemapProvider>> serviceReferences = bundleContext
-                    .getServiceReferences(SitemapProvider.class, null);
-            List<SitemapProvider> result = new ArrayList<>(serviceReferences.size());
-            for (ServiceReference<SitemapProvider> serviceReference : serviceReferences) {
-                SitemapProvider service = bundleContext.getService(serviceReference);
-                if (service != null) {
-                    result.add(service);
-                }
+    protected void registerChannelIfNeeded(ChannelUID channelUID) {
+        List<Channel> channels = new ArrayList<>(getThing().getChannels());
+        for (Channel channel : channels) {
+            if (channelUID.equals(channel.getUID())) {
+                logger.info("registerChannelIfNeeded: thingUid={}: Channel already existing (skip): {}", getThing().getUID(), channelUID);
+                return;
             }
-            return result;
-        } catch (InvalidSyntaxException e) {
-            throw new RuntimeException(e);
         }
+        logger.info("registerChannelIfNeeded: thingUid={}: Registering channel: {}", getThing().getUID(), channelUID);
+        ThingBuilder thingBuilder = editThing();
+        ChannelBuilder channelBuilder = ChannelBuilder.create(channelUID, getAcceptedItemType());
+        channels.add(channelBuilder.build());
+        thingBuilder.withChannels(channels);
+        updateThing(thingBuilder.build());
+        logger.info("registerChannelIfNeeded: thingUid={}: Channels: {}", getThing().getUID(), toChannelUidStringList(getThing().getChannels()));
     }
+
+    protected String toChannelUidStringList(List<Channel> channels) {
+        StringBuilder sb = new StringBuilder();
+        for (Channel channel : channels) {
+            if (sb.length() > 0) {
+                sb.append(", ");
+            }
+            sb.append(channel.getUID());
+        }
+        return sb.toString();
+    }
+
+    protected void initializeChannel(ChannelUID channelUID) throws Exception {
+    }
+
+    protected abstract String getAcceptedItemType();
+
+//    protected List<SitemapProvider> getSitemapProviders() {
+//        try {
+//            Collection<ServiceReference<SitemapProvider>> serviceReferences = bundleContext
+//                    .getServiceReferences(SitemapProvider.class, null);
+//            List<SitemapProvider> result = new ArrayList<>(serviceReferences.size());
+//            for (ServiceReference<SitemapProvider> serviceReference : serviceReferences) {
+//                SitemapProvider service = bundleContext.getService(serviceReference);
+//                if (service != null) {
+//                    result.add(service);
+//                }
+//            }
+//            return result;
+//        } catch (InvalidSyntaxException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     protected <S> S getServiceOrFail(final Class<S> serviceClass) {
         requireNonNull(serviceClass, "serviceClass");
@@ -201,7 +235,7 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
         final ThingUID thingUid = thing.getUID();
         Set<ChannelUID> channelUids = new LinkedHashSet<>();
         for (ItemChannelLink itemChannelLink : linkRegistry.getAll()) {
-            ChannelUID channelUid = getLinkedUID(itemChannelLink);
+            ChannelUID channelUid = itemChannelLink.getLinkedUID();
             if (thingUid.equals(channelUid.getThingUID())) {
                 channelUids.add(channelUid);
             }
@@ -224,43 +258,5 @@ public abstract class IntelliHouseHandler extends BaseThingHandler {
             throw new IllegalStateException("ServiceReference did not point to existing service: " + serviceReference);
         }
         return rpcContext;
-    }
-
-    // OpenHAB dev sometimes really sucks! They don't get the development-environment-update
-    // properly done so that I can select an older version! The new ItemChannelLink has a new
-    // method called "getLinkedUID()" for what was "getUID()" before. And they introduced a new
-    // "getUID()" doing sth. else! FUCK!!!
-    // TODO remove this method when we use OpenHAB 2.2.x.
-    protected static ChannelUID getLinkedUID(ItemChannelLink itemChannelLink) {
-        requireNonNull(itemChannelLink, "itemChannelLink");
-
-        Method method;
-        try {
-            method = ItemChannelLink.class.getMethod("getLinkedUID");
-        } catch (NoSuchMethodException x) {
-            method = null;
-        }
-
-        if (method == null) {
-            try {
-                method = ItemChannelLink.class.getMethod("getUID");
-            } catch (NoSuchMethodException x) {
-                throw new IllegalStateException("Neither 'getLinkedUID' nor 'getUID' exists! WTF?!");
-            }
-        }
-
-        Object result;
-        try {
-            result = method.invoke(itemChannelLink);
-        } catch (IllegalAccessException x) {
-            throw new RuntimeException(x);
-        } catch (InvocationTargetException x) {
-            throw new RuntimeException(x.getTargetException());
-        }
-        if (!(result instanceof ChannelUID))
-            throw new IllegalStateException(
-                    "Method '" + method + "' did not return a ChannelUID instance, but: " + result);
-
-        return (ChannelUID) result;
     }
 }

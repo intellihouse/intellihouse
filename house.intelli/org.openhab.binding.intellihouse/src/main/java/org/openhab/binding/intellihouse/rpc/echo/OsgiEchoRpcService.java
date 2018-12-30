@@ -1,6 +1,6 @@
 package org.openhab.binding.intellihouse.rpc.echo;
 
-import static house.intelli.core.util.AssertUtil.assertNotNull;
+import static java.util.Objects.*;
 
 import org.eclipse.smarthome.core.items.ItemRegistry;
 import org.slf4j.Logger;

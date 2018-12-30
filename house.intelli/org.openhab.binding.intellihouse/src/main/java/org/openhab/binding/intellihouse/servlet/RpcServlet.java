@@ -7,9 +7,9 @@
  */
 package org.openhab.binding.intellihouse.servlet;
 
-import static house.intelli.core.util.AssertUtil.assertNotNull;
 import static house.intelli.core.util.StringUtil.*;
-import static house.intelli.core.util.Util.equal;
+import static house.intelli.core.util.Util.*;
+import static java.util.Objects.*;
 import static org.openhab.binding.intellihouse.IntelliHouseBindingConstants.*;
 
 import java.io.IOException;

@@ -26,6 +26,11 @@ public class IntelliHouseSwitchHandler extends IntelliHouseHandler {
     }
 
     @Override
+    protected String getAcceptedItemType() {
+        return "Switch";
+    }
+
+    @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
         logger.info("handleCommand: channelUID={}, command={}", channelUID, command);
         final RpcContext rpcContext = getRpcContextOrFail();

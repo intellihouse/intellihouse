@@ -26,6 +26,11 @@ public class IntelliHouseDimmerHandler extends IntelliHouseHandler {
     }
 
     @Override
+    protected String getAcceptedItemType() {
+        return "Dimmer";
+    }
+
+    @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
         logger.info("handleCommand: channelUID={}, command={}", channelUID, command);
         final RpcContext rpcContext = getRpcContextOrFail();
