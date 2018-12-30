@@ -5,18 +5,23 @@ import static house.intelli.core.util.AssertUtil.*;
 import static java.util.Objects.*;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,8 +106,8 @@ public class DataCollectorBufferAndEventNotifier {
 			@Override
 			public void run() {
 				try {
-					notifyPvStatusList();
-				} catch (Exception x) {
+					notifyPvStatusList(true);
+				} catch (Throwable x) {
 					logger.error("notifyTimerTask.run: " + x, x);
 				}
 			}
@@ -127,7 +132,7 @@ public class DataCollectorBufferAndEventNotifier {
 
 	protected void onShutdown() throws Exception {
 		logger.info("onShutdown: Invoking notifyPvStatusList...");
-		notifyPvStatusList();
+		notifyPvStatusList(false);
 		logger.info("onShutdown: Invoked notifyPvStatusList.");
 	}
 
@@ -145,23 +150,29 @@ public class DataCollectorBufferAndEventNotifier {
 		return requireNonNull(result[0], "result[0]");
 	}
 
-	protected void notifyPvStatusList() throws Exception {
+	protected void notifyPvStatusList(boolean sendOld) throws Exception {
 		final PvStatusList pvStatusList = rollPvStatusList();
 
 		if (! pvStatusList.getPvStatuses().isEmpty()) {
 			try {
 				sendPvStatusListToServer(pvStatusList);
-			} catch (Exception x) {
+			} catch (Throwable x) {
 				logger.error("notifyPvStatusList: " + x, x);
 				storePvStatusListLocally(pvStatusList);
 				return;
 			}
 		}
-		sendOldPvStatusListsToServer();
+		if (sendOld)
+			sendOldPvStatusListsToServer();
 	}
 
 	protected void sendPvStatusListToServer(final PvStatusList pvStatusList) throws Exception {
 		requireNonNull(pvStatusList, "pvStatusList");
+
+		if (pvStatusList.getPvStatuses().isEmpty()) {
+			logger.warn("sendPvStatusListToServer: pvStatusList.pvStatuses is empty! Skipping.");
+			return;
+		}
 
 		final PvStatusEventRequest request = new PvStatusEventRequest();
 		request.setServerHostId(HostId.SERVER);
@@ -210,10 +221,49 @@ public class DataCollectorBufferAndEventNotifier {
 		return bufferDir;
 	}
 
-	protected void sendOldPvStatusListsToServer() {
-		// TODO implement this!
-
+	protected void sendOldPvStatusListsToServer() throws Exception {
+		sendOldPvStatusListsToServer(getBufferDir());
 	}
+
+	protected void sendOldPvStatusListsToServer(final File dirOrFile) throws Exception {
+		requireNonNull(dirOrFile);
+		if (dirOrFile.isDirectory()) {
+			final File[] children = dirOrFile.listFiles();
+			if (children != null) {
+				Arrays.sort(children, fileNameComparator);
+				for (File child : children)
+					sendOldPvStatusListsToServer(child);
+			}
+
+			File[] children2 = dirOrFile.listFiles(); // list again -- it should now be empty.
+			if (children2 == null || children2.length == 0)
+				dirOrFile.delete(); // delete empty directories
+		}
+		else if (dirOrFile.isFile() && dirOrFile.getName().endsWith(FILE_NAME_SUFFIX)) {
+			if (dirOrFile.length() == 0) {
+				logger.warn("sendOldPvStatusListsToServer: Skipping and deleting empty file: {}", dirOrFile.getAbsolutePath());
+			}
+			else {
+				final PvStatusList pvStatusList;
+				try (final GZIPInputStream in = new GZIPInputStream(new FileInputStream(dirOrFile))) {
+					final Unmarshaller unmarshaller = IntelliHouseJaxbContext.getJaxbContext().createUnmarshaller();
+					pvStatusList = (PvStatusList) unmarshaller.unmarshal(in);
+				}
+				sendPvStatusListToServer(pvStatusList);
+			}
+			// no exception => successfully stored => delete file.
+			dirOrFile.delete();
+		}
+	}
+
+	private final Comparator<File> fileNameComparator = new Comparator<File>() {
+		@Override
+		public int compare(File f1, File f2) {
+			final String name1 = f1.getName();
+			final String name2 = f2.getName();
+			return name1.compareTo(name2);
+		}
+	};
 
 	protected PvStatus createPvStatus(final DataCollectorEvent event) {
 		requireNonNull(event, "event");
