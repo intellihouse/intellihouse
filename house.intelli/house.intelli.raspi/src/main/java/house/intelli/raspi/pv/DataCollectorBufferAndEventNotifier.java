@@ -239,12 +239,12 @@ public class DataCollectorBufferAndEventNotifier {
 				for (File child : children) {
 					if (! sendOldPvStatusListsToServer(sendOldPvStatusListsToServerStartTimestamp, child))
 						return false;
+
+					File[] children2 = child.listFiles();
+					if (children2 == null || children2.length == 0)
+						dirOrFile.delete(); // delete empty directories
 				}
 			}
-
-			File[] children2 = dirOrFile.listFiles(); // list again -- it should now be empty.
-			if (children2 == null || children2.length == 0)
-				dirOrFile.delete(); // delete empty directories
 		}
 		else if (dirOrFile.isFile() && dirOrFile.getName().endsWith(FILE_NAME_SUFFIX)) {
 			if (dirOrFile.length() == 0) {
