@@ -131,6 +131,7 @@
 
 										<include name="transaction-api-*" />
 										<include name="org.datanucleus-*" />
+										<include name="org.postgresql-*" />
 									</fileset>>
 								</delete>
 							</target>
