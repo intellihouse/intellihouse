@@ -5,15 +5,10 @@ import static java.util.Objects.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.eclipse.smarthome.core.items.Item;
-import org.eclipse.smarthome.core.items.ItemUtil;
-import org.eclipse.smarthome.core.items.events.ItemEventFactory;
 import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
-import org.eclipse.smarthome.core.thing.link.ItemChannelLinkRegistry;
-import org.eclipse.smarthome.core.types.State;
 
 import house.intelli.core.rpc.Response;
 import house.intelli.core.rpc.channel.ChannelRequest;
@@ -32,15 +27,6 @@ import house.intelli.core.rpc.channel.ChannelRequest;
 public abstract class ChannelRpcService<REQ extends ChannelRequest<RES>, RES extends Response>
         extends ThingRpcService<REQ, RES> {
 
-    private ItemChannelLinkRegistry itemChannelLinkRegistry;
-
-    protected ItemChannelLinkRegistry getItemChannelLinkRegistry() {
-        if (itemChannelLinkRegistry == null) {
-            itemChannelLinkRegistry = getServiceOrFail(ItemChannelLinkRegistry.class);
-        }
-        return itemChannelLinkRegistry;
-    }
-
     protected Set<ChannelUID> getChannelUIDs(final ThingTypeUID thingTypeUID, final REQ request) {
         requireNonNull(thingTypeUID, "thingTypeUID");
         requireNonNull(request, "request");
@@ -51,16 +37,5 @@ public abstract class ChannelRpcService<REQ extends ChannelRequest<RES>, RES ext
             channelUids.add(channelUID);
         }
         return channelUids;
-    }
-
-    protected void stateUpdated(ChannelUID channelUID, State state) {
-        requireNonNull(channelUID, "channelUID");
-        requireNonNull(state, "state");
-        Set<Item> items = getItemChannelLinkRegistry().getLinkedItems(channelUID);
-        for (Item item : items) {
-            State acceptedState = ItemUtil.convertToAcceptedState(state, item);
-            getEventPublisher()
-                    .post(ItemEventFactory.createStateEvent(item.getName(), acceptedState, channelUID.toString()));
-        }
     }
 }

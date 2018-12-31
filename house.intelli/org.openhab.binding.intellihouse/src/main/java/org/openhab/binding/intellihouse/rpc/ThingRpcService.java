@@ -7,9 +7,16 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.eclipse.smarthome.core.events.EventPublisher;
+import org.eclipse.smarthome.core.items.Item;
+import org.eclipse.smarthome.core.items.ItemStateConverter;
+import org.eclipse.smarthome.core.items.ItemUtil;
+import org.eclipse.smarthome.core.items.events.ItemEventFactory;
+import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingRegistry;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
+import org.eclipse.smarthome.core.thing.link.ItemChannelLinkRegistry;
+import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.intellihouse.IntelliHouseActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -88,5 +95,34 @@ public abstract class ThingRpcService<REQ extends Request<RES>, RES extends Resp
             throw new IllegalStateException("ServiceReference did not point to existing service: " + serviceReference);
         }
         return service;
+    }
+
+    private ItemChannelLinkRegistry itemChannelLinkRegistry;
+
+    private ItemStateConverter itemStateConverter;
+
+    protected ItemChannelLinkRegistry getItemChannelLinkRegistry() {
+        if (itemChannelLinkRegistry == null) {
+            itemChannelLinkRegistry = getServiceOrFail(ItemChannelLinkRegistry.class);
+        }
+        return itemChannelLinkRegistry;
+    }
+
+    protected ItemStateConverter getItemStateConverter() {
+        if (itemStateConverter == null) {
+            itemStateConverter = getServiceOrFail(ItemStateConverter.class);
+        }
+        return itemStateConverter;
+    }
+
+    protected void stateUpdated(ChannelUID channelUID, State state) {
+        requireNonNull(channelUID, "channelUID");
+        requireNonNull(state, "state");
+        Set<Item> items = getItemChannelLinkRegistry().getLinkedItems(channelUID);
+        for (Item item : items) {
+            State acceptedState = ItemUtil.convertToAcceptedState(state, item); // TODO replace by getItemStateConverter().convertToAcceptedState(...)!
+            getEventPublisher()
+                    .post(ItemEventFactory.createStateEvent(item.getName(), acceptedState, channelUID.toString()));
+        }
     }
 }

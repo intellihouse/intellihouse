@@ -2,6 +2,30 @@ package org.openhab.binding.intellihouse.rpc.pv;
 
 import static java.util.Objects.*;
 
+import java.beans.BeanInfo;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Method;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TimeZone;
+import java.util.TreeMap;
+
+import org.eclipse.smarthome.core.library.types.DateTimeType;
+import org.eclipse.smarthome.core.library.types.DecimalType;
+import org.eclipse.smarthome.core.library.types.StringType;
+import org.eclipse.smarthome.core.thing.ChannelUID;
+import org.eclipse.smarthome.core.thing.ThingUID;
+import org.eclipse.smarthome.core.types.State;
+import org.eclipse.smarthome.core.types.UnDefType;
+import org.openhab.binding.intellihouse.IntelliHouseBindingConstants;
 import org.openhab.binding.intellihouse.jdo.JdoPersistenceService;
 import org.openhab.binding.intellihouse.rpc.ThingRpcService;
 import org.slf4j.Logger;
@@ -18,43 +42,13 @@ public class PvStatusEventRpcService extends ThingRpcService<PvStatusEventReques
 
     private final Logger logger = LoggerFactory.getLogger(PvStatusEventRpcService.class);
 
-//    private BundleContext bundleContext;
     private JdoPersistenceService jdoPersistenceService;
-
-//    @SuppressWarnings("rawtypes")
-//    private ServiceTracker jdoPersistenceServiceTracker;
+    private Map<String, PvStatus> deviceName2CurrentPvStatus = Collections.synchronizedMap(new HashMap<>());
+    private PvStatusClusterCalculator clusterCalculator = new PvStatusClusterCalculator(); // TODO make configurable...
 
     public PvStatusEventRpcService() {
         logger.info("<init>");
     }
-
-//    @SuppressWarnings({ "unchecked", "rawtypes" })
-//    protected void activate(Map<String, Object> configProps) {
-//        bundleContext = IntelliHouseActivator.getInstance().getBundleContext();
-//
-//        jdoPersistenceServiceTracker = new ServiceTracker(bundleContext, JdoPersistenceService.class.getName(), null) {
-//            @Override
-//            public Object addingService(final @Nullable ServiceReference reference) {
-//                jdoPersistenceService = (JdoPersistenceService) bundleContext.getService(reference);
-//                return jdoPersistenceService;
-//            }
-//
-//            @Override
-//            public void removedService(final @Nullable ServiceReference reference, final @Nullable Object service) {
-//                jdoPersistenceService = null;
-//            }
-//        };
-//        jdoPersistenceServiceTracker.open();
-//    }
-//
-//    protected void deactivate() {
-//        @SuppressWarnings("rawtypes")
-//        ServiceTracker st = jdoPersistenceServiceTracker;
-//        if (st != null) {
-//            st.close();
-//        }
-//        jdoPersistenceServiceTracker = null;
-//    }
 
     @Override
     public VoidResponse process(PvStatusEventRequest request) throws Exception {
@@ -66,6 +60,7 @@ public class PvStatusEventRpcService extends ThingRpcService<PvStatusEventReques
             int count = 0;
             for (final PvStatus pvStatus : request.getPvStatuses()) {
                 ++count;
+                enlistCurrentPvStatus(pvStatus);
                 PvStatusEntity entity = pvStatusDao.getPvStatusEntity(pvStatus.getDeviceName(), pvStatus.getMeasured());
                 logger.debug("process: Read entity: {}", entity);
                 if (entity == null) {
@@ -78,6 +73,10 @@ public class PvStatusEventRpcService extends ThingRpcService<PvStatusEventReques
                     tx.flush();
                     logger.debug("process: Persisted {} PvStatusEntity objects. Flushed.", count);
                 }
+            }
+            final List<PvStatus> clusterPvStatuses = clusterCalculator.calculateClusters(new ArrayList<>(deviceName2CurrentPvStatus.values()));
+            for (PvStatus pvStatus : clusterPvStatuses) {
+                enlistCurrentPvStatus(pvStatus);
             }
             logger.debug("process: Committing transaction...");
             tx.commit();
@@ -112,6 +111,169 @@ public class PvStatusEventRpcService extends ThingRpcService<PvStatusEventReques
         entity.setStatusBitmask(pvStatus.getStatusBitmask());
         entity.setEepromVersion(pvStatus.getEepromVersion());
         entity.setPvPower(pvStatus.getPvPower());
+    }
+
+    protected void enlistCurrentPvStatus(final PvStatus pvStatus) throws Exception {
+        requireNonNull(pvStatus, "pvStatus");
+        synchronized (deviceName2CurrentPvStatus) {
+            final String deviceName = requireNonNull(pvStatus.getDeviceName(), "pvStatus.deviceName");
+            requireNonNull(pvStatus.getMeasured(), "pvStatus.measured");
+            final PvStatus currentPvStatus = deviceName2CurrentPvStatus.get(deviceName);
+            if (currentPvStatus != null && pvStatus.getMeasured().before(currentPvStatus.getMeasured())) {
+                return; // nothing changed => return!
+            }
+            deviceName2CurrentPvStatus.put(deviceName, pvStatus);
+        }
+
+        final BeanInfo pvStatusBeanInfo = Introspector.getBeanInfo(PvStatus.class);
+        for (final PropertyDescriptor propertyDescriptor : pvStatusBeanInfo.getPropertyDescriptors()) {
+            if (propertyDescriptor.getPropertyType() == null) {
+                continue;
+            }
+            final Method readMethod = propertyDescriptor.getReadMethod();
+            if (readMethod == null) {
+                continue;
+            }
+            if (handleStateUpdatedForPvDateTime(pvStatus, propertyDescriptor)) {
+                continue;
+            }
+            if (handleStateUpdatedForPvNumber(pvStatus, propertyDescriptor)) {
+                continue;
+            }
+            if (handleStateUpdatedForPvString(pvStatus, propertyDescriptor)) {
+                continue;
+            }
+        }
+    }
+
+    protected boolean handleStateUpdatedForPvDateTime(final PvStatus pvStatus, final PropertyDescriptor propertyDescriptor) throws Exception {
+        requireNonNull(pvStatus, "pvStatus");
+        requireNonNull(propertyDescriptor, "propertyDescriptor");
+        final Class<?> propertyType = requireNonNull(propertyDescriptor.getPropertyType(), "propertyDescriptor.propertyType");
+        final Method readMethod = requireNonNull(propertyDescriptor.getReadMethod(), "propertyDescriptor.readMethod");
+        if (Date.class.isAssignableFrom(propertyType)) {
+            final Date value = (Date) readMethod.invoke(pvStatus);
+            final State state;
+            if (value == null) {
+                state = UnDefType.NULL;
+            } else {
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(value);
+                ZonedDateTime zonedDateTime = ZonedDateTime
+                        .ofInstant(calendar.toInstant(), TimeZone.getDefault().toZoneId())
+                        .withFixedOffsetZone();
+                state = new DateTimeType(zonedDateTime);
+            }
+            stateUpdated(getPvDateTimeChannelUid(pvStatus, propertyDescriptor), state);
+            return true;
+        }
+        if (Calendar.class.isAssignableFrom(propertyType)) {
+            final Calendar value = (Calendar) readMethod.invoke(pvStatus);
+            final State state;
+            if (value == null) {
+                state = UnDefType.NULL;
+            } else {
+                ZonedDateTime zonedDateTime = ZonedDateTime
+                        .ofInstant(value.toInstant(), TimeZone.getDefault().toZoneId())
+                        .withFixedOffsetZone();
+                state = new DateTimeType(zonedDateTime);
+            }
+            stateUpdated(getPvDateTimeChannelUid(pvStatus, propertyDescriptor), state);
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean handleStateUpdatedForPvNumber(final PvStatus pvStatus, final PropertyDescriptor propertyDescriptor) throws Exception {
+        requireNonNull(pvStatus, "pvStatus");
+        requireNonNull(propertyDescriptor, "propertyDescriptor");
+        final Class<?> propertyType = requireNonNull(propertyDescriptor.getPropertyType(), "propertyDescriptor.propertyType");
+        final Method readMethod = requireNonNull(propertyDescriptor.getReadMethod(), "propertyDescriptor.readMethod");
+        if (propertyType == byte.class || propertyType == Byte.class) {
+            final Byte value = (Byte) readMethod.invoke(pvStatus);
+            stateUpdated(getPvNumberChannelUid(pvStatus, propertyDescriptor),
+                    value == null ? UnDefType.NULL : new DecimalType(value));
+            return true;
+        }
+        if (propertyType == short.class || propertyType == Short.class) {
+            final Short value = (Short) readMethod.invoke(pvStatus);
+            stateUpdated(getPvNumberChannelUid(pvStatus, propertyDescriptor),
+                    value == null ? UnDefType.NULL : new DecimalType(value));
+            return true;
+        }
+        if (propertyType == int.class || propertyType == Integer.class) {
+            final Integer value = (Integer) readMethod.invoke(pvStatus);
+            stateUpdated(getPvNumberChannelUid(pvStatus, propertyDescriptor),
+                    value == null ? UnDefType.NULL : new DecimalType(value));
+            return true;
+        }
+        if (propertyType == long.class || propertyType == Long.class) {
+            final Long value = (Long) readMethod.invoke(pvStatus);
+            stateUpdated(getPvNumberChannelUid(pvStatus, propertyDescriptor),
+                    value == null ? UnDefType.NULL : new DecimalType(value));
+            return true;
+        }
+        if (propertyType == float.class || propertyType == Float.class) {
+            final Float value = (Float) readMethod.invoke(pvStatus);
+            stateUpdated(getPvNumberChannelUid(pvStatus, propertyDescriptor),
+                    value == null ? UnDefType.NULL : new DecimalType(value));
+            return true;
+        }
+        if (propertyType == double.class || propertyType == Double.class) {
+            final Double value = (Double) readMethod.invoke(pvStatus);
+            stateUpdated(getPvNumberChannelUid(pvStatus, propertyDescriptor),
+                    value == null ? UnDefType.NULL : new DecimalType(value));
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean handleStateUpdatedForPvString(final PvStatus pvStatus, final PropertyDescriptor propertyDescriptor) throws Exception {
+        requireNonNull(pvStatus, "pvStatus");
+        requireNonNull(propertyDescriptor, "propertyDescriptor");
+        final Class<?> propertyType = requireNonNull(propertyDescriptor.getPropertyType(), "propertyDescriptor.propertyType");
+        final Method readMethod = requireNonNull(propertyDescriptor.getReadMethod(), "propertyDescriptor.readMethod");
+        if (propertyType == String.class) {
+            final String value = (String) readMethod.invoke(pvStatus);
+            stateUpdated(getPvStringChannelUid(pvStatus, propertyDescriptor),
+                    value == null ? UnDefType.NULL : new StringType(value));
+            return true;
+        }
+        return false;
+    }
+
+    protected ChannelUID getPvDateTimeChannelUid(final PvStatus pvStatus, final PropertyDescriptor propertyDescriptor) {
+        requireNonNull(pvStatus, "pvStatus");
+        requireNonNull(propertyDescriptor, "propertyDescriptor");
+        final ThingUID thingUid = new ThingUID(IntelliHouseBindingConstants.THING_TYPE_PV_DATE_TIME, pvStatus.getDeviceName());
+        return new ChannelUID(thingUid, propertyDescriptor.getName());
+    }
+
+    protected ChannelUID getPvNumberChannelUid(final PvStatus pvStatus, final PropertyDescriptor propertyDescriptor) {
+        requireNonNull(pvStatus, "pvStatus");
+        requireNonNull(propertyDescriptor, "propertyDescriptor");
+        final ThingUID thingUid = new ThingUID(IntelliHouseBindingConstants.THING_TYPE_PV_NUMBER, pvStatus.getDeviceName());
+        return new ChannelUID(thingUid, propertyDescriptor.getName());
+    }
+
+    protected ChannelUID getPvStringChannelUid(final PvStatus pvStatus, final PropertyDescriptor propertyDescriptor) {
+        requireNonNull(pvStatus, "pvStatus");
+        requireNonNull(propertyDescriptor, "propertyDescriptor");
+        final ThingUID thingUid = new ThingUID(IntelliHouseBindingConstants.THING_TYPE_PV_STRING, pvStatus.getDeviceName());
+        return new ChannelUID(thingUid, propertyDescriptor.getName());
+    }
+
+    protected SortedMap<String, Method> getPropertyName2Getter(final Class<?> clazz) throws Exception {
+        requireNonNull(clazz, "clazz");
+
+        final SortedMap<String, Method> propertyName2Getter = new TreeMap<>();
+        for (Method method : clazz.getMethods()) {
+            if (method.getParameterTypes().length == 0
+                    && (method.getName().startsWith("get") || method.getName().startsWith("is"))) {
+
+            }
+        }
+        return propertyName2Getter;
     }
 
     public JdoPersistenceService getJdoPersistenceService() {

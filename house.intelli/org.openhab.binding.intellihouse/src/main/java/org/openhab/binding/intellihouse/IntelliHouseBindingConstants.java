@@ -24,11 +24,16 @@ public class IntelliHouseBindingConstants {
     public static final String BINDING_ID = "intellihouse";
 
     // List of all Thing Type UIDs
-    public final static ThingTypeUID THING_TYPE_DIMMER = new ThingTypeUID(BINDING_ID, "dimmer");
-    public final static ThingTypeUID THING_TYPE_SWITCH = new ThingTypeUID(BINDING_ID, "switch");
+    public static final ThingTypeUID THING_TYPE_DIMMER = new ThingTypeUID(BINDING_ID, "dimmer");
+    public static final ThingTypeUID THING_TYPE_SWITCH = new ThingTypeUID(BINDING_ID, "switch");
+    public static final ThingTypeUID THING_TYPE_PV_DATE_TIME = new ThingTypeUID(BINDING_ID, "pvDateTime");
+    public static final ThingTypeUID THING_TYPE_PV_NUMBER = new ThingTypeUID(BINDING_ID, "pvNumber");
+    public static final ThingTypeUID THING_TYPE_PV_STRING = new ThingTypeUID(BINDING_ID, "pvString");
 
     // // List of all Channel ids
     // public final static String CHANNEL_1 = "channel1";
+    // Most Channel-IDs are dynamic! They depend on the configuration of the raspberry-pis.
+    // The channels of the PV interface are the property-names of the bean-class PvStatus (the DTO).
 
     /**
      * {@link String}-representation of the thing's Host-ID. Must be configured in the

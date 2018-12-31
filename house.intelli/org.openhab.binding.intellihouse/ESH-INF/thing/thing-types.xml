@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
 
     <thing-type id="dimmer">
-        <label>IntelliHouse Dimmer</label>
+        <label>IntelliHouse dimmer</label>
         <description>Dimmer controlling lights or other dimmable devices.</description>
 
 <!-- Channels are dynamic! The last segment of a channel's UID, i.e. the channel-id, is the same as the Spring-bean-id. 
@@ -23,8 +23,23 @@
     </thing-type>
     
     <thing-type id="switch">
-        <label>IntelliHouse Switch</label>
+        <label>IntelliHouse switch</label>
         <description>Switch lights or other devices on/off.</description>
+    </thing-type>
+
+    <thing-type id="pvDateTime">
+        <label>IntelliHouse photovoltaic date+time</label>
+        <description>Read date+time sensor data from the photovoltaic system.</description>
+    </thing-type>
+
+    <thing-type id="pvNumber">
+        <label>IntelliHouse photovoltaic number</label>
+        <description>Read numeric sensor data from the photovoltaic system.</description>
+    </thing-type>
+
+    <thing-type id="pvString">
+        <label>IntelliHouse photovoltaic string</label>
+        <description>Read textual sensor data from the photovoltaic system.</description>
     </thing-type>
 
     <channel-type id="dimmer-channel">

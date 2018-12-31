@@ -20,6 +20,9 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.openhab.binding.intellihouse.handler.IntelliHouseDimmerHandler;
+import org.openhab.binding.intellihouse.handler.IntelliHousePvDateTimeHandler;
+import org.openhab.binding.intellihouse.handler.IntelliHousePvNumberHandler;
+import org.openhab.binding.intellihouse.handler.IntelliHousePvStringHandler;
 import org.openhab.binding.intellihouse.handler.IntelliHouseSwitchHandler;
 
 /**
@@ -49,7 +52,15 @@ public class IntelliHouseHandlerFactory extends BaseThingHandlerFactory {
         if (thingTypeUID.equals(THING_TYPE_SWITCH)) {
             return new IntelliHouseSwitchHandler(thing);
         }
-
+        if (thingTypeUID.equals(THING_TYPE_PV_DATE_TIME)) {
+            return new IntelliHousePvDateTimeHandler(thing);
+        }
+        if (thingTypeUID.equals(THING_TYPE_PV_NUMBER)) {
+            return new IntelliHousePvNumberHandler(thing);
+        }
+        if (thingTypeUID.equals(THING_TYPE_PV_STRING)) {
+            return new IntelliHousePvStringHandler(thing);
+        }
         return null;
     }
 }
