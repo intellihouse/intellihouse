@@ -242,7 +242,7 @@ public class DataCollectorBufferAndEventNotifier {
 
 					File[] children2 = child.listFiles();
 					if (children2 == null || children2.length == 0)
-						dirOrFile.delete(); // delete empty directories
+						child.delete(); // delete empty directories
 				}
 			}
 		}
