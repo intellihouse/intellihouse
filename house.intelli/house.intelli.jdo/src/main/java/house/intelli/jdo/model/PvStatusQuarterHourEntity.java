@@ -11,24 +11,18 @@ import javax.jdo.annotations.Queries;
 import javax.jdo.annotations.Query;
 import javax.jdo.annotations.Unique;
 
-import house.intelli.core.pv.PvStatus;
+import house.intelli.core.pv.AggregatedPvStatus;
 import house.intelli.jdo.Entity;
 
-@PersistenceCapable(table = "PvStatus")
+@PersistenceCapable(table = "PvStatusQuarterHour")
 @Inheritance(strategy = InheritanceStrategy.NEW_TABLE)
-@Unique(name = "PvStatusEntity_deviceName_measured", members = {"deviceName", "measured"})
+@Unique(name = "PvStatusQuarterHourEntity_deviceName_measured", members = {"deviceName", "measured"})
 @Queries({
-	@Query(name = "getPvStatusEntity_deviceName_measured",
-			value = "SELECT UNIQUE WHERE this.deviceName == :deviceName && this.measured == :measured"),
-
-	@Query(name = "getFirstMeasured", value = "SELECT min(this.measured)"),
-	@Query(name = "getFirstMeasuredAfter_id", value = "SELECT min(this.measured) WHERE this.id > :lastAggregatedId"),
-
-	@Query(name = "getPvStatusEntitiesMeasuredBetween_fromIncl_toExcl",
-			value = "SELECT WHERE this.measured >= :fromIncl && this.measured < :toExcl ORDER BY this.measured ASC")
-
+	@Query(name = "getPvStatusQuarterHourEntity_deviceName_measured", value = "SELECT UNIQUE WHERE this.deviceName == :deviceName && this.measured == :measured")
 })
-public class PvStatusEntity extends Entity implements PvStatus {
+public class PvStatusQuarterHourEntity extends Entity implements AggregatedPvStatus {
+
+	public static final int AGGREGATE_PERIOD_MILLIS = 15 * 60_000;
 
 	@Persistent(nullValue = NullValue.EXCEPTION)
 	private String deviceName;
@@ -103,7 +97,7 @@ public class PvStatusEntity extends Entity implements PvStatus {
 	 */
 	private float pvPower;
 
-	public PvStatusEntity() {
+	public PvStatusQuarterHourEntity() {
 	}
 
 	@Override
@@ -122,6 +116,11 @@ public class PvStatusEntity extends Entity implements PvStatus {
 	@Override
 	public void setMeasured(Date measured) {
 		this.measured = measured;
+	}
+
+	@Override
+	public int getAggregatePeriodMillis() {
+		return AGGREGATE_PERIOD_MILLIS;
 	}
 
 	@Override
@@ -305,7 +304,7 @@ public class PvStatusEntity extends Entity implements PvStatus {
 
 	@Override
 	public String toString() {
-		return "PvStatusEntity [deviceName=" + deviceName + ", measured=" + measured
+		return "PvStatusQuarterHourEntity [deviceName=" + deviceName + ", measured=" + measured
 				+ ", deviceMode=" + deviceMode + ", acInVoltage=" + acInVoltage + ", acInFrequency=" + acInFrequency
 				+ ", acOutVoltage=" + acOutVoltage + ", acOutFrequency=" + acOutFrequency + ", acOutApparentPower=" + acOutApparentPower
 				+ ", acOutActivePower=" + acOutActivePower + ", acOutLoadPercentage=" + acOutLoadPercentage

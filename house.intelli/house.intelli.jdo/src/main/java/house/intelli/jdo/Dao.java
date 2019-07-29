@@ -7,12 +7,8 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOObjectNotFoundException;
@@ -36,8 +32,8 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 	private final Class<E> entityClass;
 	private final Class<D> daoClass;
 	private DaoProvider daoProvider;
-	private static final int LOAD_PACKAGE_SIZE = 1000;
-	private static final int LOAD_DTOS_PACKAGE_SIZE = 1000;
+//	private static final int LOAD_PACKAGE_SIZE = 1000;
+//	private static final int LOAD_DTOS_PACKAGE_SIZE = 1000;
 
 	/**
 	 * Instantiate the Dao.
@@ -241,102 +237,102 @@ public abstract class Dao<E extends Entity, D extends Dao<E, D>> implements Cont
 		pm().deletePersistentAll(entities);
 	}
 
-	protected Collection<E> load(final Collection<E> entities) {
-		requireNonNull(entities, "entities");
-		final Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
-		int entitiesSize = 0;
-		for (final E entity : entities) {
-			Set<Long> entityIDs = entityClass2EntityIDs.get(entity.getClass());
-			if (entityIDs == null) {
-				entityIDs = new TreeSet<>();
-				entityClass2EntityIDs.put(entity.getClass(), entityIDs);
-			}
-			entityIDs.add(entity.getId());
-			++entitiesSize;
-		}
-
-		final Collection<E> result = new ArrayList<>(entitiesSize);
-		for (final Map.Entry<Class<? extends Entity>, Set<Long>> me : entityClass2EntityIDs.entrySet()) {
-			final Class<? extends Entity> entityClass = me.getKey();
-			final Query query = pm().newQuery(pm().getExtent(entityClass, false));
-			query.setFilter(":entityIDs.contains(this.id)");
-
-			final Set<Long> entityIDs = me.getValue();
-			int idx = -1;
-			final Set<Long> entityIDSubSet = new HashSet<>(300);
-			for (final Long entityID : entityIDs) {
-				++idx;
-				entityIDSubSet.add(entityID);
-				if (idx > LOAD_PACKAGE_SIZE) {
-					idx = -1;
-					populateLoadResult(result, query, entityIDSubSet);
-				}
-			}
-			populateLoadResult(result, query, entityIDSubSet);
-		}
-		return result;
-	}
-
-	private void populateLoadResult(final Collection<E> result, final Query query, final Set<Long> entityIDSubSet) {
-		if (entityIDSubSet.isEmpty())
-			return;
-
-		@SuppressWarnings("unchecked")
-		final Collection<E> c = (Collection<E>) query.execute(entityIDSubSet);
-		result.addAll(c);
-		query.closeAll();
-		entityIDSubSet.clear();
-	}
-
-	protected <T> List<T> loadDtos(final Collection<E> entities, final Class<T> dtoClass, final String queryResult) {
-		requireNonNull(entities, "entities");
-		requireNonNull(dtoClass, "dtoClass");
-		final Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
-		int entitiesSize = 0;
-		for (final E entity : entities) {
-			Set<Long> entityIDs = entityClass2EntityIDs.get(entity.getClass());
-			if (entityIDs == null) {
-				entityIDs = new TreeSet<>();
-				entityClass2EntityIDs.put(entity.getClass(), entityIDs);
-			}
-			entityIDs.add(entity.getId());
-			++entitiesSize;
-		}
-
-		final List<T> result = new ArrayList<>(entitiesSize);
-		for (final Map.Entry<Class<? extends Entity>, Set<Long>> me : entityClass2EntityIDs.entrySet()) {
-			final Class<? extends Entity> entityClass = me.getKey();
-			final Query query = pm().newQuery(pm().getExtent(entityClass, false));
-			query.setResultClass(dtoClass);
-			query.setResult(queryResult);
-			query.setFilter(":entityIDs.contains(this.id)");
-
-			final Set<Long> entityIDs = me.getValue();
-			int idx = -1;
-			final Set<Long> entityIDSubSet = new HashSet<>(300);
-			for (final Long entityID : entityIDs) {
-				++idx;
-				entityIDSubSet.add(entityID);
-				if (idx > LOAD_DTOS_PACKAGE_SIZE) {
-					idx = -1;
-					populateLoadDtosResult(result, query, entityIDSubSet);
-				}
-			}
-			populateLoadDtosResult(result, query, entityIDSubSet);
-		}
-		return result;
-	}
-
-	private <T> void populateLoadDtosResult(final Collection<T> result, final Query query, final Set<Long> entityIDSubSet) {
-		if (entityIDSubSet.isEmpty())
-			return;
-
-		@SuppressWarnings("unchecked")
-		final Collection<T> c = (Collection<T>) query.execute(entityIDSubSet);
-		result.addAll(c);
-		query.closeAll();
-		entityIDSubSet.clear();
-	}
+//	protected Collection<E> load(final Collection<E> entities) {
+//		requireNonNull(entities, "entities");
+//		final Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
+//		int entitiesSize = 0;
+//		for (final E entity : entities) {
+//			Set<Long> entityIDs = entityClass2EntityIDs.get(entity.getClass());
+//			if (entityIDs == null) {
+//				entityIDs = new TreeSet<>();
+//				entityClass2EntityIDs.put(entity.getClass(), entityIDs);
+//			}
+//			entityIDs.add(entity.getId());
+//			++entitiesSize;
+//		}
+//
+//		final Collection<E> result = new ArrayList<>(entitiesSize);
+//		for (final Map.Entry<Class<? extends Entity>, Set<Long>> me : entityClass2EntityIDs.entrySet()) {
+//			final Class<? extends Entity> entityClass = me.getKey();
+//			final Query query = pm().newQuery(pm().getExtent(entityClass, false));
+//			query.setFilter(":entityIDs.contains(this.id)");
+//
+//			final Set<Long> entityIDs = me.getValue();
+//			int idx = -1;
+//			final Set<Long> entityIDSubSet = new HashSet<>(300);
+//			for (final Long entityID : entityIDs) {
+//				++idx;
+//				entityIDSubSet.add(entityID);
+//				if (idx > LOAD_PACKAGE_SIZE) {
+//					idx = -1;
+//					populateLoadResult(result, query, entityIDSubSet);
+//				}
+//			}
+//			populateLoadResult(result, query, entityIDSubSet);
+//		}
+//		return result;
+//	}
+//
+//	private void populateLoadResult(final Collection<E> result, final Query query, final Set<Long> entityIDSubSet) {
+//		if (entityIDSubSet.isEmpty())
+//			return;
+//
+//		@SuppressWarnings("unchecked")
+//		final Collection<E> c = (Collection<E>) query.execute(entityIDSubSet);
+//		result.addAll(c);
+//		query.closeAll();
+//		entityIDSubSet.clear();
+//	}
+//
+//	protected <T> List<T> loadDtos(final Collection<E> entities, final Class<T> dtoClass, final String queryResult) {
+//		requireNonNull(entities, "entities");
+//		requireNonNull(dtoClass, "dtoClass");
+//		final Map<Class<? extends Entity>, Set<Long>> entityClass2EntityIDs = new HashMap<>();
+//		int entitiesSize = 0;
+//		for (final E entity : entities) {
+//			Set<Long> entityIDs = entityClass2EntityIDs.get(entity.getClass());
+//			if (entityIDs == null) {
+//				entityIDs = new TreeSet<>();
+//				entityClass2EntityIDs.put(entity.getClass(), entityIDs);
+//			}
+//			entityIDs.add(entity.getId());
+//			++entitiesSize;
+//		}
+//
+//		final List<T> result = new ArrayList<>(entitiesSize);
+//		for (final Map.Entry<Class<? extends Entity>, Set<Long>> me : entityClass2EntityIDs.entrySet()) {
+//			final Class<? extends Entity> entityClass = me.getKey();
+//			final Query query = pm().newQuery(pm().getExtent(entityClass, false));
+//			query.setResultClass(dtoClass);
+//			query.setResult(queryResult);
+//			query.setFilter(":entityIDs.contains(this.id)");
+//
+//			final Set<Long> entityIDs = me.getValue();
+//			int idx = -1;
+//			final Set<Long> entityIDSubSet = new HashSet<>(300);
+//			for (final Long entityID : entityIDs) {
+//				++idx;
+//				entityIDSubSet.add(entityID);
+//				if (idx > LOAD_DTOS_PACKAGE_SIZE) {
+//					idx = -1;
+//					populateLoadDtosResult(result, query, entityIDSubSet);
+//				}
+//			}
+//			populateLoadDtosResult(result, query, entityIDSubSet);
+//		}
+//		return result;
+//	}
+//
+//	private <T> void populateLoadDtosResult(final Collection<T> result, final Query query, final Set<Long> entityIDSubSet) {
+//		if (entityIDSubSet.isEmpty())
+//			return;
+//
+//		@SuppressWarnings("unchecked")
+//		final Collection<T> c = (Collection<T>) query.execute(entityIDSubSet);
+//		result.addAll(c);
+//		query.closeAll();
+//		entityIDSubSet.clear();
+//	}
 
 	private final Map<Class<? extends Dao<?,?>>, Dao<?,?>> daoClass2DaoInstance = new HashMap<>(3);
 
