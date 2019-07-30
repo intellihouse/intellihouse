@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import house.intelli.jdo.model.PvStatusEntity;
+import house.intelli.jdo.model.PvStatusHourEntity;
 import house.intelli.jdo.model.PvStatusMinuteEntity;
 import house.intelli.jdo.model.PvStatusQuarterHourEntity;
 
@@ -125,6 +126,7 @@ public class JdoPersistenceServiceCfgReader {
     pm.getExtent(PvStatusEntity.class);
     pm.getExtent(PvStatusMinuteEntity.class);
     pm.getExtent(PvStatusQuarterHourEntity.class);
+    pm.getExtent(PvStatusHourEntity.class);
 	}
 
 }

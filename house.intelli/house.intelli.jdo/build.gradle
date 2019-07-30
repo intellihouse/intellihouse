@@ -4,7 +4,7 @@ dependencies {
 	compile group: 'org.datanucleus', name: 'datanucleus-core' , version: '5.2.0-m2'
 	compile group: 'org.datanucleus', name: 'datanucleus-api-jdo' , version: '5.2.0-m2'
 	compile group: 'org.datanucleus', name: 'datanucleus-rdbms' , version: '5.2.0-m2'
-	testCompile group: 'org.postgresql', name: 'postgresql' , version: '42.2.5.jre7'
+	testCompile group: 'org.postgresql', name: 'postgresql' , version: postgresqlVersion
 }
 
 compileJava.doLast {

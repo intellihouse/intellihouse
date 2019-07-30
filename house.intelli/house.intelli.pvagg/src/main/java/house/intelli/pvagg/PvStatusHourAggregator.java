@@ -7,25 +7,25 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 import house.intelli.core.TimeInterval;
-import house.intelli.jdo.model.PvStatusMinuteDao;
-import house.intelli.jdo.model.PvStatusMinuteEntity;
+import house.intelli.jdo.model.PvStatusHourDao;
+import house.intelli.jdo.model.PvStatusHourEntity;
 
-public class PvStatusMinuteAggregator extends PvStatusAggregator<PvStatusMinuteEntity> {
+public class PvStatusHourAggregator extends PvStatusAggregator<PvStatusHourEntity> {
 
 	@Override
-	protected PvStatusMinuteEntity createAggregatedPvStatusEntity() {
-		return new PvStatusMinuteEntity();
+	protected PvStatusHourEntity createAggregatedPvStatusEntity() {
+		return new PvStatusHourEntity();
 	}
 
 	@Override
-	protected PvStatusMinuteEntity getAggregatedPvStatus(String deviceName, Date measured) {
-		return getTransactionOrFail().getDao(PvStatusMinuteDao.class).getPvStatusMinuteEntity(deviceName, measured);
+	protected PvStatusHourEntity getAggregatedPvStatus(String deviceName, Date measured) {
+		return getTransactionOrFail().getDao(PvStatusHourDao.class).getPvStatusHourEntity(deviceName, measured);
 	}
 
 	@Override
-	protected void persistAggregatedPvStatus(PvStatusMinuteEntity aggregatedPvStatus) {
+	protected void persistAggregatedPvStatus(PvStatusHourEntity aggregatedPvStatus) {
 		requireNonNull(aggregatedPvStatus, "aggregatedPvStatus");
-		getTransactionOrFail().getDao(PvStatusMinuteDao.class).makePersistent(aggregatedPvStatus);
+		getTransactionOrFail().getDao(PvStatusHourDao.class).makePersistent(aggregatedPvStatus);
 	}
 
 	@Override
@@ -35,9 +35,10 @@ public class PvStatusMinuteAggregator extends PvStatusAggregator<PvStatusMinuteE
 		cal.setTime(timestamp);
 		cal.set(Calendar.MILLISECOND, 0);
 		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MINUTE, 0);
 
 		Date startDateInclusive = cal.getTime();
-		cal.add(Calendar.MINUTE, 1);
+		cal.add(Calendar.HOUR, 1);
 		Date endDateExclusive = cal.getTime();
 
 		if (startDateInclusive.after(timestamp))

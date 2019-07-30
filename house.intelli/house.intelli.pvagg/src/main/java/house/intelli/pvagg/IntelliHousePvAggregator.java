@@ -1,9 +1,11 @@
 package house.intelli.pvagg;
 
 import static house.intelli.core.util.Util.*;
+import static java.util.Objects.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLDecoder;
 
 import javax.jdo.PersistenceManagerFactory;
 
@@ -31,6 +33,7 @@ public class IntelliHousePvAggregator {
 
 	public static void main(String[] args) throws Exception {
 		initLogging();
+		parseArgsIntoSystemProperties(args);
 		IntelliHousePvAggregator intelliHousePvAggregator = new IntelliHousePvAggregator();
 		intelliHousePvAggregator.run();
 	}
@@ -39,12 +42,12 @@ public class IntelliHousePvAggregator {
 		String baseDirString = System.getProperty(PROPERTY_KEY_OPENHAB_BASE_DIR);
 		if (baseDirString == null || baseDirString.isEmpty())
 			throw new IllegalStateException(String.format(
-					"System-property missing: %s", PROPERTY_KEY_OPENHAB_BASE_DIR));
+					"Property missing: %s", PROPERTY_KEY_OPENHAB_BASE_DIR));
 
 		baseDir = new File(baseDirString);
 		if (! baseDir.isDirectory())
 			throw new IllegalStateException(String.format(
-					"System-property points to non-existent directory: %s = %s",
+					"Property points to non-existent directory: %s = %s",
 					PROPERTY_KEY_OPENHAB_BASE_DIR, baseDir.getAbsolutePath()));
 
 		confDir = new File(baseDir, "conf");
@@ -75,6 +78,22 @@ public class IntelliHousePvAggregator {
 
 		JdoPersistenceServiceCfgReader pmfPropertiesReader = JdoPersistenceServiceCfgReader.fromJdoPersistenceServiceCfgFile(jdoPersistenceServiceCfgFile);
 		return pmfPropertiesReader.getPersistenceManagerFactory();
+	}
+
+	private static void parseArgsIntoSystemProperties(String[] args) throws Exception {
+		requireNonNull(args, "args");
+		for (String arg : args) {
+			int equalsCharIndex = arg.indexOf('=');
+			if (equalsCharIndex < 0)
+				throw new IllegalArgumentException("Program-argument is not a key-value-pair separated by an equals-character (=): " + arg);
+
+			String key = arg.substring(0, equalsCharIndex);
+			String value = arg.substring(equalsCharIndex + 1);
+
+			key = URLDecoder.decode(key, "UTF-8");
+			value = URLDecoder.decode(value, "UTF-8");
+			System.setProperty(key, value);
+		}
 	}
 
 	private static void initLogging() throws IOException, JoranException {

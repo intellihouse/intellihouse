@@ -27,18 +27,13 @@ public class PvStatusQuarterHourAggregator extends PvStatusAggregator<PvStatusQu
 
 	@Override
 	protected PvStatusQuarterHourEntity getAggregatedPvStatus(String deviceName, Date measured) {
-		return getTransactionOrFail().getDao(PvStatusQuarterHourDao.class).getPvStatusMinuteEntity(deviceName, measured);
+		return getTransactionOrFail().getDao(PvStatusQuarterHourDao.class).getPvStatusQuarterHourEntity(deviceName, measured);
 	}
 
 	@Override
 	protected void persistAggregatedPvStatus(PvStatusQuarterHourEntity aggregatedPvStatus) {
 		requireNonNull(aggregatedPvStatus, "aggregatedPvStatus");
 		getTransactionOrFail().getDao(PvStatusQuarterHourDao.class).makePersistent(aggregatedPvStatus);
-	}
-
-	@Override
-	public long getAggregatePeriodMillis() {
-		return PvStatusQuarterHourEntity.AGGREGATE_PERIOD_MILLIS;
 	}
 
 	@Override

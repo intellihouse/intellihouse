@@ -2,7 +2,14 @@ package house.intelli.pvagg;
 
 import static java.util.Objects.*;
 
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +31,77 @@ public abstract class PvStatusAggregator<A extends AggregatedPvStatus> {
 
 	protected abstract void persistAggregatedPvStatus(A aggregatedPvStatus);
 
-	public abstract long getAggregatePeriodMillis();
+	private static final Map<String, AggregateType> propertyName2AggregateType = new HashMap<>();
+	private static final Map<String, AggregateSource> propertyName2AggregateSource = new HashMap<>();
+
+	static {
+		propertyName2AggregateType.put("class", AggregateType.NONE);
+		propertyName2AggregateType.put("id", AggregateType.NONE);
+		propertyName2AggregateType.put("deviceName", AggregateType.NONE);
+		propertyName2AggregateType.put("measured", AggregateType.NONE);
+		propertyName2AggregateType.put("created", AggregateType.NONE);
+		propertyName2AggregateType.put("changed", AggregateType.NONE);
+		propertyName2AggregateType.put("aggregatePeriodMillis", AggregateType.NONE);
+
+		propertyName2AggregateType.put("deviceMode", AggregateType.MAX); // 'L' > 'B' : We want it to show the worst case.
+
+		propertyName2AggregateType.put("acInVoltage", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("acInFrequency", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("acOutVoltage", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("acOutFrequency", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("acOutApparentPower", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("acOutActivePower", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("acOutLoadPercentage", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("internalBusVoltage", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("batteryVoltageAtInverter", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("batteryChargeCurrent", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("batteryCapacityPercentage", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("heatSinkTemperature", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("pvToBatteryCurrent", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("pvVoltage", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("batteryVoltageAtCharger", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("batteryDischargeCurrent", AggregateType.AVERAGE);
+		propertyName2AggregateType.put("pvPower", AggregateType.AVERAGE);
+
+		propertyName2AggregateType.put("statusBitmask", AggregateType.LAST);
+		propertyName2AggregateType.put("eepromVersion", AggregateType.LAST);
+
+		propertyName2AggregateSource.put("acInVoltageMin", new AggregateSource("acInVoltage", AggregateType.MIN));
+		propertyName2AggregateSource.put("acInFrequencyMin", new AggregateSource("acInFrequency", AggregateType.MIN));
+		propertyName2AggregateSource.put("acOutVoltageMin", new AggregateSource("acOutVoltage", AggregateType.MIN));
+		propertyName2AggregateSource.put("acOutFrequencyMin", new AggregateSource("acOutFrequency", AggregateType.MIN));
+		propertyName2AggregateSource.put("acOutApparentPowerMin", new AggregateSource("acOutApparentPower", AggregateType.MIN));
+		propertyName2AggregateSource.put("acOutActivePowerMin", new AggregateSource("acOutActivePower", AggregateType.MIN));
+		propertyName2AggregateSource.put("acOutLoadPercentageMin", new AggregateSource("acOutLoadPercentage", AggregateType.MIN));
+		propertyName2AggregateSource.put("internalBusVoltageMin", new AggregateSource("internalBusVoltage", AggregateType.MIN));
+		propertyName2AggregateSource.put("batteryVoltageAtInverterMin", new AggregateSource("batteryVoltageAtInverter", AggregateType.MIN));
+		propertyName2AggregateSource.put("batteryChargeCurrentMin", new AggregateSource("batteryChargeCurrent", AggregateType.MIN));
+		propertyName2AggregateSource.put("batteryCapacityPercentageMin", new AggregateSource("batteryCapacityPercentage", AggregateType.MIN));
+		propertyName2AggregateSource.put("heatSinkTemperatureMin", new AggregateSource("heatSinkTemperature", AggregateType.MIN));
+		propertyName2AggregateSource.put("pvToBatteryCurrentMin", new AggregateSource("pvToBatteryCurrent", AggregateType.MIN));
+		propertyName2AggregateSource.put("pvVoltageMin", new AggregateSource("pvVoltage", AggregateType.MIN));
+		propertyName2AggregateSource.put("batteryVoltageAtChargerMin", new AggregateSource("batteryVoltageAtCharger", AggregateType.MIN));
+		propertyName2AggregateSource.put("batteryDischargeCurrentMin", new AggregateSource("batteryDischargeCurrent", AggregateType.MIN));
+		propertyName2AggregateSource.put("pvPowerMin", new AggregateSource("pvPower", AggregateType.MIN));
+
+		propertyName2AggregateSource.put("acInVoltageMax", new AggregateSource("acInVoltage", AggregateType.MAX));
+		propertyName2AggregateSource.put("acInFrequencyMax", new AggregateSource("acInFrequency", AggregateType.MAX));
+		propertyName2AggregateSource.put("acOutVoltageMax", new AggregateSource("acOutVoltage", AggregateType.MAX));
+		propertyName2AggregateSource.put("acOutFrequencyMax", new AggregateSource("acOutFrequency", AggregateType.MAX));
+		propertyName2AggregateSource.put("acOutApparentPowerMax", new AggregateSource("acOutApparentPower", AggregateType.MAX));
+		propertyName2AggregateSource.put("acOutActivePowerMax", new AggregateSource("acOutActivePower", AggregateType.MAX));
+		propertyName2AggregateSource.put("acOutLoadPercentageMax", new AggregateSource("acOutLoadPercentage", AggregateType.MAX));
+		propertyName2AggregateSource.put("internalBusVoltageMax", new AggregateSource("internalBusVoltage", AggregateType.MAX));
+		propertyName2AggregateSource.put("batteryVoltageAtInverterMax", new AggregateSource("batteryVoltageAtInverter", AggregateType.MAX));
+		propertyName2AggregateSource.put("batteryChargeCurrentMax", new AggregateSource("batteryChargeCurrent", AggregateType.MAX));
+		propertyName2AggregateSource.put("batteryCapacityPercentageMax", new AggregateSource("batteryCapacityPercentage", AggregateType.MAX));
+		propertyName2AggregateSource.put("heatSinkTemperatureMax", new AggregateSource("heatSinkTemperature", AggregateType.MAX));
+		propertyName2AggregateSource.put("pvToBatteryCurrentMax", new AggregateSource("pvToBatteryCurrent", AggregateType.MAX));
+		propertyName2AggregateSource.put("pvVoltageMax", new AggregateSource("pvVoltage", AggregateType.MAX));
+		propertyName2AggregateSource.put("batteryVoltageAtChargerMax", new AggregateSource("batteryVoltageAtCharger", AggregateType.MAX));
+		propertyName2AggregateSource.put("batteryDischargeCurrentMax", new AggregateSource("batteryDischargeCurrent", AggregateType.MAX));
+		propertyName2AggregateSource.put("pvPowerMax", new AggregateSource("pvPower", AggregateType.MAX));
+	}
 
 	/**
 	 * Calculate the time-interval which encloses the given {@code timestamp}.
@@ -48,7 +125,9 @@ public abstract class PvStatusAggregator<A extends AggregatedPvStatus> {
 		this.transaction = transaction;
 	}
 
-	public void aggregate(List<PvStatusEntity> pvStatusEntities) {
+	public void aggregate(final List<PvStatusEntity> pvStatusEntities) {
+		final Map<String, PropertyDescriptor> sourcePropertyName2PropertyDescriptor = getPropertyName2PropertyDescriptorMap(PvStatusEntity.class);
+
 		SortedMap<TimeInterval, Map<String, List<PvStatusEntity>>> timeInterval2DeviceName2PvStatusEntities = split(pvStatusEntities);
 		for (Map.Entry<TimeInterval, Map<String, List<PvStatusEntity>>> me1 : timeInterval2DeviceName2PvStatusEntities.entrySet()) {
 			TimeInterval timeInterval = me1.getKey();
@@ -56,44 +135,219 @@ public abstract class PvStatusAggregator<A extends AggregatedPvStatus> {
 			for (Map.Entry<String, List<PvStatusEntity>> me2 : deviceName2PvStatusEntities.entrySet()) {
 				String deviceName = me2.getKey();
 				List<PvStatusEntity> subPvStatusEntities = me2.getValue();
+				if (subPvStatusEntities.isEmpty())
+					throw new IllegalStateException("subPvStatusEntities.isEmpty()");
+
 				A aggregatedPvStatus = getAggregatedPvStatus(deviceName, timeInterval.getFromIncl());
 				if (aggregatedPvStatus == null)
 					aggregatedPvStatus = createAggregatedPvStatusEntity();
 
+				BeanInfo targetBeanInfo;
+				try {
+					targetBeanInfo = Introspector.getBeanInfo(aggregatedPvStatus.getClass());
+				} catch (IntrospectionException e) {
+					throw new RuntimeException(e);
+				}
+
+				for (PropertyDescriptor targetPropertyDescriptor : targetBeanInfo.getPropertyDescriptors()) {
+					String targetPropertyName = targetPropertyDescriptor.getName();
+					AggregateSource aggregateSource = getAggregateSource(targetPropertyName);
+					requireNonNull(aggregateSource, "getAggregateSource(\"" + targetPropertyName + "\")");
+					if (AggregateType.NONE == aggregateSource.getAggregateType())
+						continue;
+
+					String sourcePropertyName = aggregateSource.getSourcePropertyName();
+					PropertyDescriptor sourcePropertyDescriptor = sourcePropertyName2PropertyDescriptor.get(sourcePropertyName);
+					requireNonNull(sourcePropertyDescriptor, "sourcePropertyDescriptor[\"" + sourcePropertyName + "\"]");
+
+					Method sourceReadMethod = sourcePropertyDescriptor.getReadMethod();
+					requireNonNull(sourceReadMethod, "sourceReadMethod for sourcePropertyName=\"" + sourcePropertyName + "\"");
+
+					Method targetWriteMethod = targetPropertyDescriptor.getWriteMethod();
+					requireNonNull(targetWriteMethod, "targetWriteMethod for targetPropertyName=\"" + targetPropertyName + "\"");
+
+					aggregate(aggregateSource.getAggregateType(), subPvStatusEntities, aggregatedPvStatus, sourceReadMethod, targetWriteMethod);
+				}
+
 				aggregatedPvStatus.setMeasured(timeInterval.getFromIncl());
 				aggregatedPvStatus.setDeviceName(deviceName);
-
-				aggregatedPvStatus.setAcInFrequency(average(subPvStatusEntities, PvStatusEntity::getAcInFrequency));
-				aggregatedPvStatus.setAcInVoltage(average(subPvStatusEntities, PvStatusEntity::getAcInVoltage));
-				aggregatedPvStatus.setAcOutActivePower(average(subPvStatusEntities, PvStatusEntity::getAcOutActivePower));
-				aggregatedPvStatus.setAcOutApparentPower(average(subPvStatusEntities, PvStatusEntity::getAcOutApparentPower));
-				aggregatedPvStatus.setPvPower(average(subPvStatusEntities, PvStatusEntity::getPvPower));
 
 				persistAggregatedPvStatus(aggregatedPvStatus);
 			}
 		}
 	}
 
-	@FunctionalInterface
-	public static interface PvStatusEntityFloatProperty {
+	protected void aggregate(final AggregateType aggregateType,
+			final List<PvStatusEntity> subPvStatusEntities, final A aggregatedPvStatus,
+			final Method sourceReadMethod, final Method targetWriteMethod) {
 
-		float getPropertyValue(PvStatusEntity pvStatusEntity);
-
+		switch (aggregateType) {
+			case NONE:
+				return; // do nothing
+			case AVERAGE: {
+				double value = aggAverage(subPvStatusEntities, sourceReadMethod);
+				writePropertyValueWithConversion(aggregatedPvStatus, targetWriteMethod, value);
+				break;
+			}
+			case MIN: {
+				Comparable<?> value = aggMin(subPvStatusEntities, sourceReadMethod);
+				writePropertyValue(aggregatedPvStatus, targetWriteMethod, value);
+				break;
+			}
+			case MAX: {
+				Comparable<?> value = aggMax(subPvStatusEntities, sourceReadMethod);
+				writePropertyValue(aggregatedPvStatus, targetWriteMethod, value);
+				break;
+			}
+			case FIRST: {
+				Object value = aggFirst(subPvStatusEntities, sourceReadMethod);
+				writePropertyValue(aggregatedPvStatus, targetWriteMethod, value);
+				break;
+			}
+			case LAST: {
+				Object value = aggLast(subPvStatusEntities, sourceReadMethod);
+				writePropertyValue(aggregatedPvStatus, targetWriteMethod, value);
+				break;
+			}
+			default:
+				throw new IllegalStateException("Unknown aggregateType: " + aggregateType);
+		}
 	}
 
-	private float average(List<PvStatusEntity> subPvStatusEntities, PvStatusEntityFloatProperty property) {
+	protected Map<String, PropertyDescriptor> getPropertyName2PropertyDescriptorMap(final Class<?> beanClass) {
+		requireNonNull(beanClass, "beanClass");
+		final BeanInfo beanInfo;
+		try {
+			beanInfo = Introspector.getBeanInfo(beanClass);
+		} catch (IntrospectionException e) {
+			throw new RuntimeException(e);
+		}
+		requireNonNull(beanInfo, "beanInfo");
+		PropertyDescriptor[] propertyDescriptors = requireNonNull(beanInfo.getPropertyDescriptors(), "beanInfo.getPropertyDescriptors() for beanClass=" + beanClass.getName());
+		Map<String, PropertyDescriptor> propertyName2PropertyDescriptor = new HashMap<>(propertyDescriptors.length);
+		for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+			propertyName2PropertyDescriptor.put(propertyDescriptor.getName(), propertyDescriptor);
+		}
+		return propertyName2PropertyDescriptor;
+	}
+
+	protected AggregateSource getAggregateSource(String targetPropertyName) {
+		AggregateType aggregateType = propertyName2AggregateType.get(targetPropertyName);
+		if (aggregateType != null)
+			return new AggregateSource(targetPropertyName, aggregateType);
+
+		return propertyName2AggregateSource.get(targetPropertyName);
+	}
+
+	private final Object readPropertyValue(final Object bean, final Method readMethod) {
+		requireNonNull(bean, "bean");
+		requireNonNull(readMethod, "readMethod");
+		try {
+			return readMethod.invoke(bean);
+		} catch (IllegalAccessException | InvocationTargetException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private final void writePropertyValue(final Object bean, final Method writeMethod, final Object value) {
+		requireNonNull(bean, "bean");
+		requireNonNull(writeMethod, "writeMethod");
+		try {
+			writeMethod.invoke(bean, value);
+		} catch (IllegalAccessException | InvocationTargetException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private final void writePropertyValueWithConversion(final Object bean, final Method writeMethod, final Object value) {
+		requireNonNull(bean, "bean");
+		requireNonNull(writeMethod, "writeMethod");
+		final Class<?> targetType = writeMethod.getParameterTypes()[0];
+		final Object convertedValue = convert(targetType, value);
+		writePropertyValue(bean, writeMethod, convertedValue);
+	}
+
+	private final Object convert(final Class<?> targetType, final Object value) {
+		if (value == null)
+			return value;
+
+		if (targetType.isAssignableFrom(value.getClass()))
+			return value;
+
+		if (value instanceof Number) {
+			if (float.class.isAssignableFrom(targetType) || Float.class.isAssignableFrom(targetType))
+				return ((Number) value).floatValue();
+
+			if (double.class.isAssignableFrom(targetType) || Double.class.isAssignableFrom(targetType))
+				return ((Number) value).doubleValue();
+		}
+
+		throw new IllegalArgumentException(String.format("Cannot convert value of type %s to targetType %s!", value.getClass().getName(), targetType.getName()));
+	}
+
+	private <T extends Comparable<T>> T aggMin(final List<PvStatusEntity> subPvStatusEntities, final Method readMethod) {
+		requireNonNull(subPvStatusEntities, "subPvStatusEntities");
+		requireNonNull(readMethod, "readMethod");
+		T result = null;
+		for (PvStatusEntity pvStatusEntity : subPvStatusEntities) {
+			@SuppressWarnings("unchecked")
+			final T val = (T) readPropertyValue(pvStatusEntity, readMethod);
+			requireNonNull(val, "readPropertyValue(...) returned null for " + readMethod);
+			if (result == null || result.compareTo(val) > 0)
+				result = val;
+		}
+		return result;
+	}
+
+	private <T extends Comparable<T>> T  aggMax(final List<PvStatusEntity> subPvStatusEntities, final Method readMethod) {
+		requireNonNull(subPvStatusEntities, "subPvStatusEntities");
+		requireNonNull(readMethod, "readMethod");
+		T result = null;
+		for (PvStatusEntity pvStatusEntity : subPvStatusEntities) {
+			@SuppressWarnings("unchecked")
+			final T val = (T) readPropertyValue(pvStatusEntity, readMethod);
+			requireNonNull(val, "readPropertyValue(...) returned null for " + readMethod);
+			if (result == null || result.compareTo(val) < 0)
+				result = val;
+		}
+		return result;
+	}
+
+	private double aggAverage(final List<PvStatusEntity> subPvStatusEntities, final Method readMethod) {
+		requireNonNull(subPvStatusEntities, "subPvStatusEntities");
+		requireNonNull(readMethod, "readMethod");
 		double valueSum = 0;
 
 		for (PvStatusEntity pvStatusEntity : subPvStatusEntities) {
-			float value = property.getPropertyValue(pvStatusEntity);
-			valueSum += value;
+			final Object val = readPropertyValue(pvStatusEntity, readMethod);
+			requireNonNull(val, "readPropertyValue(...) returned null for " + readMethod);
+			valueSum += toDouble(val);
 		}
 
-		double result = valueSum / subPvStatusEntities.size();
-		return (float) result;
+		return valueSum / subPvStatusEntities.size();
 	}
 
-//	protected float average(List<PvStatusEntity> subPvStatusEntities, Function<T, R>)
+	private Object aggFirst(final List<PvStatusEntity> subPvStatusEntities, final Method readMethod) {
+		requireNonNull(subPvStatusEntities, "subPvStatusEntities");
+		requireNonNull(readMethod, "readMethod");
+		final PvStatusEntity pvStatusEntity = subPvStatusEntities.get(0);
+		return readPropertyValue(pvStatusEntity, readMethod);
+	}
+
+	private Object aggLast(final List<PvStatusEntity> subPvStatusEntities, final Method readMethod) {
+		requireNonNull(subPvStatusEntities, "subPvStatusEntities");
+		requireNonNull(readMethod, "readMethod");
+		final PvStatusEntity pvStatusEntity = subPvStatusEntities.get(subPvStatusEntities.size() - 1);
+		return readPropertyValue(pvStatusEntity, readMethod);
+	}
+
+	protected double toDouble(final Object value) {
+		requireNonNull(value, "value");
+		if (value instanceof Number) {
+			return ((Number) value).doubleValue();
+		}
+		throw new IllegalArgumentException("value is not an instance of Number: (" + value.getClass().getName() + ") " + value);
+	}
 
 	protected SortedMap<TimeInterval, Map<String, List<PvStatusEntity>>> split(List<PvStatusEntity> pvStatusEntities) {
 		SortedMap<TimeInterval, Map<String, List<PvStatusEntity>>> map = new TreeMap<>();

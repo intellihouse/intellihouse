@@ -5,6 +5,7 @@ import static java.util.Objects.*;
 import java.util.Date;
 
 import javax.jdo.JDOHelper;
+import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.IdentityType;
 import javax.jdo.annotations.Inheritance;
@@ -25,6 +26,7 @@ public abstract class Entity implements AutoTrackChanged
 {
 	@PrimaryKey
 	@Persistent(valueStrategy=IdGeneratorStrategy.NATIVE)
+	@Column(jdbcType = "bigint")
 	private long id = Long.MIN_VALUE;
 
 	// We always initialise this, though the value might be overwritten when DataNucleus loads

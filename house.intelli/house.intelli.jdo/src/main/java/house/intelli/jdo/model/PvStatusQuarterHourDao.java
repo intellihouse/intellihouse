@@ -15,7 +15,7 @@ public class PvStatusQuarterHourDao extends Dao<PvStatusQuarterHourEntity, PvSta
 
 	private static final Logger logger = LoggerFactory.getLogger(PvStatusQuarterHourDao.class);
 
-	public PvStatusQuarterHourEntity getPvStatusMinuteEntity(final String deviceName, final Date measured) {
+	public PvStatusQuarterHourEntity getPvStatusQuarterHourEntity(final String deviceName, final Date measured) {
 		requireNonNull(deviceName, "deviceName");
 		requireNonNull(measured, "measured");
 		final Query<PvStatusQuarterHourEntity> query = pm().newNamedQuery(getEntityClass(), "getPvStatusQuarterHourEntity_deviceName_measured");

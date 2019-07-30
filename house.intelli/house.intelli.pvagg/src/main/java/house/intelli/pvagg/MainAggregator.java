@@ -9,6 +9,9 @@ import java.util.List;
 
 import javax.jdo.PersistenceManagerFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import house.intelli.core.TimeInterval;
 import house.intelli.jdo.IntelliHouseTransaction;
 import house.intelli.jdo.IntelliHouseTransactionImpl;
@@ -18,6 +21,8 @@ import house.intelli.jdo.model.PvStatusDao;
 import house.intelli.jdo.model.PvStatusEntity;
 
 public class MainAggregator {
+
+	private static final Logger logger = LoggerFactory.getLogger(MainAggregator.class);
 
 	protected final PersistenceManagerFactory pmf;
 
@@ -33,10 +38,12 @@ public class MainAggregator {
 		for (PvStatusAggregator<?> pvStatusAggregator : pvStatusAggregators) {
 			TimeInterval interval = pvStatusAggregator.getTimeInterval(firstNonAggregatedMeasured);
 			if (startInterval == null
-					|| interval.getFromIncl().before(startInterval.getFromIncl())) {
+					|| interval.getFromIncl().before(startInterval.getFromIncl())
+					|| (interval.getFromIncl().equals(startInterval.getFromIncl()) && interval.getToExcl().after(startInterval.getToExcl()))) {
 					startInterval = interval;
 			}
 		}
+		logger.info("run: startInterval={}", startInterval);
 		if (startInterval == null)
 			return; // nothing to do ;-)
 
@@ -46,40 +53,51 @@ public class MainAggregator {
 				PvStatusDao pvStatusDao = tx.getDao(PvStatusDao.class);
 
 				List<PvStatusEntity> pvStatusEntities = pvStatusDao.getPvStatusEntitiesMeasuredBetween(interval);
-				if (pvStatusEntities.isEmpty())
-					break;
+				logger.info("run: Found {} PvStatusEntity instances for {}", pvStatusEntities.size(), interval);
 
-				// Currently the largest time-interval must be an aligned multiple of all smaller time-intervals!
-				for (PvStatusAggregator<?> pvStatusAggregator : pvStatusAggregators) {
-					TimeInterval ti = pvStatusAggregator.getTimeInterval(interval.getFromIncl());
-					if (ti.getFromIncl().before(interval.getFromIncl()))
-						throw new IllegalStateException(String.format(
-								"Time-interval %s of PvStatusAggregator %s does not align fromIncl with main interval %s!",
-								ti, pvStatusAggregator.getClass().getName(), interval));
+				if (pvStatusEntities.isEmpty()) {
+					if (interval.getToExcl().after(new Date()))
+						break;
+				} else {
+					// The current logic requires that the largest time-interval must be an aligned
+					// multiple of all smaller time-intervals! => Sanity-check now!
+					for (PvStatusAggregator<?> pvStatusAggregator : pvStatusAggregators) {
+						TimeInterval ti = pvStatusAggregator.getTimeInterval(interval.getFromIncl());
+						if (ti.getFromIncl().before(interval.getFromIncl()))
+							throw new IllegalStateException(String.format(
+									"Time-interval %s of PvStatusAggregator %s does not align fromIncl with main interval %s!",
+									ti, pvStatusAggregator.getClass().getName(), interval));
 
-					ti = pvStatusAggregator.getTimeInterval(new Date(interval.getToExcl().getTime() - 1));
-					if (ti.getToExcl().before(interval.getToExcl()))
-						throw new IllegalStateException(String.format(
-								"Time-interval %s of PvStatusAggregator %s does not align toExcl with main interval %s!",
-								ti, pvStatusAggregator.getClass().getName(), interval));
+						ti = pvStatusAggregator.getTimeInterval(new Date(interval.getToExcl().getTime() - 1));
+						if (ti.getToExcl().before(interval.getToExcl()))
+							throw new IllegalStateException(String.format(
+									"Time-interval %s of PvStatusAggregator %s does not align toExcl with main interval %s!",
+									ti, pvStatusAggregator.getClass().getName(), interval));
+					}
+
+					// Make all aggregators do their work.
+					for (PvStatusAggregator<?> pvStatusAggregator : pvStatusAggregators) {
+						pvStatusAggregator.setTransaction(tx);
+						pvStatusAggregator.aggregate(pvStatusEntities);
+					}
+
+					// Update the 'last' persistent state so we continue here, if we're interrupted.
+					PvStatusEntity lastAggregatedPvStatusEntity = null;
+					for (PvStatusEntity pvStatusEntity : pvStatusEntities) {
+						if (lastAggregatedPvStatusEntity == null
+								|| lastAggregatedPvStatusEntity.getId() < pvStatusEntity.getId())
+							lastAggregatedPvStatusEntity = pvStatusEntity;
+					}
+					requireNonNull(lastAggregatedPvStatusEntity, "lastAggregatedPvStatusEntity"); // impossible to be null
+
+					PvStatusAggregationStateEntity aggregationStateEntity = getPvStatusAggregationStateEntity(tx);
+					aggregationStateEntity.setLastAggregatedPvStatusEntity(lastAggregatedPvStatusEntity);
+
+					// Commit all work done for the current interval.
+					tx.commit();
 				}
-
-				for (PvStatusAggregator<?> pvStatusAggregator : pvStatusAggregators) {
-					pvStatusAggregator.setTransaction(tx);
-					pvStatusAggregator.aggregate(pvStatusEntities);
-				}
-
-				PvStatusEntity lastAggregatedPvStatusEntity = null;
-				for (PvStatusEntity pvStatusEntity : pvStatusEntities) {
-					if (lastAggregatedPvStatusEntity == null
-							|| lastAggregatedPvStatusEntity.getId() < pvStatusEntity.getId())
-						lastAggregatedPvStatusEntity = pvStatusEntity;
-				}
-				requireNonNull(lastAggregatedPvStatusEntity, "lastAggregatedPvStatusEntity"); // impossible to be null
-
-				PvStatusAggregationStateEntity aggregationStateEntity = getPvStatusAggregationStateEntity(tx);
-				aggregationStateEntity.setLastAggregatedPvStatusEntity(lastAggregatedPvStatusEntity);
-			  tx.commit();
+				// Proceed to next interval.
+				interval = new TimeInterval(interval.getToExcl(), new Date(interval.getToExcl().getTime() + interval.getLengthMillis()));
 			}
 		}
 	}
@@ -124,6 +142,7 @@ public class MainAggregator {
 		List<PvStatusAggregator<?>> result = new ArrayList<>();
 		result.add(new PvStatusMinuteAggregator());
 		result.add(new PvStatusQuarterHourAggregator());
+		result.add(new PvStatusHourAggregator());
 		return result;
 	}
 

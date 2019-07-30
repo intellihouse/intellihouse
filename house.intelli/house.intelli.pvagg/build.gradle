@@ -1,6 +1,76 @@
+import org.apache.tools.ant.filters.*
+
 dependencies {
 	compile project(':house.intelli.jdo')
-	compile group: 'org.postgresql', name: 'postgresql' , version: '42.2.5.jre7'
+	compile group: 'org.postgresql', name: 'postgresql' , version: postgresqlVersion
 
 	compile "org.slf4j:log4j-over-slf4j:$slf4jVersion", "ch.qos.logback:logback-classic:$logbackVersion"
 }
+
+
+jar {
+	manifest {
+		attributes(
+			'Main-Class': 'house.intelli.pvagg.IntelliHousePvAggregator',
+			'Class-Path': configurations.runtime.collect { it.getName() }.join(' '))
+	}
+}
+
+
+task copyDependencies(type: Copy) {
+	into "$buildDir/assembly/house.intelli.pvagg/lib"
+	from configurations.runtime
+}
+
+task copyJar(type: Copy) {
+	into "$buildDir/assembly/house.intelli.pvagg/lib"
+	from "$buildDir/libs"
+}
+
+def filterTokenMap = [
+			'project.artifactId' : project.name,
+			'project.version' : project.version
+		]
+
+task copyFilesFromAssembly(type: Copy) {
+	into "$buildDir/assembly/house.intelli.pvagg"
+	from 'src/assembly/installation.properties'
+
+	// Use ANT filter ReplaceTokens.
+	filter(ReplaceTokens, tokens: filterTokenMap)
+}
+
+task copyFilesFromBin(type: Copy) {
+	into "$buildDir/assembly/house.intelli.pvagg/bin"
+	from 'src/bin'
+
+	// Use ANT filter ReplaceTokens.
+	filter(ReplaceTokens, tokens: filterTokenMap)
+}
+
+task chmodMainExecutable(type: Exec, dependsOn: [ copyFilesFromBin, copyFilesFromAssembly ]) {
+	commandLine = ['chmod', 'a+x', 'house.intelli.pvagg']
+	workingDir = file("$buildDir/assembly/house.intelli.pvagg/bin")
+}
+
+task tarGzAssembly(type: Tar, dependsOn: [ chmodMainExecutable, copyJar, copyDependencies ]) {
+	compression = Compression.GZIP
+	classifier = 'bin'
+	extension = 'tar.gz' // default is 'tgz'
+	includeEmptyDirs true
+	from "$buildDir/assembly"
+}
+
+//task zipAssembly(type: Zip, dependsOn: tarGzAssembly) {
+//	classifier = 'bin'
+//	includeEmptyDirs true
+//	from "$buildDir/assembly"
+//}
+
+artifacts{
+//    archives tarGzAssembly, zipAssembly
+	archives tarGzAssembly
+}
+
+//build.dependsOn(zipAssembly)
+build.dependsOn(tarGzAssembly)

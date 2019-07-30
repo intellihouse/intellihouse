@@ -2,6 +2,7 @@ package house.intelli.jdo.model;
 
 import java.util.Date;
 
+import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Inheritance;
 import javax.jdo.annotations.InheritanceStrategy;
 import javax.jdo.annotations.NullValue;
@@ -39,53 +40,69 @@ public class PvStatusEntity extends Entity implements PvStatus {
 	@Persistent(nullValue = NullValue.EXCEPTION)
 	private String deviceMode;
 
+	@Column(sqlType = "real")
 	private float acInVoltage;
+	@Column(sqlType = "real")
 	private float acInFrequency;
+	@Column(sqlType = "real")
 	private float acOutVoltage;
+	@Column(sqlType = "real")
 	private float acOutFrequency;
+	@Column(sqlType = "real")
 	private float acOutApparentPower; // Scheinleistung
+	@Column(sqlType = "real")
 	private float acOutActivePower; // Wirkleistung
+	@Column(sqlType = "real")
 	private float acOutLoadPercentage; // based on apparent power
+	@Column(sqlType = "real")
 	private float internalBusVoltage;
 
 	/**
 	 * Batteriespannung vom Wechselrichter gemessen
 	 */
+	@Column(sqlType = "real")
 	private float batteryVoltageAtInverter;
 
 	/**
 	 * Batterie-Ladestrom
 	 */
+	@Column(sqlType = "real")
 	private float batteryChargeCurrent;
 
 	/**
 	 * Batterie-Kapazität (ca.)
 	 */
+	@Column(sqlType = "real")
 	private float batteryCapacityPercentage;
 
 	/**
 	 * Kühlkörper-Temperatur
 	 */
+	@Column(sqlType = "real")
 	private float heatSinkTemperature;
 
 	/**
 	 * PV Eingangsstrom (batterieseitig)
 	 */
+	@Column(sqlType = "real")
 	private float pvToBatteryCurrent;
 
 	/**
 	 * PV Spannung
 	 */
+	@Column(sqlType = "real")
 	private float pvVoltage;
 
 	/**
 	 * Batteriespannung vom Laderegler gemessen
 	 */
+	@Column(sqlType = "real")
 	private float batteryVoltageAtCharger;
 
 	/**
 	 * Batterie-Entladestrom
 	 */
+	@Column(sqlType = "real")
 	private float batteryDischargeCurrent;
 
 	/**
@@ -101,6 +118,7 @@ public class PvStatusEntity extends Entity implements PvStatus {
 	/**
 	 * PV Ladeleistung
 	 */
+	@Column(sqlType = "real")
 	private float pvPower;
 
 	public PvStatusEntity() {

@@ -15,15 +15,15 @@ import javax.jdo.annotations.Unique;
 import house.intelli.core.pv.AggregatedPvStatus;
 import house.intelli.jdo.Entity;
 
-@PersistenceCapable(table = "PvStatusQuarterHour")
+@PersistenceCapable(table = "PvStatusHour")
 @Inheritance(strategy = InheritanceStrategy.NEW_TABLE)
-@Unique(name = "PvStatusQuarterHourEntity_deviceName_measured", members = {"deviceName", "measured"})
+@Unique(name = "PvStatusHourEntity_deviceName_measured", members = {"deviceName", "measured"})
 @Queries({
-	@Query(name = "getPvStatusQuarterHourEntity_deviceName_measured", value = "SELECT UNIQUE WHERE this.deviceName == :deviceName && this.measured == :measured")
+	@Query(name = "getPvStatusHourEntity_deviceName_measured", value = "SELECT UNIQUE WHERE this.deviceName == :deviceName && this.measured == :measured")
 })
-public class PvStatusQuarterHourEntity extends Entity implements AggregatedPvStatus {
+public class PvStatusHourEntity extends Entity implements AggregatedPvStatus {
 
-	public static final int AGGREGATE_PERIOD_MILLIS = 15 * 60_000;
+	public static final int AGGREGATE_PERIOD_MILLIS = 60 * 60_000;
 
 	@Persistent(nullValue = NullValue.EXCEPTION)
 	private String deviceName;
@@ -192,7 +192,7 @@ public class PvStatusQuarterHourEntity extends Entity implements AggregatedPvSta
 	@Column(jdbcType = "real")
 	private float pvPowerMax;
 
-	public PvStatusQuarterHourEntity() {
+	public PvStatusHourEntity() {
 	}
 
 	@Override

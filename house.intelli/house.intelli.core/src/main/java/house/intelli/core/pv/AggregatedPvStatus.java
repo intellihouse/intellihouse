@@ -47,4 +47,139 @@ public interface AggregatedPvStatus extends PvStatus {
 	 */
 	int getAggregatePeriodMillis();
 
+	float getAcInVoltageMin();
+
+	void setAcInVoltageMin(float acInVoltageMin);
+
+	float getAcInFrequencyMin();
+
+	void setAcInFrequencyMin(float acInFrequencyMin);
+
+	float getAcOutVoltageMin();
+
+	void setAcOutVoltageMin(float acOutVoltageMin);
+
+	float getAcOutFrequencyMin();
+
+	void setAcOutFrequencyMin(float acOutFrequencyMin);
+
+	float getAcOutApparentPowerMin();
+
+	void setAcOutApparentPowerMin(float acOutApparentPowerMin);
+
+	float getAcOutActivePowerMin();
+
+	void setAcOutActivePowerMin(float acOutActivePowerMin);
+
+	float getAcOutLoadPercentageMin();
+
+	void setAcOutLoadPercentageMin(float acOutLoadPercentageMin);
+
+	float getInternalBusVoltageMin();
+
+	void setInternalBusVoltageMin(float internalBusVoltageMin);
+
+	float getBatteryVoltageAtInverterMin();
+
+	void setBatteryVoltageAtInverterMin(float batteryVoltageAtInverterMin);
+
+	float getBatteryChargeCurrentMin();
+
+	void setBatteryChargeCurrentMin(float batteryChargeCurrentMin);
+
+	float getBatteryCapacityPercentageMin();
+
+	void setBatteryCapacityPercentageMin(float batteryCapacityPercentageMin);
+
+	float getHeatSinkTemperatureMin();
+
+	void setHeatSinkTemperatureMin(float heatSinkTemperatureMin);
+
+	float getPvToBatteryCurrentMin();
+
+	void setPvToBatteryCurrentMin(float pvToBatteryCurrentMin);
+
+	float getPvVoltageMin();
+
+	void setPvVoltageMin(float pvVoltageMin);
+
+	float getBatteryVoltageAtChargerMin();
+
+	void setBatteryVoltageAtChargerMin(float batteryVoltageAtChargerMin);
+
+	float getBatteryDischargeCurrentMin();
+
+	void setBatteryDischargeCurrentMin(float batteryDischargeCurrentMin);
+
+	float getPvPowerMin();
+
+	void setPvPowerMin(float pvPowerMin);
+
+	float getAcInVoltageMax();
+
+	void setAcInVoltageMax(float acInVoltageMax);
+
+	float getAcInFrequencyMax();
+
+	void setAcInFrequencyMax(float acInFrequencyMax);
+
+	float getAcOutVoltageMax();
+
+	void setAcOutVoltageMax(float acOutVoltageMax);
+
+	float getAcOutFrequencyMax();
+
+	void setAcOutFrequencyMax(float acOutFrequencyMax);
+
+	float getAcOutApparentPowerMax();
+
+	void setAcOutApparentPowerMax(float acOutApparentPowerMax);
+
+	float getAcOutActivePowerMax();
+
+	void setAcOutActivePowerMax(float acOutActivePowerMax);
+
+	float getAcOutLoadPercentageMax();
+
+	void setAcOutLoadPercentageMax(float acOutLoadPercentageMax);
+
+	float getInternalBusVoltageMax();
+
+	void setInternalBusVoltageMax(float internalBusVoltageMax);
+
+	float getBatteryVoltageAtInverterMax();
+
+	void setBatteryVoltageAtInverterMax(float batteryVoltageAtInverterMax);
+
+	float getBatteryChargeCurrentMax();
+
+	void setBatteryChargeCurrentMax(float batteryChargeCurrentMax);
+
+	float getBatteryCapacityPercentageMax();
+
+	void setBatteryCapacityPercentageMax(float batteryCapacityPercentageMax);
+
+	float getHeatSinkTemperatureMax();
+
+	void setHeatSinkTemperatureMax(float heatSinkTemperatureMax);
+
+	float getPvToBatteryCurrentMax();
+
+	void setPvToBatteryCurrentMax(float pvToBatteryCurrentMax);
+
+	float getPvVoltageMax();
+
+	void setPvVoltageMax(float pvVoltageMax);
+
+	float getBatteryVoltageAtChargerMax();
+
+	void setBatteryVoltageAtChargerMax(float batteryVoltageAtChargerMax);
+
+	float getBatteryDischargeCurrentMax();
+
+	void setBatteryDischargeCurrentMax(float batteryDischargeCurrentMax);
+
+	float getPvPowerMax();
+
+	void setPvPowerMax(float pvPowerMax);
 }

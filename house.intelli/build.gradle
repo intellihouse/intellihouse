@@ -69,6 +69,7 @@ allprojects {
 	project.ext.slf4jVersion = '1.7.21'
 	project.ext.logbackVersion = '1.1.7'
 	project.ext.springVersion = '4.3.5.RELEASE'
+	project.ext.postgresqlVersion = '42.2.5.jre7'
 
 	sourceSets {
 		main {
