@@ -1,0 +1,7 @@
+#!/bin/sh
+
+BIN_DIR=`dirname $0`
+INSTALLATION_DIR="$BIN_DIR/.."
+CONFIG_DIR="$HOME/.intellihouse"
+
+java -jar "$INSTALLATION_DIR/lib/@project.artifactId@-@project.version@.jar" "$@"
