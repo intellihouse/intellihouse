@@ -13,6 +13,7 @@ import javax.jdo.annotations.Query;
 import javax.jdo.annotations.Unique;
 
 import house.intelli.core.pv.AggregatedPvStatus;
+import house.intelli.core.pv.EstimatedPvStatus;
 import house.intelli.jdo.Entity;
 
 @PersistenceCapable(table = "PvStatusQuarterHour")
@@ -21,7 +22,7 @@ import house.intelli.jdo.Entity;
 @Queries({
 	@Query(name = "getPvStatusQuarterHourEntity_deviceName_measured", value = "SELECT UNIQUE WHERE this.deviceName == :deviceName && this.measured == :measured")
 })
-public class PvStatusQuarterHourEntity extends Entity implements AggregatedPvStatus {
+public class PvStatusQuarterHourEntity extends Entity implements AggregatedPvStatus, EstimatedPvStatus {
 
 	public static final int COVERED_PERIOD_MILLIS = 15 * 60_000;
 
@@ -197,6 +198,18 @@ public class PvStatusQuarterHourEntity extends Entity implements AggregatedPvSta
 	private float batteryDischargeCurrentMax;
 	@Column(jdbcType = "real")
 	private float pvPowerMax;
+
+	@Column(jdbcType = "real", defaultValue = "0")
+	private float estBatteryChargeEnergyIdeal;
+
+	@Column(jdbcType = "real", defaultValue = "0")
+	private float estBatteryChargeEnergyReal;
+
+	@Column(jdbcType = "real", defaultValue = "0")
+	private float estBatteryEnergyCapacity;
+
+	@Column(jdbcType = "real", defaultValue = "0")
+	private float estBatteryEnergyLevel;
 
 	public PvStatusQuarterHourEntity() {
 	}
@@ -775,6 +788,46 @@ public class PvStatusQuarterHourEntity extends Entity implements AggregatedPvSta
 	@Override
 	public void setPvPowerMax(float pvPowerMax) {
 		this.pvPowerMax = pvPowerMax;
+	}
+
+	@Override
+	public float getEstBatteryChargeEnergyIdeal() {
+		return estBatteryChargeEnergyIdeal;
+	}
+
+	@Override
+	public void setEstBatteryChargeEnergyIdeal(float idealBatteryChargeEnergy) {
+		this.estBatteryChargeEnergyIdeal = idealBatteryChargeEnergy;
+	}
+
+	@Override
+	public float getEstBatteryChargeEnergyReal() {
+		return estBatteryChargeEnergyReal;
+	}
+
+	@Override
+	public void setEstBatteryChargeEnergyReal(float estimatedBatteryChargeEnergy) {
+		this.estBatteryChargeEnergyReal = estimatedBatteryChargeEnergy;
+	}
+
+	@Override
+	public float getEstBatteryEnergyCapacity() {
+		return estBatteryEnergyCapacity;
+	}
+
+	@Override
+	public void setEstBatteryEnergyCapacity(float estimatedBatteryCapacity) {
+		this.estBatteryEnergyCapacity = estimatedBatteryCapacity;
+	}
+
+	@Override
+	public float getEstBatteryEnergyLevel() {
+		return estBatteryEnergyLevel;
+	}
+
+	@Override
+	public void setEstBatteryEnergyLevel(float estimatedBatteryEnergy) {
+		this.estBatteryEnergyLevel = estimatedBatteryEnergy;
 	}
 
 }

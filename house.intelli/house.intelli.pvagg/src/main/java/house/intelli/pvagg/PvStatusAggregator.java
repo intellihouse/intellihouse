@@ -18,6 +18,7 @@ import java.util.TreeMap;
 
 import house.intelli.core.TimeInterval;
 import house.intelli.core.pv.AggregatedPvStatus;
+import house.intelli.core.pv.EstimatedPvStatus;
 import house.intelli.core.pv.PvStatus;
 import house.intelli.jdo.IntelliHouseTransaction;
 import house.intelli.jdo.model.PvStatusEntity;
@@ -36,6 +37,9 @@ public abstract class PvStatusAggregator<A extends PvStatus> {
 	private static final Map<String, AggregateSource> propertyName2AggregateSource = new HashMap<>();
 
 	protected final Map<String, PropertyDescriptor> sourcePropertyName2PropertyDescriptor;
+
+	protected final BatteryChargeEnergyEstimatorIdeal batteryChargeEnergyEstimatorIdeal = new BatteryChargeEnergyEstimatorIdeal();
+	protected final BatteryChargeEnergyEstimatorReal batteryChargeEnergyEstimatorReal = new BatteryChargeEnergyEstimatorReal();
 
 	static {
 		propertyName2AggregateType.put("class", AggregateType.NONE);
@@ -158,27 +162,48 @@ public abstract class PvStatusAggregator<A extends PvStatus> {
 				aggregatedPvStatus.setMeasured(timeInterval.getFromIncl());
 				aggregatedPvStatus.setDeviceName(deviceName);
 
-				if (aggregatedPvStatus instanceof AggregatedPvStatus) {
-					AggregatedPvStatus aps = (AggregatedPvStatus) aggregatedPvStatus;
-
-					int inputCountInterpolated = 0;
-					int inputCountMeasured = 0;
-					for (PvStatusEntity pvStatusEntity : subPvStatusEntities) {
-						if (pvStatusEntity.getId() < 0)
-							++inputCountInterpolated;
-						else
-							++inputCountMeasured;
-					}
-
-					aps.setInputCountInterpolated(inputCountInterpolated);
-					aps.setInputCountMeasured(inputCountMeasured);
-				}
+				if (aggregatedPvStatus instanceof AggregatedPvStatus)
+					populateInputCountProperties(subPvStatusEntities, (AggregatedPvStatus) aggregatedPvStatus);
 
 				aggregate(subPvStatusEntities, aggregatedPvStatus);
+
+				if (aggregatedPvStatus instanceof EstimatedPvStatus)
+					populateEstimatedProperties(subPvStatusEntities, (EstimatedPvStatus) aggregatedPvStatus);
 
 				persistAggregatedPvStatus(aggregatedPvStatus);
 			}
 		}
+	}
+
+	protected void populateInputCountProperties(List<PvStatusEntity> subPvStatusEntities, AggregatedPvStatus aggregatedPvStatus) {
+		requireNonNull(subPvStatusEntities, "subPvStatusEntities");
+		requireNonNull(aggregatedPvStatus, "aggregatedPvStatus");
+
+		int inputCountInterpolated = 0;
+		int inputCountMeasured = 0;
+		for (PvStatusEntity pvStatusEntity : subPvStatusEntities) {
+			if (pvStatusEntity.getId() < 0)
+				++inputCountInterpolated;
+			else
+				++inputCountMeasured;
+		}
+
+		aggregatedPvStatus.setInputCountInterpolated(inputCountInterpolated);
+		aggregatedPvStatus.setInputCountMeasured(inputCountMeasured);
+	}
+
+	protected void populateEstimatedProperties(List<PvStatusEntity> subPvStatusEntities, EstimatedPvStatus estimatedPvStatus) {
+		requireNonNull(subPvStatusEntities, "subPvStatusEntities");
+		requireNonNull(estimatedPvStatus, "estimatedPvStatus");
+
+		batteryChargeEnergyEstimatorIdeal.setTransaction(getTransactionOrFail());
+		batteryChargeEnergyEstimatorReal.setTransaction(getTransactionOrFail());
+
+		estimatedPvStatus.setEstBatteryChargeEnergyIdeal((float) batteryChargeEnergyEstimatorIdeal.estimateBatteryChargeEnergy(subPvStatusEntities));
+		estimatedPvStatus.setEstBatteryChargeEnergyReal((float) batteryChargeEnergyEstimatorReal.estimateBatteryChargeEnergy(subPvStatusEntities));
+
+		batteryChargeEnergyEstimatorIdeal.setTransaction(null);
+		batteryChargeEnergyEstimatorReal.setTransaction(null);
 	}
 
 	protected void aggregate(List<PvStatusEntity> subPvStatusEntities, A aggregatedPvStatus) {
