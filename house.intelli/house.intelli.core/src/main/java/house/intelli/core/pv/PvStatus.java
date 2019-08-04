@@ -8,6 +8,32 @@ import java.util.Date;
  */
 public interface PvStatus {
 
+	/**
+	 * When was the measurement done?
+	 * @return the timestamp of when the data was measured.
+	 */
+	Date getMeasured();
+
+	void setMeasured(Date measured);
+
+	void setDeviceName(String deviceName);
+
+	String getDeviceName();
+
+	/**
+	 * How many milliseconds are covered by this instance?
+	 * <p>
+	 * If this entity originates directly from a measurement, the time covered by this entity is
+	 * from >>>{@link #getMeasured() measured}{@code  - }{@code coveredPeriodMillis}<<< <i>excluding</i>
+	 * until >>>{@link #getMeasured() measured}<<< <i>including</i>.
+	 * <p>
+	 * If this method returns 0, it means the time covered is unknown and must be determined from
+	 * other data (e.g. the previous entity measured before).
+	 *
+	 * @return how many milliseconds were aggregated by this instance?
+	 */
+	int getCoveredPeriodMillis();
+
 	void setPvPower(float pvPower);
 
 	float getPvPower();
@@ -87,17 +113,5 @@ public interface PvStatus {
 	void setDeviceMode(String deviceMode);
 
 	String getDeviceMode();
-
-	void setMeasured(Date measured);
-
-	/**
-	 * When was the measurement done?
-	 * @return the timestamp of when the data was measured.
-	 */
-	Date getMeasured();
-
-	void setDeviceName(String deviceName);
-
-	String getDeviceName();
 
 }

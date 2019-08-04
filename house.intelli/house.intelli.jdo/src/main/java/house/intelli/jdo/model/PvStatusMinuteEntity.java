@@ -13,6 +13,7 @@ import javax.jdo.annotations.Query;
 import javax.jdo.annotations.Unique;
 
 import house.intelli.core.pv.AggregatedPvStatus;
+import house.intelli.core.pv.EstimatedPvStatus;
 import house.intelli.jdo.Entity;
 
 @PersistenceCapable(table = "PvStatusMinute")
@@ -21,15 +22,21 @@ import house.intelli.jdo.Entity;
 @Queries({
 	@Query(name = "getPvStatusMinuteEntity_deviceName_measured", value = "SELECT UNIQUE WHERE this.deviceName == :deviceName && this.measured == :measured")
 })
-public class PvStatusMinuteEntity extends Entity implements AggregatedPvStatus {
+public class PvStatusMinuteEntity extends Entity implements AggregatedPvStatus, EstimatedPvStatus {
 
-	public static final int AGGREGATE_PERIOD_MILLIS = 60_000;
+	public static final int COVERED_PERIOD_MILLIS = 60_000;
 
 	@Persistent(nullValue = NullValue.EXCEPTION)
 	private String deviceName;
 
 	@Persistent(nullValue = NullValue.EXCEPTION)
 	private Date measured;
+
+	@Column(defaultValue = "-1")
+	int inputCountInterpolated;
+
+	@Column(defaultValue = "-1")
+	int inputCountMeasured;
 
 	@Persistent(nullValue = NullValue.EXCEPTION)
 	private String deviceMode;
@@ -192,6 +199,18 @@ public class PvStatusMinuteEntity extends Entity implements AggregatedPvStatus {
 	@Column(jdbcType = "real")
 	private float pvPowerMax;
 
+	@Column(jdbcType = "real", defaultValue = "0")
+	private float estBatteryChargeEnergyIdeal;
+
+	@Column(jdbcType = "real", defaultValue = "0")
+	private float estBatteryChargeEnergyReal;
+
+	@Column(jdbcType = "real", defaultValue = "0")
+	private float estBatteryEnergyCapacity;
+
+	@Column(jdbcType = "real", defaultValue = "0")
+	private float estBatteryEnergyLevel;
+
 	public PvStatusMinuteEntity() {
 	}
 
@@ -213,13 +232,29 @@ public class PvStatusMinuteEntity extends Entity implements AggregatedPvStatus {
 		this.measured = measured;
 	}
 
-	/**
-	 * How many milliseconds was measured? This instance is an aggregate
-	 * @return
-	 */
 	@Override
-	public int getAggregatePeriodMillis() {
-		return AGGREGATE_PERIOD_MILLIS;
+	public int getCoveredPeriodMillis() {
+		return COVERED_PERIOD_MILLIS;
+	}
+
+	@Override
+	public int getInputCountInterpolated() {
+		return inputCountInterpolated;
+	}
+
+	@Override
+	public void setInputCountInterpolated(int inputCountInterpolated) {
+		this.inputCountInterpolated = inputCountInterpolated;
+	}
+
+	@Override
+	public int getInputCountMeasured() {
+		return inputCountMeasured;
+	}
+
+	@Override
+	public void setInputCountMeasured(int inputCountMeasured) {
+		this.inputCountMeasured = inputCountMeasured;
 	}
 
 	@Override
@@ -753,6 +788,46 @@ public class PvStatusMinuteEntity extends Entity implements AggregatedPvStatus {
 	@Override
 	public void setPvPowerMax(float pvPowerMax) {
 		this.pvPowerMax = pvPowerMax;
+	}
+
+	@Override
+	public float getEstBatteryChargeEnergyIdeal() {
+		return estBatteryChargeEnergyIdeal;
+	}
+
+	@Override
+	public void setEstBatteryChargeEnergyIdeal(float idealBatteryChargeEnergy) {
+		this.estBatteryChargeEnergyIdeal = idealBatteryChargeEnergy;
+	}
+
+	@Override
+	public float getEstBatteryChargeEnergyReal() {
+		return estBatteryChargeEnergyReal;
+	}
+
+	@Override
+	public void setEstBatteryChargeEnergyReal(float estimatedBatteryChargeEnergy) {
+		this.estBatteryChargeEnergyReal = estimatedBatteryChargeEnergy;
+	}
+
+	@Override
+	public float getEstBatteryEnergyCapacity() {
+		return estBatteryEnergyCapacity;
+	}
+
+	@Override
+	public void setEstBatteryEnergyCapacity(float estimatedBatteryCapacity) {
+		this.estBatteryEnergyCapacity = estimatedBatteryCapacity;
+	}
+
+	@Override
+	public float getEstBatteryEnergyLevel() {
+		return estBatteryEnergyLevel;
+	}
+
+	@Override
+	public void setEstBatteryEnergyLevel(float estimatedBatteryEnergy) {
+		this.estBatteryEnergyLevel = estimatedBatteryEnergy;
 	}
 
 }

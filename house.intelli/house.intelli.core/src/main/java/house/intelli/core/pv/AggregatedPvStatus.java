@@ -39,13 +39,26 @@ public interface AggregatedPvStatus extends PvStatus {
 	Date getMeasured();
 
 	/**
-	 * How many milliseconds were aggregated by this instance?
+	 * {@inheritDoc}
 	 * <p>
-	 * The time covered by this aggregation-entity is from {@link #getMeasured() measured} <i>including</i>
-	 * until {@link #getMeasured() measured} + {@code aggregatePeriodMillis} <i>excluding</i>.
+	 * The time covered by this <i>aggregation</i>-entity is from >>>{@link #getMeasured() measured}<<< <i>including</i>
+	 * until >>>{@link #getMeasured() measured}{@code  + }{@code coveredPeriodMillis}<<< <i>excluding</i>.
+	 * <p>
+	 * So in contrast to a <i>measured</i> entity, whose time-period is directly <i>before</i> (and including) the
+	 * {@link #getMeasured() measured} timestamp, the aggregated entity has its time-period directly <i>after</i>
+	 * (and including) the {@code measured} timestamp.
 	 * @return how many milliseconds were aggregated by this instance?
 	 */
-	int getAggregatePeriodMillis();
+	@Override
+	int getCoveredPeriodMillis();
+
+	int getInputCountInterpolated();
+
+	void setInputCountInterpolated(int inputCountInterpolated);
+
+	int getInputCountMeasured();
+
+	void setInputCountMeasured(int inputCountMeasured);
 
 	float getAcInVoltageMin();
 

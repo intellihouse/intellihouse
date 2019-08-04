@@ -18,10 +18,11 @@ import java.util.TreeMap;
 
 import house.intelli.core.TimeInterval;
 import house.intelli.core.pv.AggregatedPvStatus;
+import house.intelli.core.pv.PvStatus;
 import house.intelli.jdo.IntelliHouseTransaction;
 import house.intelli.jdo.model.PvStatusEntity;
 
-public abstract class PvStatusAggregator<A extends AggregatedPvStatus> {
+public abstract class PvStatusAggregator<A extends PvStatus> {
 
 	private IntelliHouseTransaction transaction;
 
@@ -34,14 +35,18 @@ public abstract class PvStatusAggregator<A extends AggregatedPvStatus> {
 	private static final Map<String, AggregateType> propertyName2AggregateType = new HashMap<>();
 	private static final Map<String, AggregateSource> propertyName2AggregateSource = new HashMap<>();
 
+	protected final Map<String, PropertyDescriptor> sourcePropertyName2PropertyDescriptor;
+
 	static {
 		propertyName2AggregateType.put("class", AggregateType.NONE);
 		propertyName2AggregateType.put("id", AggregateType.NONE);
 		propertyName2AggregateType.put("deviceName", AggregateType.NONE);
 		propertyName2AggregateType.put("measured", AggregateType.NONE);
+		propertyName2AggregateType.put("inputCountInterpolated", AggregateType.NONE);
+		propertyName2AggregateType.put("inputCountMeasured", AggregateType.NONE);
 		propertyName2AggregateType.put("created", AggregateType.NONE);
 		propertyName2AggregateType.put("changed", AggregateType.NONE);
-		propertyName2AggregateType.put("aggregatePeriodMillis", AggregateType.NONE);
+		propertyName2AggregateType.put("coveredPeriodMillis", AggregateType.NONE);
 
 		propertyName2AggregateType.put("deviceMode", AggregateType.MAX); // 'L' > 'B' : We want it to show the worst case.
 
@@ -101,6 +106,16 @@ public abstract class PvStatusAggregator<A extends AggregatedPvStatus> {
 		propertyName2AggregateSource.put("batteryVoltageAtChargerMax", new AggregateSource("batteryVoltageAtCharger", AggregateType.MAX));
 		propertyName2AggregateSource.put("batteryDischargeCurrentMax", new AggregateSource("batteryDischargeCurrent", AggregateType.MAX));
 		propertyName2AggregateSource.put("pvPowerMax", new AggregateSource("pvPower", AggregateType.MAX));
+
+		// The estimated properties are not aggregated, but estimated ;-)
+		propertyName2AggregateType.put("estBatteryChargeEnergyIdeal", AggregateType.NONE);
+		propertyName2AggregateType.put("estBatteryChargeEnergyReal", AggregateType.NONE);
+		propertyName2AggregateType.put("estBatteryEnergyCapacity", AggregateType.NONE);
+		propertyName2AggregateType.put("estBatteryEnergyLevel", AggregateType.NONE);
+	}
+
+	public PvStatusAggregator() {
+		sourcePropertyName2PropertyDescriptor = getPropertyName2PropertyDescriptorMap(PvStatusEntity.class);
 	}
 
 	/**
@@ -126,8 +141,6 @@ public abstract class PvStatusAggregator<A extends AggregatedPvStatus> {
 	}
 
 	public void aggregate(final List<PvStatusEntity> pvStatusEntities) {
-		final Map<String, PropertyDescriptor> sourcePropertyName2PropertyDescriptor = getPropertyName2PropertyDescriptorMap(PvStatusEntity.class);
-
 		SortedMap<TimeInterval, Map<String, List<PvStatusEntity>>> timeInterval2DeviceName2PvStatusEntities = split(pvStatusEntities);
 		for (Map.Entry<TimeInterval, Map<String, List<PvStatusEntity>>> me1 : timeInterval2DeviceName2PvStatusEntities.entrySet()) {
 			TimeInterval timeInterval = me1.getKey();
@@ -142,44 +155,72 @@ public abstract class PvStatusAggregator<A extends AggregatedPvStatus> {
 				if (aggregatedPvStatus == null)
 					aggregatedPvStatus = createAggregatedPvStatusEntity();
 
-				BeanInfo targetBeanInfo;
-				try {
-					targetBeanInfo = Introspector.getBeanInfo(aggregatedPvStatus.getClass());
-				} catch (IntrospectionException e) {
-					throw new RuntimeException(e);
-				}
-
-				for (PropertyDescriptor targetPropertyDescriptor : targetBeanInfo.getPropertyDescriptors()) {
-					String targetPropertyName = targetPropertyDescriptor.getName();
-					AggregateSource aggregateSource = getAggregateSource(targetPropertyName);
-					requireNonNull(aggregateSource, "getAggregateSource(\"" + targetPropertyName + "\")");
-					if (AggregateType.NONE == aggregateSource.getAggregateType())
-						continue;
-
-					String sourcePropertyName = aggregateSource.getSourcePropertyName();
-					PropertyDescriptor sourcePropertyDescriptor = sourcePropertyName2PropertyDescriptor.get(sourcePropertyName);
-					requireNonNull(sourcePropertyDescriptor, "sourcePropertyDescriptor[\"" + sourcePropertyName + "\"]");
-
-					Method sourceReadMethod = sourcePropertyDescriptor.getReadMethod();
-					requireNonNull(sourceReadMethod, "sourceReadMethod for sourcePropertyName=\"" + sourcePropertyName + "\"");
-
-					Method targetWriteMethod = targetPropertyDescriptor.getWriteMethod();
-					requireNonNull(targetWriteMethod, "targetWriteMethod for targetPropertyName=\"" + targetPropertyName + "\"");
-
-					aggregate(aggregateSource.getAggregateType(), subPvStatusEntities, aggregatedPvStatus, sourceReadMethod, targetWriteMethod);
-				}
-
 				aggregatedPvStatus.setMeasured(timeInterval.getFromIncl());
 				aggregatedPvStatus.setDeviceName(deviceName);
+
+				if (aggregatedPvStatus instanceof AggregatedPvStatus) {
+					AggregatedPvStatus aps = (AggregatedPvStatus) aggregatedPvStatus;
+
+					int inputCountInterpolated = 0;
+					int inputCountMeasured = 0;
+					for (PvStatusEntity pvStatusEntity : subPvStatusEntities) {
+						if (pvStatusEntity.getId() < 0)
+							++inputCountInterpolated;
+						else
+							++inputCountMeasured;
+					}
+
+					aps.setInputCountInterpolated(inputCountInterpolated);
+					aps.setInputCountMeasured(inputCountMeasured);
+				}
+
+				aggregate(subPvStatusEntities, aggregatedPvStatus);
 
 				persistAggregatedPvStatus(aggregatedPvStatus);
 			}
 		}
 	}
 
+	protected void aggregate(List<PvStatusEntity> subPvStatusEntities, A aggregatedPvStatus) {
+		requireNonNull(subPvStatusEntities, "subPvStatusEntities");
+		requireNonNull(aggregatedPvStatus, "aggregatedPvStatus");
+
+		BeanInfo targetBeanInfo;
+		try {
+			targetBeanInfo = Introspector.getBeanInfo(aggregatedPvStatus.getClass());
+		} catch (IntrospectionException e) {
+			throw new RuntimeException(e);
+		}
+
+		for (PropertyDescriptor targetPropertyDescriptor : targetBeanInfo.getPropertyDescriptors()) {
+			String targetPropertyName = targetPropertyDescriptor.getName();
+			AggregateSource aggregateSource = getAggregateSource(targetPropertyName);
+			requireNonNull(aggregateSource, "getAggregateSource(\"" + targetPropertyName + "\")");
+			if (AggregateType.NONE == aggregateSource.getAggregateType())
+				continue;
+
+			String sourcePropertyName = aggregateSource.getSourcePropertyName();
+			PropertyDescriptor sourcePropertyDescriptor = sourcePropertyName2PropertyDescriptor.get(sourcePropertyName);
+			requireNonNull(sourcePropertyDescriptor, "sourcePropertyDescriptor[\"" + sourcePropertyName + "\"]");
+
+			Method sourceReadMethod = sourcePropertyDescriptor.getReadMethod();
+			requireNonNull(sourceReadMethod, "sourceReadMethod for sourcePropertyName=\"" + sourcePropertyName + "\"");
+
+			Method targetWriteMethod = targetPropertyDescriptor.getWriteMethod();
+			requireNonNull(targetWriteMethod, "targetWriteMethod for targetPropertyName=\"" + targetPropertyName + "\"");
+
+			aggregate(aggregateSource.getAggregateType(), subPvStatusEntities, aggregatedPvStatus, sourceReadMethod, targetWriteMethod);
+		}
+	}
+
 	protected void aggregate(final AggregateType aggregateType,
 			final List<PvStatusEntity> subPvStatusEntities, final A aggregatedPvStatus,
 			final Method sourceReadMethod, final Method targetWriteMethod) {
+		requireNonNull(aggregateType, "aggregateType");
+		requireNonNull(subPvStatusEntities, "subPvStatusEntities");
+		requireNonNull(aggregatedPvStatus, "aggregatedPvStatus");
+		requireNonNull(sourceReadMethod, "sourceReadMethod");
+		requireNonNull(targetWriteMethod, "targetWriteMethod");
 
 		switch (aggregateType) {
 			case NONE:

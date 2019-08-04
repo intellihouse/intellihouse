@@ -26,10 +26,18 @@ import house.intelli.jdo.Entity;
 	@Query(name = "getFirstMeasuredAfter_id", value = "SELECT min(this.measured) WHERE this.id > :lastAggregatedId"),
 
 	@Query(name = "getPvStatusEntitiesMeasuredBetween_fromIncl_toExcl",
-			value = "SELECT WHERE this.measured >= :fromIncl && this.measured < :toExcl ORDER BY this.measured ASC")
+			value = "SELECT WHERE this.measured >= :fromIncl && this.measured < :toExcl ORDER BY this.measured ASC, this.deviceName ASC"),
+
+	@Query(name = "getLastMeasuredBefore_deviceName_measuredToExcl",
+			value = "SELECT max(this.measured) WHERE this.deviceName == :deviceName && this.measured < :measuredToExcl"),
+
+	@Query(name = "getFirstMeasuredAfter_deviceName_measuredFromExcl",
+			value = "SELECT min(this.measured) WHERE this.deviceName == :deviceName && this.measured > :measuredFromExcl")
 
 })
 public class PvStatusEntity extends Entity implements PvStatus {
+
+	public static final int COVERED_PERIOD_MILLIS = house.intelli.core.rpc.pv.PvStatus.COVERED_PERIOD_MILLIS;
 
 	@Persistent(nullValue = NullValue.EXCEPTION)
 	private String deviceName;
@@ -319,6 +327,11 @@ public class PvStatusEntity extends Entity implements PvStatus {
 	@Override
 	public void setPvPower(float pvPower) {
 		this.pvPower = pvPower;
+	}
+
+	@Override
+	public int getCoveredPeriodMillis() {
+		return COVERED_PERIOD_MILLIS;
 	}
 
 	@Override

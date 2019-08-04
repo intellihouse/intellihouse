@@ -44,7 +44,7 @@ public class PvStatusDao extends Dao<PvStatusEntity, PvStatusDao> {
 		}
 	}
 
-	public Date getFirstMeasuredAfter(long lastAggregatedId) {
+	public Date getFirstMeasuredAfter(final long lastAggregatedId) {
 		final Query<PvStatusEntity> query = pm().newNamedQuery(getEntityClass(), "getFirstMeasuredAfter_id");
 		try {
 			logger.debug("getFirstMeasuredAfter");
@@ -56,7 +56,7 @@ public class PvStatusDao extends Dao<PvStatusEntity, PvStatusDao> {
 		}
 	}
 
-	public List<PvStatusEntity> getPvStatusEntitiesMeasuredBetween(TimeInterval interval) {
+	public List<PvStatusEntity> getPvStatusEntitiesMeasuredBetween(final TimeInterval interval) {
 		requireNonNull(interval, "interval");
 		final Query<PvStatusEntity> query = pm().newNamedQuery(getEntityClass(), "getPvStatusEntitiesMeasuredBetween_fromIncl_toExcl");
 		try {
@@ -69,4 +69,55 @@ public class PvStatusDao extends Dao<PvStatusEntity, PvStatusDao> {
 		}
 	}
 
+	public Date getLastMeasuredBefore(final String deviceName, final Date measuredToExcl) {
+		requireNonNull(deviceName, "deviceName");
+		requireNonNull(measuredToExcl, "measuredToExcl");
+		final Query<PvStatusEntity> query = pm().newNamedQuery(getEntityClass(), "getLastMeasuredBefore_deviceName_measuredToExcl");
+		try {
+			logger.debug("getLastMeasuredBefore: deviceName='{}', measuredToExcl={}", deviceName, measuredToExcl);
+			final Date result = (Date) query.execute(deviceName, measuredToExcl);
+			logger.debug("getLastMeasuredBefore: result={}", result);
+			return result;
+		} finally {
+			query.closeAll();
+		}
+	}
+
+	public PvStatusEntity getLastPvStatusEntityMeasuredBefore(final String deviceName, final Date measuredToExcl) {
+		requireNonNull(deviceName, "deviceName");
+		requireNonNull(measuredToExcl, "measuredToExcl");
+		Date measured = getLastMeasuredBefore(deviceName, measuredToExcl);
+		if (measured == null)
+			return null;
+
+		PvStatusEntity pvStatusEntity = getPvStatusEntity(deviceName, measured);
+		requireNonNull(pvStatusEntity, "getPvStatusEntity('" + deviceName + "', " + measured + ")");
+		return pvStatusEntity;
+	}
+
+	public Date getFirstMeasuredAfter(final String deviceName, final Date measuredFromExcl) {
+		requireNonNull(deviceName, "deviceName");
+		requireNonNull(measuredFromExcl, "measuredFromExcl");
+		final Query<PvStatusEntity> query = pm().newNamedQuery(getEntityClass(), "getFirstMeasuredAfter_deviceName_measuredFromExcl");
+		try {
+			logger.debug("getFirstMeasuredAfter: deviceName='{}', measuredFromExcl={}", deviceName, measuredFromExcl);
+			final Date result = (Date) query.execute(deviceName, measuredFromExcl);
+			logger.debug("getFirstMeasuredAfter: result={}", result);
+			return result;
+		} finally {
+			query.closeAll();
+		}
+	}
+
+	public PvStatusEntity getFirstPvStatusEntityMeasuredAfter(final String deviceName, final Date measuredFromExcl) {
+		requireNonNull(deviceName, "deviceName");
+		requireNonNull(measuredFromExcl, "measuredFromExcl");
+		Date measured = getFirstMeasuredAfter(deviceName, measuredFromExcl);
+		if (measured == null)
+			return null;
+
+		PvStatusEntity pvStatusEntity = getPvStatusEntity(deviceName, measured);
+		requireNonNull(pvStatusEntity, "getPvStatusEntity('" + deviceName + "', " + measured + ")");
+		return pvStatusEntity;
+	}
 }

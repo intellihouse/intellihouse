@@ -33,6 +33,7 @@ public class MainAggregator {
 	public void run() {
 		Date firstNonAggregatedMeasured = getFirstNonAggregatedMeasured();
 
+		PvStatusInterpolator pvStatusInterpolator = new PvStatusInterpolator();
 		List<PvStatusAggregator<?>> pvStatusAggregators = createPvStatusAggregators();
 		TimeInterval startInterval = null;
 		for (PvStatusAggregator<?> pvStatusAggregator : pvStatusAggregators) {
@@ -59,6 +60,10 @@ public class MainAggregator {
 					if (interval.getToExcl().after(new Date()))
 						break;
 				} else {
+					pvStatusInterpolator.setTransaction(tx);
+					pvStatusEntities = pvStatusInterpolator.interpolate(pvStatusEntities, interval);
+					pvStatusInterpolator.setTransaction(null);
+
 					// The current logic requires that the largest time-interval must be an aligned
 					// multiple of all smaller time-intervals! => Sanity-check now!
 					for (PvStatusAggregator<?> pvStatusAggregator : pvStatusAggregators) {
@@ -79,11 +84,15 @@ public class MainAggregator {
 					for (PvStatusAggregator<?> pvStatusAggregator : pvStatusAggregators) {
 						pvStatusAggregator.setTransaction(tx);
 						pvStatusAggregator.aggregate(pvStatusEntities);
+						pvStatusAggregator.setTransaction(null);
 					}
 
 					// Update the 'last' persistent state so we continue here, if we're interrupted.
 					PvStatusEntity lastAggregatedPvStatusEntity = null;
 					for (PvStatusEntity pvStatusEntity : pvStatusEntities) {
+						if (pvStatusEntity.getId() < 0)
+							continue; // ignore extrapolated entities!
+
 						if (lastAggregatedPvStatusEntity == null
 								|| lastAggregatedPvStatusEntity.getId() < pvStatusEntity.getId())
 							lastAggregatedPvStatusEntity = pvStatusEntity;

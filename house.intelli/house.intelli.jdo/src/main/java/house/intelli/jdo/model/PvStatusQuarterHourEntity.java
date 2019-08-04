@@ -23,13 +23,19 @@ import house.intelli.jdo.Entity;
 })
 public class PvStatusQuarterHourEntity extends Entity implements AggregatedPvStatus {
 
-	public static final int AGGREGATE_PERIOD_MILLIS = 15 * 60_000;
+	public static final int COVERED_PERIOD_MILLIS = 15 * 60_000;
 
 	@Persistent(nullValue = NullValue.EXCEPTION)
 	private String deviceName;
 
 	@Persistent(nullValue = NullValue.EXCEPTION)
 	private Date measured;
+
+	@Column(defaultValue = "-1")
+	int inputCountInterpolated;
+
+	@Column(defaultValue = "-1")
+	int inputCountMeasured;
 
 	@Persistent(nullValue = NullValue.EXCEPTION)
 	private String deviceMode;
@@ -214,8 +220,28 @@ public class PvStatusQuarterHourEntity extends Entity implements AggregatedPvSta
 	}
 
 	@Override
-	public int getAggregatePeriodMillis() {
-		return AGGREGATE_PERIOD_MILLIS;
+	public int getCoveredPeriodMillis() {
+		return COVERED_PERIOD_MILLIS;
+	}
+
+	@Override
+	public int getInputCountInterpolated() {
+		return inputCountInterpolated;
+	}
+
+	@Override
+	public void setInputCountInterpolated(int inputCountInterpolated) {
+		this.inputCountInterpolated = inputCountInterpolated;
+	}
+
+	@Override
+	public int getInputCountMeasured() {
+		return inputCountMeasured;
+	}
+
+	@Override
+	public void setInputCountMeasured(int inputCountMeasured) {
+		this.inputCountMeasured = inputCountMeasured;
 	}
 
 	@Override

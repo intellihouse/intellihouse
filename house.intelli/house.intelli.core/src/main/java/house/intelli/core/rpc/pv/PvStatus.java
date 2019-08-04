@@ -2,7 +2,11 @@ package house.intelli.core.rpc.pv;
 
 import java.util.Date;
 
+import javax.xml.bind.annotation.XmlTransient;
+
 public class PvStatus implements house.intelli.core.pv.PvStatus {
+
+	public static final int COVERED_PERIOD_MILLIS = 1_000;
 
 	private String deviceName;
 	private Date measured;
@@ -271,6 +275,15 @@ public class PvStatus implements house.intelli.core.pv.PvStatus {
 	@Override
 	public void setPvPower(float pvPower) {
 		this.pvPower = pvPower;
+	}
+
+	/**
+	 * Unsupported by the raw XML measured data! This method always returns 0.
+	 */
+	@XmlTransient
+	@Override
+	public int getCoveredPeriodMillis() {
+		return COVERED_PERIOD_MILLIS;
 	}
 
 	@Override
