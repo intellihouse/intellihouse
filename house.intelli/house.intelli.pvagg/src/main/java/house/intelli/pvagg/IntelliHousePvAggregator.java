@@ -9,6 +9,7 @@ import java.net.URLDecoder;
 
 import javax.jdo.PersistenceManagerFactory;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.LoggerContext;
@@ -20,6 +21,8 @@ import house.intelli.core.util.IOUtil;
 import house.intelli.jdo.pmf.JdoPersistenceServiceCfgReader;
 
 public class IntelliHousePvAggregator {
+	
+	private static final Logger logger = LoggerFactory.getLogger(IntelliHousePvAggregator.class);
 
 	public static final String PROPERTY_KEY_OPENHAB_BASE_DIR = "openhab.basedir";
 
@@ -32,10 +35,15 @@ public class IntelliHousePvAggregator {
 	protected final PersistenceManagerFactory pmf;
 
 	public static void main(String[] args) throws Exception {
-		initLogging();
-		parseArgsIntoSystemProperties(args);
-		IntelliHousePvAggregator intelliHousePvAggregator = new IntelliHousePvAggregator();
-		intelliHousePvAggregator.run();
+		try {
+			initLogging();
+			parseArgsIntoSystemProperties(args);
+			IntelliHousePvAggregator intelliHousePvAggregator = new IntelliHousePvAggregator();
+			intelliHousePvAggregator.run();
+		} catch (Throwable error) {
+			logger.error(error.toString(), error);
+			throw error;
+		}
 	}
 
 	public IntelliHousePvAggregator() throws Exception {
