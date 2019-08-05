@@ -44,6 +44,7 @@ public abstract class BatteryChargeEnergyEstimator {
 				break;
 			case FAILURE:
 				power = 0;
+				break;
 			default:
 				throw new IllegalStateException("Unknown deviceMode: " + deviceMode);
 		}
