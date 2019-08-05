@@ -33,7 +33,7 @@ public abstract class BatteryChargeEnergyEstimator {
 
 	protected double estimateBatteryChargeEnergy(final PvStatusEntity pvStatusEntity) {
 		requireNonNull(pvStatusEntity, "pvStatusEntity");
-		DeviceMode deviceMode = DeviceMode.from(pvStatusEntity.getDeviceMode());
+		final DeviceMode deviceMode = DeviceMode.from(pvStatusEntity.getDeviceMode());
 		final double power; // W (Watt)
 		switch (deviceMode) {
 			case BATTERY:
@@ -42,6 +42,8 @@ public abstract class BatteryChargeEnergyEstimator {
 			case LINE:
 				power = pvStatusEntity.getPvPower();
 				break;
+			case FAILURE:
+				power = 0;
 			default:
 				throw new IllegalStateException("Unknown deviceMode: " + deviceMode);
 		}

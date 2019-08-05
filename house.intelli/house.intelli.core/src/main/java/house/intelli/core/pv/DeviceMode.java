@@ -5,7 +5,8 @@ import static java.util.Objects.*;
 public enum DeviceMode {
 
 	BATTERY,
-	LINE
+	LINE,
+	FAILURE
 	;
 
 	public static DeviceMode from(final String string) {
@@ -19,6 +20,8 @@ public enum DeviceMode {
 				return BATTERY;
 			case 'L':
 				return LINE;
+			case 'F':
+				return FAILURE;
 			default:
 				throw new IllegalArgumentException("string represents no known DeviceMode: " + string);
 		}
