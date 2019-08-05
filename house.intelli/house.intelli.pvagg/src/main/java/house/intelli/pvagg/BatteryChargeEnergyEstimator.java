@@ -42,8 +42,18 @@ public abstract class BatteryChargeEnergyEstimator {
 			case LINE:
 				power = pvStatusEntity.getPvPower();
 				break;
-			case FAILURE:
-				power = 0;
+			case FAULT:
+				// according to the user's manual, page 28, the system *may* still be charging the batteries
+				power = pvStatusEntity.getPvPower();
+				break;
+			case ENERGY_SAVING:
+			case STAND_BY:
+				// according to the user's manual, page 28, the system *may* still be charging the batteries
+				power = pvStatusEntity.getPvPower();
+				break;
+			case POWERED:
+				// didn't find anything about this in the user's manual, but I assume that, *if* there's energy coming in, it might be charging
+				power = pvStatusEntity.getPvPower();
 				break;
 			default:
 				throw new IllegalStateException("Unknown deviceMode: " + deviceMode);

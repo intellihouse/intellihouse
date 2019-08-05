@@ -22,10 +22,6 @@ public class BatteryChargeEnergyEstimatorReal extends BatteryChargeEnergyEstimat
 	@Override
 	protected double estimateBatteryChargeEnergy(PvStatusEntity pvStatusEntity) {
 		requireNonNull(pvStatusEntity, "pvStatusEntity");
-		final DeviceMode deviceMode = DeviceMode.from(pvStatusEntity.getDeviceMode());
-		if (DeviceMode.FAILURE == deviceMode)
-			return 0;
-
 		double result = super.estimateBatteryChargeEnergy(pvStatusEntity);
 
 		final double selfConsumptionEnergy = powerToEnergyWh(SELF_CONSUMPTION_POWER, pvStatusEntity.getCoveredPeriodMillis());

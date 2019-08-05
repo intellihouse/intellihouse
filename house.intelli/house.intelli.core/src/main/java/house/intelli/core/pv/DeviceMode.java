@@ -6,7 +6,10 @@ public enum DeviceMode {
 
 	BATTERY,
 	LINE,
-	FAILURE
+	FAULT,
+	POWERED,
+	STAND_BY,
+	ENERGY_SAVING
 	;
 
 	public static DeviceMode from(final String string) {
@@ -21,7 +24,14 @@ public enum DeviceMode {
 			case 'L':
 				return LINE;
 			case 'F':
-				return FAILURE;
+				return FAULT;
+			case 'P':
+				return POWERED;
+			case 'S':
+				return STAND_BY;
+			case 'H':
+			case 'E': // *not* coming from the inverter, but for compatibility with the valueOf(...) method.
+				return ENERGY_SAVING;
 			default:
 				throw new IllegalArgumentException("string represents no known DeviceMode: " + string);
 		}
